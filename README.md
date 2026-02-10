@@ -1,1 +1,1 @@
-# jobhunter-ui
+# jobhunter

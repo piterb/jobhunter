@@ -64,45 +64,67 @@
     <header
         class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm fixed w-full top-0 z-50">
         <!-- Logo -->
-        <a href="dashboard.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div class="bg-indigo-600 p-1.5 rounded-lg">
-                <i data-lucide="crosshair" class="w-5 h-5 text-white"></i>
-            </div>
-            <span class="font-bold text-lg tracking-tight">JobHunter</span>
+        <a href="dashboard.html"
+            class="font-bold text-xl tracking-tight text-white flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <i data-lucide="crosshair" class="w-6 h-6 text-indigo-500"></i>
+            JobHunter
         </a>
 
         <!-- Input -->
-        <div class="flex-1 max-w-2xl mx-8">
-            <div class="relative group">
+        <div class="flex-1 max-w-2xl mx-8 flex items-center gap-3">
+            <div class="relative group flex-1">
                 <i data-lucide="link"
                     class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="text" id="job-url-input" placeholder="Paste job URL to add..."
+                <input type="text" id="job-url-input" placeholder="AI Import (Paste job URL here)..."
                     class="w-full bg-slate-900 border border-slate-800 rounded-md py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-600 transition-all shadow-sm">
 
                 <div class="absolute right-2 top-1/2 -translate-y-1/2 hidden group-focus-within:block">
                     <span
-                        class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Enter</span>
+                        class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Scan
+                        with AI</span>
                 </div>
             </div>
+
+            <button onclick="showJobDataModalManual()"
+                class="flex items-center gap-2 px-3 py-2 bg-slate-900/50 hover:bg-slate-900 border border-slate-800 rounded-md text-slate-400 hover:text-white transition-all text-xs font-bold whitespace-nowrap group">
+                <i data-lucide="plus" class="w-4 h-4 transition-transform duration-300 group-hover:rotate-90"></i>
+                <span>Manual (No AI)</span>
+            </button>
         </div>
 
         <!-- Profile / Menu -->
-        <div class="flex items-center gap-4">
-            <a href="settings_profile.html" class="flex items-center gap-2 group">
+        <div class="flex items-center gap-4 relative">
+            <button onclick="toggleProfileMenu()" class="flex items-center gap-2 group">
                 <div
                     class="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-slate-700 flex items-center justify-center text-xs font-medium cursor-pointer shadow-sm group-hover:ring-2 ring-indigo-500/50 transition-all">
                     PD
                 </div>
                 <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-hover:text-slate-300"></i>
-            </a>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="profile-menu"
+                class="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 hidden z-[100]">
+                <a href="settings_profile.html"
+                    class="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    Settings
+                </a>
+                <div class="h-px bg-slate-800 my-1"></div>
+                <a href="login.html"
+                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left uppercase font-bold text-[10px] tracking-wider">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Sign Out
+                </a>
+            </div>
         </div>
     </header>
 
     <!-- Main Layout (2 Col) -->
-    <div class="flex flex-1 pt-16 h-full">
+    <div id="main-layout" class="flex flex-1 pt-16 h-full transition-transform duration-300">
 
-        <!-- Left: Job Table -->
-        <main class="flex-1 flex flex-col min-w-0 border-r border-slate-800/50">
+        <!-- Left: Job Table / List -->
+        <main id="left-panel" class="flex-1 flex flex-col min-w-0 border-r border-slate-800/50 w-full md:w-auto">
 
             <!-- Toolbar -->
             <div class="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/30">
@@ -115,8 +137,8 @@
 
             </div>
 
-            <!-- Table -->
-            <div class="flex-1 overflow-y-auto">
+            <!-- Table (Desktop) -->
+            <div class="flex-1 overflow-y-auto hidden md:block">
                 <table class="w-full text-left border-collapse">
                     <thead
                         class="bg-slate-950/80 text-xs font-semibold text-slate-500 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm border-b border-slate-800">
@@ -229,8 +251,122 @@
                             </td>
                         </tr>
 
+                        <!-- Row 6 (Ghosted) -->
+                        <tr
+                            class="hover:bg-slate-900/40 cursor-pointer transition-colors border-l-2 border-l-transparent group">
+                            <td
+                                class="px-6 py-4 font-medium text-slate-400 group-hover:text-slate-300 transition-colors flex items-center gap-2">
+                                <span>Software Architect</span>
+                                <i data-lucide="ghost" class="w-3.5 h-3.5 text-purple-500/50"></i>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500">OldSchool Systems</td>
+                            <td class="px-6 py-4 text-slate-500">Remote</td>
+                            <td class="px-6 py-4 text-slate-500 text-xs">Contract</td>
+                            <td class="px-6 py-4 text-slate-500 italic">21 days ago</td>
+                            <td class="px-6 py-4 text-right">
+                                <span
+                                    class="inline-flex justify-center w-24 items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                    Ghosted
+                                </span>
+                            </td>
+                        </tr>
+
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Card View (Mobile) -->
+            <div class="flex-1 overflow-y-auto md:hidden p-4 space-y-3">
+                <!-- Card 1 (Selected) -->
+                <div onclick="showDetail()"
+                    class="bg-slate-900 border-l-4 border-indigo-500 rounded-lg p-4 shadow-sm active:bg-slate-800 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-white">Senior Software Engineer</h3>
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">Interviewing</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                        <span class="font-medium text-slate-300">TechSolutions Inc.</span>
+                        <span class="text-slate-600">•</span>
+                        <span>Remote, USA</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="briefcase" class="w-3 h-3"></i>
+                            <span>Full-time</span>
+                        </div>
+                        <span>Applied Oct 26</span>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div onclick="showDetail()"
+                    class="bg-slate-900 border border-slate-800 rounded-lg p-4 shadow-sm active:bg-slate-800">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-slate-200">Product Manager</h3>
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">Applied</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                        <span class="font-medium text-slate-300">Innovate Corp</span>
+                        <span class="text-slate-600">•</span>
+                        <span>San Francisco, CA</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="briefcase" class="w-3 h-3"></i>
+                            <span>Full-time</span>
+                        </div>
+                        <span>Applied Oct 25</span>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div onclick="showDetail()"
+                    class="bg-slate-900 border border-slate-800 rounded-lg p-4 shadow-sm active:bg-slate-800">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-slate-200">Data Scientist</h3>
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Offer</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                        <span class="font-medium text-slate-300">DataDynamics</span>
+                        <span class="text-slate-600">•</span>
+                        <span>New York, NY</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="briefcase" class="w-3 h-3"></i>
+                            <span>Contract</span>
+                        </div>
+                        <span>Applied Oct 24</span>
+                    </div>
+                </div>
+
+                <!-- Card 4 (Ghosted) -->
+                <div onclick="showDetail()"
+                    class="bg-slate-900 border border-slate-800 rounded-lg p-4 shadow-sm active:bg-slate-800 opacity-75">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-slate-400">Software Architect</h3>
+                            <i data-lucide="ghost" class="w-3 h-3 text-purple-500/50"></i>
+                        </div>
+                        <span
+                            class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Ghosted</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                        <span class="font-medium">OldSchool Systems</span>
+                        <span class="text-slate-700">•</span>
+                        <span>Remote</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-600">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="briefcase" class="w-3 h-3"></i>
+                            <span>Contract</span>
+                        </div>
+                        <span class="italic">Applied 21 days ago</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Pagination -->
@@ -254,15 +390,20 @@
 
         </main>
 
+        <!-- Resizer -->
+        <div id="panel-resizer" class="w-1 cursor-col-resize hover:bg-indigo-600 transition-colors z-20 -mx-0.5"></div>
+
         <!-- Right: Detail Panel -->
-        <aside class="w-[400px] border-l border-slate-800 bg-slate-950 flex flex-col">
+        <aside id="right-panel"
+            class="fixed md:relative inset-0 md:inset-auto z-[60] md:z-10 w-full md:w-[400px] bg-slate-950 flex flex-col shrink-0 transform translate-x-full md:translate-x-0 transition-transform duration-300 border-l border-slate-800">
 
             <!-- Panel Header -->
             <div class="p-6 pb-2">
                 <div class="flex justify-between items-start mb-4">
                     <h2 class="text-xl font-semibold text-white leading-tight">Senior Software Engineer</h2>
-                    <button class="text-slate-500 hover:text-white transition-colors"><i data-lucide="x"
-                            class="w-5 h-5"></i></button>
+                    <button onclick="hideDetail()" class="p-1 -mr-1 text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
                 </div>
                 <div class="flex items-center gap-2 mb-6">
                     <span class="text-sm font-medium text-indigo-400">TechSolutions Inc.</span>
@@ -279,6 +420,9 @@
                         Info</button>
                     <button onclick="switchTab('activity', this)"
                         class="tab-btn flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-white transition-colors">Activity</button>
+                    <button onclick="switchTab('cover-letter', this)"
+                        class="tab-btn flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-white transition-colors">Cover
+                        Letter</button>
                 </div>
             </div>
 
@@ -287,6 +431,44 @@
 
                 <!-- Tab: Job Info -->
                 <div id="tab-info" class="space-y-6 tab-content">
+
+                    <div>
+                        <h3 class="text-sm font-medium text-white mb-3">Contact Person</h3>
+                        <div class="bg-slate-900/50 rounded-lg border border-slate-800 p-4 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-medium text-slate-400">
+                                    JS
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-white">John Smith</div>
+                                    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Technical Recruiter
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-2 pt-1">
+                                <a href="mailto:john.smith@techsolutions.com"
+                                    class="flex items-center gap-2.5 text-xs text-slate-400 hover:text-white transition-colors group">
+                                    <i data-lucide="mail"
+                                        class="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400"></i>
+                                    john.smith@techsolutions.com
+                                </a>
+                                <a href="tel:+1234567890"
+                                    class="flex items-center gap-2.5 text-xs text-slate-400 hover:text-white transition-colors group">
+                                    <i data-lucide="phone"
+                                        class="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400"></i>
+                                    +1 (234) 567-890
+                                </a>
+                                <a href="https://linkedin.com/in/johnsmith" target="_blank"
+                                    class="flex items-center gap-2.5 text-xs text-slate-400 hover:text-white transition-colors group">
+                                    <i data-lucide="linkedin"
+                                        class="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400"></i>
+                                    linkedin.com/in/johnsmith
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="p-4 bg-slate-900 rounded-lg border border-slate-800 space-y-3">
                         <div class="flex justify-between items-center">
@@ -320,7 +502,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-sm font-medium text-white mb-2">Skills</h3>
+                        <h3 class="text-sm font-medium text-white mb-3">Skills</h3>
                         <div class="flex flex-wrap gap-2">
                             <span
                                 class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">React</span>
@@ -441,7 +623,91 @@
                         </div>
 
                     </div>
+                </div>
 
+                <!-- Tab: Cover Letter -->
+                <div id="tab-cover-letter" class="space-y-6 tab-content hidden">
+                    <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-lg p-4">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="p-2 bg-indigo-500/10 rounded-md text-indigo-400">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-white">AI Tailoring</h4>
+                                <p class="text-xs text-slate-400 mt-1">Generate a cover letter based on your profile
+                                    and
+                                    this job description.</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="relative">
+                                <select id="cl-model-choice"
+                                    class="w-full bg-slate-900 border border-slate-800 rounded-md pl-8 pr-3 py-2 text-xs text-slate-300 appearance-none focus:outline-none focus:border-indigo-500 transition-all">
+                                    <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
+                                    <option value="gpt-4o">GPT-4o (High Quality)</option>
+                                </select>
+                                <i data-lucide="cpu"
+                                    class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500"></i>
+                            </div>
+
+                            <button onclick="generateCoverLetter(event)"
+                                class="w-full bg-indigo-600 text-white py-2 rounded-md text-xs font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                                <i data-lucide="wand-2" class="w-4 h-4"></i>
+                                Generate Personalized Letter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CL Preview (Hidden by default) -->
+                    <div id="cl-preview-container" class="hidden space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Draft Preview
+                                </h4>
+                                <div id="auto-save-status"
+                                    class="flex items-center gap-1.5 text-[10px] text-slate-500 opacity-0 transition-opacity duration-300">
+                                    <i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>
+                                    <span>Saved</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button
+                                    class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                                    title="Copy to clipboard">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button
+                                    class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                                    title="Download as PDF">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="cl-editor" oninput="handleCLInput()"
+                            class="w-full bg-slate-900 border border-slate-800 rounded-lg p-4 text-xs text-slate-300 font-serif leading-relaxed h-[450px] overflow-y-auto focus:outline-none focus:border-indigo-500/50 transition-all resize-none custom-scrollbar">Dear Hiring Manager at TechSolutions Inc.,
+
+I am writing to express my strong interest in the Senior Software Engineer position at TechSolutions Inc., as advertised on LinkedIn. With over 5 years of experience in full-stack development and a proven track record of architectural leadership, I am confident that my skills in React, Node.js, and Cloud Infrastructure align perfectly with your team's needs.
+
+In my current role as a Senior Frontend Engineer, I lead the development of our core product UI, where I successfully implemented a new design system that reduced development time by 30%. Your requirement for someone who can "drive technical innovation" resonates with my experience leading the transition to a serverless architecture, which improved system reliability and reduced costs.
+
+I am particularly drawn to TechSolutions because of your recent Series B funding and your reputation for technical excellence. I am excited about the possibility of bringing my problem-solving passion to your dynamic team.
+
+Thank you for your time and consideration. I look forward to the possibility of discussing how my background can contribute to the continued success of TechSolutions Inc.
+
+Best regards,
+Peter Developer</textarea>
+                    </div>
+
+                    <!-- Empty State for CL -->
+                    <div id="cl-empty-state" class="text-center py-12 space-y-3">
+                        <div
+                            class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 text-slate-600">
+                            <i data-lucide="file-text" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-sm text-slate-500">No cover letter generated yet.</p>
+                    </div>
                 </div>
 
             </div>
@@ -460,6 +726,68 @@
     </div>
 
     <!-- Modals -->
+    <!-- AI Model Selector Modal -->
+    <div id="ai-model-selector-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-white">Select AI Model</h3>
+                <button onclick="closeModals()" class="text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="space-y-3">
+                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Choose Extraction
+                        Model</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <label
+                            class="relative flex items-center p-4 rounded-lg border border-slate-800 bg-slate-950/50 cursor-pointer hover:border-indigo-500/50 transition-all group">
+                            <input type="radio" name="model-choice" value="gpt-4o-mini" checked class="hidden peer">
+                            <div class="flex-1">
+                                <span class="block text-sm font-bold text-slate-200">GPT-4o Mini</span>
+                                <span class="block text-[11px] text-slate-500">Fast and cost-efficient. Best for
+                                    standard job posts.</span>
+                            </div>
+                            <div
+                                class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center group-hover:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:border-indigo-500">
+                                <i data-lucide="check" class="w-2.5 h-2.5 text-white"></i>
+                            </div>
+                        </label>
+                        <label
+                            class="relative flex items-center p-4 rounded-lg border border-slate-800 bg-slate-950/50 cursor-pointer hover:border-indigo-500/50 transition-all group">
+                            <input type="radio" name="model-choice" value="gpt-4o" class="hidden peer">
+                            <div class="flex-1">
+                                <span class="block text-sm font-bold text-slate-200">GPT-4o (High Precision)</span>
+                                <span class="block text-[11px] text-slate-500">More intelligent but slower and more
+                                    expensive. Use for messy layouts.</span>
+                            </div>
+                            <div
+                                class="w-4 h-4 rounded-full border border-slate-700 flex items-center justify-center group-hover:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:border-indigo-500">
+                                <i data-lucide="check" class="w-2.5 h-2.5 text-white"></i>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 flex gap-3">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
+                    <div class="text-xs text-amber-200/80 leading-relaxed">
+                        Processing this URL will consume AI tokens. Costs depend on the complexity and size of the job
+                        post. Detailed usage can be found in <a href="ai_logs.html" target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-amber-500 underline font-medium hover:text-amber-400">AI Logs</a>.
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-800 bg-slate-800/10 flex gap-3">
+                <button onclick="confirmModelAndStart()"
+                    class="w-full py-2.5 px-4 rounded-md bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all">Start
+                    AI Extraction</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Processing Modal -->
     <div id="processing-modal"
         class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
@@ -480,7 +808,7 @@
     <!-- Job Data Modal -->
     <div id="job-data-modal"
         class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-lg font-semibold text-white">Review Job Details</h3>
                 <button onclick="closeModals()" class="text-slate-500 hover:text-white transition-colors">
@@ -503,6 +831,7 @@
                             <option value="draft" selected>Draft</option>
                             <option value="applied">Applied</option>
                             <option value="interviewing">Interviewing</option>
+                            <option value="ghosted">Ghosted (Auto-detected)</option>
                         </select>
                     </div>
                 </div>
@@ -546,7 +875,7 @@
                 <div class="space-y-1.5">
                     <label class="text-xs font-medium text-slate-500 uppercase">Description Snippet</label>
                     <textarea id="modal-job-desc"
-                        class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500 h-24 resize-none">We are looking for a Senior Developer to lead our core product team. You will work with React, Node.js and AWS...</textarea>
+                        class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500 h-48 resize-none">We are looking for a Senior Developer to lead our core product team. You will work with React, Node.js and AWS...</textarea>
                 </div>
             </div>
             <div class="p-6 border-t border-slate-800 bg-slate-800/20 flex gap-3">
@@ -580,6 +909,20 @@
     <script>
         lucide.createIcons();
 
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('hidden');
+            // Close when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!e.target.closest('#profile-menu') && !e.target.closest('button[onclick="toggleProfileMenu()"]')) {
+                        menu.classList.add('hidden');
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
+
         function switchTab(tabName, btn) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -599,26 +942,40 @@
 
         // Add Job Interaction
         const jobUrlInput = document.getElementById('job-url-input');
+        const modelSelectorModal = document.getElementById('ai-model-selector-modal');
         const processingModal = document.getElementById('processing-modal');
         const jobDataModal = document.getElementById('job-data-modal');
         const successModal = document.getElementById('success-modal');
+
+        let pendingUrl = '';
 
         jobUrlInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 const url = this.value.trim();
                 if (url) {
-                    startProcessing(url);
+                    pendingUrl = url;
+                    modelSelectorModal.classList.remove('hidden');
                     this.value = '';
                 }
             }
         });
 
+        function confirmModelAndStart() {
+            modelSelectorModal.classList.add('hidden');
+            if (pendingUrl) {
+                startProcessing(pendingUrl);
+            }
+        }
+
         function startProcessing(url) {
             // Show processing modal
             processingModal.classList.remove('hidden');
 
-            // Set URL in hidden field for the next modal
-            document.getElementById('modal-job-url').value = url;
+            // Set URL and disable field (AI mode)
+            const urlField = document.getElementById('modal-job-url');
+            urlField.value = url;
+            urlField.readOnly = true;
+            urlField.parentElement.classList.add('cursor-not-allowed', 'opacity-80');
 
             // Wait 3 seconds
             setTimeout(() => {
@@ -631,7 +988,24 @@
             jobDataModal.classList.remove('hidden');
         }
 
+        function showJobDataModalManual() {
+            // Reset and enable fields for manual entry
+            const urlField = document.getElementById('modal-job-url');
+            urlField.value = '';
+            urlField.readOnly = false;
+            urlField.parentElement.classList.remove('cursor-not-allowed', 'opacity-80');
+
+            document.getElementById('modal-job-title').value = '';
+            document.getElementById('modal-job-company').value = '';
+            document.getElementById('modal-job-location').value = '';
+            document.getElementById('modal-job-salary').value = '';
+            document.getElementById('modal-job-desc').value = '';
+
+            showJobDataModal();
+        }
+
         function closeModals() {
+            modelSelectorModal.classList.add('hidden');
             processingModal.classList.add('hidden');
             jobDataModal.classList.add('hidden');
             successModal.classList.add('hidden');
@@ -652,6 +1026,109 @@
             setTimeout(() => {
                 successModal.classList.add('hidden');
             }, 3000);
+        }
+
+        // Layout Resizer Logic
+        const resizer = document.getElementById('panel-resizer');
+        const rightPanel = document.getElementById('right-panel');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.classList.add('select-none'); // Prevent text selection
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+
+            // Calculate new width: window width - mouse X position
+            const newWidth = window.innerWidth - e.clientX;
+
+            // Constrain width between 300px and 800px
+            if (newWidth >= 300 && newWidth <= 800) {
+                rightPanel.style.width = `${newWidth}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+            document.body.classList.remove('select-none');
+        });
+
+        // Mobile Detail View Toggle
+        function showDetail() {
+            if (window.innerWidth < 768) {
+                rightPanel.classList.remove('translate-x-full');
+            } else {
+                // Desktop show
+                rightPanel.classList.remove('hidden');
+                resizer.classList.remove('hidden');
+            }
+        }
+
+        function hideDetail() {
+            if (window.innerWidth < 768) {
+                rightPanel.classList.add('translate-x-full');
+            } else {
+                // Desktop hide
+                rightPanel.classList.add('hidden');
+                resizer.classList.add('hidden');
+            }
+        }
+
+        // Add showDetail to desktop rows too
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                showDetail();
+            });
+        });
+
+        function generateCoverLetter(e) {
+            const btn = e ? e.currentTarget : event.currentTarget;
+            const originalContent = btn.innerHTML;
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Tailoring...';
+            lucide.createIcons();
+
+            // Mock AI processing delay
+            setTimeout(() => {
+                const emptyState = document.getElementById('cl-empty-state');
+                const previewContainer = document.getElementById('cl-preview-container');
+
+                if (emptyState) emptyState.classList.add('hidden');
+                if (previewContainer) previewContainer.classList.remove('hidden');
+
+                // Restore button
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }, 2000);
+        }
+
+        let saveTimeout;
+        function handleCLInput() {
+            const status = document.getElementById('auto-save-status');
+
+            // Show "Saving..." indicator
+            status.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> <span>Saving...</span>';
+            status.classList.remove('opacity-0');
+            lucide.createIcons();
+
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                // Change to "Saved"
+                status.innerHTML = '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i> <span>Saved</span>';
+                lucide.createIcons();
+
+                // Keep visible for a bit then fade
+                setTimeout(() => {
+                    status.classList.add('opacity-0');
+                }, 2000);
+            }, 800);
         }
     </script>
 

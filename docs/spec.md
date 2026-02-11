@@ -60,7 +60,7 @@ JobHunter je desktop-first webová aplikácia navrhnutá na inteligentné sledov
 ### 4.3 Dashboard & UI
 - **Tabuľkový View:** Hlavná obrazovka s výkonným filtrovaním a sortovaním.
 - **Side-Panel Detail:** Po kliknutí na riadok sa vysunie panel s kompletnou časovou osou (Timeline) a možnosťou pridávať manuálne poznámky.
-- **Ghosting Alarm:** Vizuálne zvýraznenie (napr. červený border), ak je v stave `Applied` dlhšie ako 14 dní bez novej aktivity.
+- **Ghosting Alarm:** Vizuálne zvýraznenie (napr. červený border), ak je práca v stave `Applied` (alebo inom aktívnom stave) dlhšie ako definovaný počet dní (default 14) bez novej aktivity. Tento limit si používateľ môže nastaviť v profile. Status sa môže automaticky prepnúť na `Ghosted` po prekročení limitu alebo podľa rozhodnutia používateľa.
 
 ### 4.4 Export a Nastavenia
 - **Auth:** Google OAuth (žiadne heslá v DB).

@@ -183,7 +183,8 @@ Získa globálne nastavenia aplikácie pre užívateľa.
   "theme": "dark",
   "language": "sk",
   "auto_parse": true,
-  "monthly_spend_limit": 5.00
+  "monthly_spend_limit": 5.00,
+  "ghosting_threshold_days": 14
 }
 ```
 

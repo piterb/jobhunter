@@ -34,7 +34,7 @@
 
     <!-- Header -->
     <header
-        class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950 sticky top-0 z-10">
+        class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div class="flex items-center gap-4">
             <a href="dashboard.html"
                 class="font-bold text-xl tracking-tight text-white flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -43,10 +43,29 @@
             </a>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div
-                class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300 border border-slate-700">
-                PD
+        <div class="flex items-center gap-4 relative">
+            <button onclick="toggleProfileMenu()" class="flex items-center gap-2 group">
+                <div
+                    class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300 border border-slate-700 group-hover:ring-2 ring-indigo-500/50 transition-all">
+                    PD
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-hover:text-slate-300"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="profile-menu"
+                class="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 hidden z-[100]">
+                <a href="settings_profile.html"
+                    class="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    Settings
+                </a>
+                <div class="h-px bg-slate-800 my-1"></div>
+                <a href="login.html"
+                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left uppercase font-bold text-[10px] tracking-wider">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Sign Out
+                </a>
             </div>
         </div>
     </header>
@@ -65,6 +84,11 @@
                     class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-900/50">
                     <i data-lucide="key" class="w-4 h-4"></i>
                     API Keys
+                </a>
+                <a href="ai_logs.html"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-900/50">
+                    <i data-lucide="scroll-text" class="w-4 h-4"></i>
+                    AI Logs
                 </a>
                 <a href="settings_appearance.html"
                     class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-900/50">
@@ -136,11 +160,39 @@
                     </div>
                 </section>
 
-                <!-- CV Upload / Management Card -->
+                <!-- Job Application Tracking Card -->
                 <section class="bg-slate-900 rounded-lg border border-slate-800 p-6 shadow-sm">
                     <div class="mb-6">
-                        <h2 class="text-lg font-medium text-white">Resumé / CV</h2>
-                        <p class="text-sm text-slate-400">Upload your CV to personalize AI interactions.</p>
+                        <h2 class="text-lg font-medium text-white flex items-center gap-2">
+                            <i data-lucide="ghost" class="w-5 h-5 text-purple-400"></i>
+                            Job Application Tracking
+                        </h2>
+                        <p class="text-sm text-slate-400">Configure how the system identifies inactive job applications.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label for="ghosting-threshold"
+                                    class="block text-sm font-medium text-slate-300">Ghosting Threshold (Days)</label>
+                                <p class="text-xs text-slate-500">Number of days without activity before an application
+                                    is flagged as ghosted.</p>
+                            </div>
+                            <div class="w-24">
+                                <input type="number" id="ghosting-threshold" value="14" min="1" max="90"
+                                    class="block w-full rounded-md border-slate-700 bg-slate-950 py-1.5 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 border">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Documents & Attachments Card -->
+                <section class="bg-slate-900 rounded-lg border border-slate-800 p-6 shadow-sm">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-medium text-white">Documents & Attachments</h2>
+                        <p class="text-sm text-slate-400">Manage your resume, cover letters, diplomas, and other
+                            professional certificates.</p>
                     </div>
 
                     <!-- Upload Zone -->
@@ -152,23 +204,49 @@
                         </div>
                         <h3 class="mt-2 text-sm font-semibold text-white">Upload a file</h3>
                         <p class="mt-1 text-xs text-slate-400">Drag and drop or click to browse</p>
-                        <p class="mt-1 text-xs text-slate-500">PDF, MD, TXT up to 10MB</p>
+                        <p class="mt-1 text-xs text-slate-500">PDF, MD, TXT, JPG, PNG up to 10MB</p>
                     </div>
 
                     <!-- File List -->
                     <div class="mt-6 space-y-3">
                         <h4 class="text-xs font-medium text-slate-500 uppercase tracking-wider">Uploaded Files</h4>
 
-                        <!-- File Item -->
+                        <!-- File Item (PDF) -->
                         <div
                             class="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-md hover:border-slate-700 transition-colors">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-rose-500/10 rounded-md text-rose-400">
                                     <i data-lucide="file-text" class="w-5 h-5"></i>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-white">peter_cv_2024.pdf</p>
-                                    <p class="text-xs text-slate-500">2.4 MB • Uploaded 2 days ago</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-white truncate">peter_cv_2024.pdf</p>
+                                    <p class="text-[10px] text-slate-500">Resume • 2.4 MB • 2 days ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+                                    title="View">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button
+                                    class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                                    title="Delete">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- File Item (Image) -->
+                        <div
+                            class="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-md hover:border-slate-700 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-500/10 rounded-md text-blue-400">
+                                    <i data-lucide="image" class="w-5 h-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-white truncate">university_diploma.jpg</p>
+                                    <p class="text-[10px] text-slate-500">Certificate • 1.8 MB • 5 hours ago</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -192,9 +270,9 @@
                                 <div class="p-2 bg-indigo-500/10 rounded-md text-indigo-400">
                                     <i data-lucide="file-code" class="w-5 h-5"></i>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-white">skills_summary.md</p>
-                                    <p class="text-xs text-slate-500">12 KB • Uploaded just now</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-white truncate">cover_letter_generic.md</p>
+                                    <p class="text-[10px] text-slate-500">Cover Letter • 12 KB • just now</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -222,6 +300,20 @@
     <!-- Initialize Icons -->
     <script>
         lucide.createIcons();
+
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('hidden');
+            // Close when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!e.target.closest('#profile-menu') && !e.target.closest('button[onclick="toggleProfileMenu()"]')) {
+                        menu.classList.add('hidden');
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
     </script>
 </body>
 

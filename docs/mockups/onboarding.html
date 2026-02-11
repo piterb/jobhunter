@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobHunter - Onboarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            950: '#020617',
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            400: '#94a3b8',
+                            50: '#f8fafc',
+                        },
+                        indigo: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .step-active {
+            color: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-step {
+            display: none;
+        }
+
+        .fade-step.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 text-slate-50 h-screen flex flex-col items-center justify-center p-6 sm:p-0">
+
+    <div class="max-w-2xl w-full">
+        <!-- Progress -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-bold uppercase tracking-widest text-indigo-500" id="step-count">Step 1 of
+                    3</span>
+                <span class="text-xs text-slate-500" id="step-title">Profile Setup</span>
+            </div>
+            <div class="h-1 w-full bg-slate-900 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-indigo-600 progress-bar" style="width: 33.33%;"></div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+            <!-- Background Decoration -->
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/5 blur-[80px] rounded-full"></div>
+
+            <!-- Step 1: Profile -->
+            <div id="step-1" class="fade-step active space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Let's set up your profile</h2>
+                    <p class="text-slate-400">Tell us a bit about yourself to personalize your experience.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-500 uppercase">First Name</label>
+                            <input type="text" value="Peter"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-slate-500 uppercase">Last Name</label>
+                            <input type="text" value="Dvorak"
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Target Role / Title</label>
+                        <input type="text" placeholder="e.g. Senior Frontend Engineer"
+                            class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="nextStep(2)"
+                        class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/20">
+                        Continue
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload CV -->
+            <div id="step-2" class="fade-step space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Upload your resume</h2>
+                    <p class="text-slate-400">We'll use this to help you tailor applications and extract skills.</p>
+                </div>
+
+                <div
+                    class="border-2 border-dashed border-slate-800 rounded-2xl p-10 flex flex-col items-center gap-4 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all cursor-pointer group">
+                    <div
+                        class="h-16 w-16 bg-slate-800 rounded-full flex items-center justify-center group-hover:bg-indigo-500/10 transition-colors">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-indigo-400"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-white font-medium">Click to upload or drag and drop</p>
+                        <p class="text-slate-500 text-sm mt-1">PDF, DOCX or Markdown (Max 5MB)</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button onclick="nextStep(1)"
+                        class="flex-1 py-3 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 font-semibold rounded-xl transition-all">
+                        Back
+                    </button>
+                    <button onclick="nextStep(3)"
+                        class="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/20">
+                        Continue
+                    </button>
+                </div>
+                <button onclick="nextStep(3)"
+                    class="w-full text-center text-xs text-slate-500 hover:text-slate-400">Skip for now</button>
+            </div>
+
+            <!-- Step 3: API Integration -->
+            <div id="step-3" class="fade-step space-y-6">
+                <div>
+                    <div
+                        class="h-12 w-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-500 mb-4">
+                        <i data-lucide="key" class="w-6 h-6"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">AI Capabilities</h2>
+                    <p class="text-slate-400">To unlock AI features like job extraction and cover letter generation, add
+                        your OpenAI API Key.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">OpenAI API Key</label>
+                        <div class="relative">
+                            <input type="password" placeholder="sk-..."
+                                class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-indigo-500 transition-all pr-10">
+                            <i data-lucide="eye"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 cursor-pointer hover:text-slate-400"></i>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Your key is stored locally and encrypted. We never see it.
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-indigo-600/5 border border-indigo-600/10 rounded-xl flex items-start gap-3">
+                        <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-slate-400 leading-relaxed">Don't have a key? You can still use the app
+                            manually and add it later in Settings.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button onclick="nextStep(2)"
+                        class="flex-1 py-3 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 font-semibold rounded-xl transition-all">
+                        Back
+                    </button>
+                    <button onclick="finishOnboarding()"
+                        class="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                        Get Started
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const stepTitles = ["Profile Setup", "Upload CV", "AI Features"];
+
+        function nextStep(step) {
+            // Hide all
+            document.querySelectorAll('.fade-step').forEach(el => el.classList.remove('active'));
+
+            // Show new
+            const activeStep = document.getElementById('step-' + step);
+            activeStep.classList.add('active');
+
+            // Update progress
+            const progress = (step / 3) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('step-count').innerText = `Step ${step} of 3`;
+            document.getElementById('step-title').innerText = stepTitles[step - 1];
+
+            lucide.createIcons();
+        }
+
+        function finishOnboarding() {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+
+</html>

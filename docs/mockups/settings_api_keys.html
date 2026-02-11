@@ -38,7 +38,7 @@
 
     <!-- Header -->
     <header
-        class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950 sticky top-0 z-10">
+        class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-10">
         <div class="flex items-center gap-4">
             <a href="dashboard.html"
                 class="font-bold text-xl tracking-tight text-white flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -47,10 +47,29 @@
             </a>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div
-                class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300 border border-slate-700">
-                PD
+        <div class="flex items-center gap-4 relative">
+            <button onclick="toggleProfileMenu()" class="flex items-center gap-2 group">
+                <div
+                    class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-300 border border-slate-700 group-hover:ring-2 ring-indigo-500/50 transition-all">
+                    PD
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-hover:text-slate-300"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="profile-menu"
+                class="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 hidden z-[100]">
+                <a href="settings_profile.html"
+                    class="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    Settings
+                </a>
+                <div class="h-px bg-slate-800 my-1"></div>
+                <a href="login.html"
+                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left uppercase font-bold text-[10px] tracking-wider">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Sign Out
+                </a>
             </div>
         </div>
     </header>
@@ -69,6 +88,11 @@
                     class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md bg-slate-900 text-indigo-400">
                     <i data-lucide="key" class="w-4 h-4"></i>
                     API Keys
+                </a>
+                <a href="ai_logs.html"
+                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-900/50">
+                    <i data-lucide="scroll-text" class="w-4 h-4"></i>
+                    AI Logs
                 </a>
                 <a href="settings_appearance.html"
                     class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-900/50">
@@ -139,8 +163,14 @@
                         <div class="pt-4 border-t border-slate-800/50 flex items-center justify-between">
                             <div class="flex gap-4 text-sm text-slate-400">
                                 <div>
-                                    <span class="block text-xs text-slate-500 uppercase tracking-wide">Model</span>
-                                    <span class="text-white font-medium">gpt-4o-mini</span>
+                                    <span class="block text-xs text-slate-500 uppercase tracking-wide mb-1">Model</span>
+                                    <select
+                                        class="bg-slate-950 border border-slate-700 rounded text-sm text-white px-2 py-1 outline-none focus:border-indigo-500 transition-colors">
+                                        <option value="gpt-4o">gpt-4o</option>
+                                        <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+                                        <option value="gpt-4-turbo">gpt-4-turbo</option>
+                                        <option value="o1-preview">o1-preview</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <span class="block text-xs text-slate-500 uppercase tracking-wide">Last Used</span>
@@ -174,20 +204,7 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-sm font-medium text-white">Auto-Parsing</h3>
-                                <p class="text-xs text-slate-500">Automatically parse job content when adding a new URL.
-                                </p>
-                            </div>
-                            <button
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-slate-900 bg-indigo-600"
-                                role="switch" aria-checked="true">
-                                <span class="sr-only">Use setting</span>
-                                <span aria-hidden="true"
-                                    class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-                            </button>
-                        </div>
+
                     </div>
                 </section>
 
@@ -219,6 +236,20 @@
     <!-- Initialize Icons -->
     <script>
         lucide.createIcons();
+
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('hidden');
+            // Close when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!e.target.closest('#profile-menu') && !e.target.closest('button[onclick="toggleProfileMenu()"]')) {
+                        menu.classList.add('hidden');
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
     </script>
 </body>
 

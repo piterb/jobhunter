@@ -18,7 +18,7 @@ Using `slate` for neutrals and `indigo` for primary actions.
 | **Primary** | `bg-indigo-600` | `#4f46e5` | Primary buttons, Active states |
 | **Text Main** | `text-slate-50` | `#f8fafc` | Headings, Primary text |
 | **Text Muted** | `text-slate-400` | `#94a3b8` | Metadata, Secondary text |
-| **Accents** | `green-500` (Offer), `red-500` (Rejected), `amber-500` (Interview) | | Status Badges |
+| **Accents** | `green-500` (Offer), `red-500` (Rejected), `amber-500` (Interview), `purple-500` (Ghosted) | | Status Badges |
 
 ## 3. Layout Structure (2-Column Interface)
 ```

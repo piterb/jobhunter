@@ -5,161 +5,178 @@ Tento dokument definuje schému databázy, bezpečnostné pravidlá a proces ria
 ## 1. Prehľad Databázy
 
 - **Databázový Engine:** PostgreSQL 15+ (hôstované na Supabase).
-- **Schéma:** `public` (pre aplikačné dáta), `auth` (pre používateľov - spravované Supabase).
+- **Schéma:** `jobhunter` (hlavná schéma aplikácie), `auth` (pre používateľov - spravované Supabase).
 - **Autentifikácia:** Supabase Auth (Google OAuth).
-- **ORM / Query Builder:** Prisma alebo priamo Supabase JS Client (v závislosti od backend preferencií, pre tento stack odporúčame **Supabase JS Client** pre jednoduchosť a **Type generation** pre TypeScript).
+- **App Isolation:** Prístup k dátam je podmienený prítomnosťou `id` používateľa a `app_id: 'jobhunter'` v metadátach JWT tokenu.
 
-## 2. ER Diagram (Logický model)
+## 2. Architektúra a Bezpečnosť
+
+Aby sme obišli limit 2 free projektov na Supabase, JobHunter beží v **samostatnej schéme** (`jobhunter`) v rámci zdieľanej inštancie.
+
+### 2.1 RLS s Izoláciou Aplikácie
+Každá tabuľka v schéme `jobhunter` má zapnuté Row Level Security (RLS). Prístup je povolený len vtedy, ak:
+1.  Používateľ je prihlásený (`auth.uid()` nie je null).
+2.  `user_id` v zázname sa zhoduje s `auth.uid()`.
+3.  JWT token obsahuje v `app_metadata` kľúč `"app_id": "jobhunter"`.
+
+**Helper funkcia pre RLS:**
+```sql
+CREATE OR REPLACE FUNCTION jobhunter.is_app_authorized()
+RETURNS boolean AS $$
+BEGIN
+  RETURN (
+    (auth.jwt() -> 'app_metadata' ->> 'app_id') = 'jobhunter'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+## 3. ER Diagram (Logický model)
+
+
+(Pozri diagram v: [docs/diagrams/er_model.mermaid](./diagrams/er_model.mermaid))
 
 ```mermaid
 erDiagram
-    users ||--|| profiles : "has"
-    profiles ||--o{ jobs : "manages"
-    profiles ||--o{ resumes : "owns"
-    jobs ||--o{ activities : "has history"
-    
-    users {
-        uuid id PK "Supabase Auth ID"
-        string email
-    }
-
-    profiles {
-        uuid id PK, FK "References auth.users(id)"
-        string email
-        string full_name
-        string avatar_url
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    jobs {
-        uuid id PK
-        uuid user_id FK
-        string title
-        string company
-        enum status
-        enum employment_type
-        int salary_min
-        int salary_max
-        string location
-        string[] skills_tools
-        string url
-        date date_posted
-        string experience_level
-        timestamp applied_at
-        timestamp last_activity
-        text notes
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    activities {
-        uuid id PK
-        uuid job_id FK
-        uuid user_id FK
-        enum event_type
-        enum category
-        text content
-        jsonb metadata
-        string checksum
-        timestamp created_at
-    }
-
-    resumes {
-        uuid id PK
-        uuid user_id FK
-        string name
-        string storage_path "Path in Supabase Storage"
-        text content_text "Parsed text for AI"
-        boolean is_primary
-        timestamp created_at
-        timestamp updated_at
-    }
+    %% Obsah je v súbore docs/diagrams/er_model.mermaid
 ```
 
-## 3. Detailná Špecifikácia Tabuliek
+## 4. SQL Inicializačný Skript (DDL)
 
-Všetky tabuľky musia mať zapnuté **Row Level Security (RLS)**.
+```sql
+-- 1. Vytvorenie schémy
+CREATE SCHEMA IF NOT EXISTS jobhunter;
 
-### 3.1 `profiles`
-Rozširuje štandardnú `auth.users` tabuľku. Automaticky vytvárané cez Trigger pri registrácii.
+-- 2. ENUM Typy
+DO $$ BEGIN
+    CREATE TYPE jobhunter.job_status AS ENUM ('draft', 'applied', 'interview', 'offer', 'rejected', 'ghosted');
+    CREATE TYPE jobhunter.emp_type AS ENUM ('full_time', 'part_time', 'contract', 'internship', 'b2b');
+    CREATE TYPE jobhunter.event_type AS ENUM ('note', 'status_change', 'email', 'call', 'meeting');
+    CREATE TYPE jobhunter.activity_cat AS ENUM ('interview', 'offer', 'rejection', 'question', 'info');
+    CREATE TYPE jobhunter.doc_type AS ENUM ('resume', 'cover_letter', 'certificate', 'diploma', 'other');
+    CREATE TYPE jobhunter.ai_feature AS ENUM ('job_analysis', 'smart_paste', 'cover_letter_gen', 'chat');
+    CREATE TYPE jobhunter.ai_status AS ENUM ('success', 'error');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
-| Stĺpec | Dátový Typ | Constraint | Popis |
-| :--- | :--- | :--- | :--- |
-| `id` | `uuid` | PK, FK `auth.users.id` | Väzba 1:1 na Supabase usera. |
-| `email` | `text` | NOT NULL | Email (redundantný pre rýchle čítanie). |
-| `full_name`| `text` | | Meno z OAuth providera. |
-| `avatar_url`| `text` | | URL k profilovej fotke. |
-| `created_at`| `timestamptz`| DEFAULT now() | |
-| `updated_at`| `timestamptz`| DEFAULT now() | |
+-- 3. Tabuľky
+CREATE TABLE IF NOT EXISTS jobhunter.profiles (
+    id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email text NOT NULL,
+    first_name text,
+    last_name text,
+    full_name text,
+    avatar_url text,
+    professional_headline text,
+    onboarding_completed boolean DEFAULT false,
+    theme text DEFAULT 'dark',
+    language text DEFAULT 'en',
+    openai_api_key text, -- Encrypted at rest
+    selected_ai_model text DEFAULT 'gpt-4o-mini',
+    monthly_spend_limit numeric(10, 2) DEFAULT 5.00,
+    ghosting_threshold_days integer DEFAULT 14,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
 
-### 3.2 `jobs`
-Hlavná entita inzerátov.
+CREATE TABLE IF NOT EXISTS jobhunter.jobs (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES jobhunter.profiles(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    company text NOT NULL,
+    status jobhunter.job_status NOT NULL DEFAULT 'draft',
+    employment_type jobhunter.emp_type NOT NULL DEFAULT 'full_time',
+    salary_min integer,
+    salary_max integer,
+    location text,
+    skills_tools text[],
+    url text,
+    date_posted date,
+    experience_level text,
+    contact_person text,
+    contact_email text,
+    contact_phone text,
+    contact_linkedin text,
+    applied_at timestamptz,
+    last_activity timestamptz DEFAULT now(),
+    notes text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
 
-| Stĺpec | Dátový Typ | Constraint | Popis |
-| :--- | :--- | :--- | :--- |
-| `id` | `uuid` | PK, DEFAULT gen_random_uuid() | |
-| `user_id` | `uuid` | FK `profiles.id`, NOT NULL | Vlastník záznamu. |
-| `title` | `text` | NOT NULL | Názov pozície. |
-| `company` | `text` | NOT NULL | Názov firmy. |
-| `status` | `job_status` | NOT NULL | ENUM: `draft`, `applied`, `interview`, `offer`, `rejected`, `ghosted`. |
-| `employment_type` | `emp_type` | NOT NULL | ENUM: `full_time`, `part_time`, `contract`, `internship`, `b2b`. |
-| `salary_min` | `integer` | | Mesačný plat (EUR). |
-| `salary_max` | `integer` | | Mesačný plat (EUR). |
-| `location` | `text` | | Mesto alebo "Remote". |
-| `skills_tools` | `text[]` | | Pole reťazcov. |
-| `url` | `text` | | Unikátny link. Môže byť UNIQUE per user? Zatiaľ nie, aby sa dalo aplikovať viackrát ak treba. |
-| `date_posted` | `date` | | Dátum zverejnenia inzerátu (ak je dostupný). |
-| `experience_level`| `text` | | Napr. Junior, Mid, Senior, Lead. |
-| `applied_at` | `timestamptz`| | Kedy bolo odoslané CV. |
-| `last_activity`| `timestamptz`| DEFAULT now() | Pre ghosting tracking. Update triggerom pri inserte do activities. |
-| `notes` | `text` | | AI poznámky (Markdown). |
-| `created_at`| `timestamptz`| DEFAULT now() | |
-| `updated_at`| `timestamptz`| DEFAULT now() | |
+CREATE TABLE IF NOT EXISTS jobhunter.activities (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_id uuid NOT NULL REFERENCES jobhunter.jobs(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES jobhunter.profiles(id) ON DELETE CASCADE,
+    event_type jobhunter.event_type NOT NULL,
+    category jobhunter.activity_cat,
+    content text NOT NULL, -- Main summary or manual note
+    raw_content text, -- Original unedited text (e.g. from Outlook)
+    metadata jsonb DEFAULT '{}'::jsonb,
+    checksum text, -- Unique hash for deduplication
+    occurred_at timestamptz DEFAULT now(), -- Real time of event (extracted from email)
+    created_at timestamptz DEFAULT now() -- Time of record creation
+);
 
-### 3.3 `activities`
-Flexibilný tracklog pre všetky interakcie a zmeny. Slúži ako "denník" pre daný job – od automatických zmien statusu, cez emaily až po manuálne poznámky.
+-- Index for fast deduplication check
+CREATE INDEX IF NOT EXISTS idx_activities_job_checksum ON jobhunter.activities(job_id, checksum);
 
-| Stĺpec | Dátový Typ | Constraint | Popis |
-| :--- | :--- | :--- | :--- |
-| `id` | `uuid` | PK, DEFAULT gen_random_uuid() | |
-| `job_id` | `uuid` | FK `jobs.id`, ON DELETE CASCADE | Ak sa zmaže job, zmizne história. |
-| `user_id` | `uuid` | FK `profiles.id`, NOT NULL | Pre RLS optimalizáciu. |
-| `event_type` | `event_type` | NOT NULL | ENUM: `note` (poznámka), `status_change`, `email`, `call`, `meeting`. |
-| `category` | `activity_cat`| | ENUM: `interview`, `offer`, `rejection`, `question`, `info`. |
-| `content` | `text` | NOT NULL | Hlavný textový obsah (telo mailu, poznámka). |
-| `metadata` | `jsonb` | DEFAULT '{}'::jsonb | Štruktúrované dáta (napr. `{old_status: 'applied', new_status: 'interview'}`, `{duration: '30m'}`). |
-| `checksum` | `text` | | SHA-256 hash pre deduplikáciu emailov. |
-| `created_at` | `timestamptz`| | Čas udalosti (nie vloženia do DB, ale kedy prišiel mail a pod). |
 
-### 3.4 `resumes`
-Uložené životopisy pre kontext AI.
+CREATE TABLE IF NOT EXISTS jobhunter.documents (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES jobhunter.profiles(id) ON DELETE CASCADE,
+    document_type jobhunter.doc_type NOT NULL DEFAULT 'other',
+    name text NOT NULL,
+    storage_path text NOT NULL,
+    content_text text,
+    is_primary boolean DEFAULT false,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
 
-| Stĺpec | Dátový Typ | Constraint | Popis |
-| :--- | :--- | :--- | :--- |
-| `id` | `uuid` | PK, DEFAULT gen_random_uuid() | |
-| `user_id` | `uuid` | FK `profiles.id`, NOT NULL | |
-| `name` | `text` | NOT NULL | Zobrazovaný názov (napr. "Frontend CV 2026"). |
-| `storage_path`| `text` | NOT NULL | Cesta v Supabase Storage buckete. |
-| `content_text`| `text` | | Extrahovaný text pre posielanie do LLM. |
-| `is_primary` | `boolean` | DEFAULT false | Hlavné CV. |
-| `created_at` | `timestamptz`| DEFAULT now() | |
+CREATE TABLE IF NOT EXISTS jobhunter.ai_usage_logs (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES jobhunter.profiles(id) ON DELETE CASCADE,
+    feature jobhunter.ai_feature NOT NULL,
+    model text NOT NULL,
+    prompt_summary text,
+    tokens_input integer DEFAULT 0,
+    tokens_output integer DEFAULT 0,
+    cost numeric(10, 6) DEFAULT 0,
+    latency_ms integer,
+    status jobhunter.ai_status NOT NULL DEFAULT 'success',
+    request_json jsonb DEFAULT '{}'::jsonb,
+    response_json jsonb DEFAULT '{}'::jsonb,
+    created_at timestamptz DEFAULT now()
+);
 
-## 4. Bezpečnosť (RLS)
+-- 4. RLS Nastavenia
+ALTER TABLE jobhunter.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobhunter.jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobhunter.activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobhunter.documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobhunter.ai_usage_logs ENABLE ROW LEVEL SECURITY;
 
-Aplikácia používa prísny model **Row Level Security**. Žiaden používateľ nesmie vidieť dáta iného používateľa.
+-- 5. Helper pre JWT check
+CREATE OR REPLACE FUNCTION jobhunter.is_app_authorized()
+RETURNS boolean AS $$
+BEGIN
+  RETURN (auth.jwt() -> 'app_metadata' ->> 'app_id') = 'jobhunter';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-### Politikty (Policies)
-Pre každú tabuľku (`jobs`, `activities`, `resumes`, `profiles`) budú vytvorené politiky:
+-- 6. Politiky (Ukážka pre 'jobs')
+CREATE POLICY "Users manage their own jobs in jobhunter app"
+ON jobhunter.jobs
+FOR ALL
+USING (
+    auth.uid() = user_id 
+    AND jobhunter.is_app_authorized()
+);
 
-1.  **SELECT**: `auth.uid() = user_id` (resp. `id` pre `profiles`)
-2.  **INSERT**: `auth.uid() = user_id`
-3.  **UPDATE**: `auth.uid() = user_id`
-4.  **DELETE**: `auth.uid() = user_id`
-
-### Database Functions & Triggers
--   **`handle_new_user`**: Trigger, ktorý po inserte do `auth.users` vytvorí záznam v `public.profiles`.
--   **`update_job_activity`**: Trigger, ktorý po pridaní záznamu do `activities` aktualizuje `last_activity` v tabuľke `jobs`.
+-- ... (Podobne pre ostatné tabuľky)
+```
 
 ## 5. Riadenie Zmien Databázy (Change Management)
 
@@ -172,37 +189,14 @@ Na správu databázovej schémy budeme používať **Supabase CLI**. Tento prís
     -   Zmeny v schéme robí buď cez lokálne Studio (`http://localhost:54323`) alebo písaním SQL.
     
 2.  **Vytvorenie Migrácie**:
-    -   Keď je zmena hotová v UI, vygeneruje sa rozdielová migrácia:
-        ```bash
-        npx supabase db diff -f nazov_zmeny
-        ```
-    -   Tým vznikne súbor `supabase/migrations/<timestamp>_nazov_zmeny.sql`.
+    ```bash
+    npx supabase db diff -f init_jobhunter_schema
+    ```
 
-3.  **Aplikovanie Migrácie**:
-    -   Lokálne sa migrácia aplikuje auto-reloadom alebo reštartom.
-    -   Do repozitára sa commituje `supabase/migrations/*.sql`.
-
-4.  **Nasadenie (Production)**:
-    -   V CI/CD (GitHub Actions) sa spustí príkaz:
-        ```bash
-        npx supabase db push
-        ```
-    -   Toto aplikuje nové migrácie na vzdialenú Supabase databázu.
-
-5.  **Generovanie Typov**:
-    -   Pre TypeScript typovú bezpečnosť sa po každej zmene DB pregenerujú typy:
-        ```bash
-        npx supabase gen types typescript --local > shared/types/supabase.ts
-        ```
-
-### Seed Data
--   Pre lokálny vývoj bude existovať `supabase/seed.sql` s testovacími dátami (mock user, pár jobov).
-
-## 6. Prípady použitia Supabase Features
-
--   **Auth**: Správa používateľov, sessions, reset hesla (ak by nebolo len OAuth).
--   **Storage**: Bucket `resumes` pre nahrávanie PDF/MD súborov životopisov. Súkromný bucket, prístup len cez RLS `(bucket_id = 'resumes' AND auth.uid() = owner)`.
--   **Edge Functions** (Voliteľné): Ak by backend logika (AI calling) bola presunutá priamo do Supabase, ale podľa špecifikácie to rieši Express server.
+3.  **Generovanie Typov**:
+    ```bash
+    npx supabase gen types typescript --local > shared/types/supabase.ts
+    ```
 
 ---
-*Tento dokument slúži ako záväzný podklad pre implementáciu databázovej vrstvy.*
+*Tento dokument slúži ako záväzný podklad pre implementáciu databázovej vrstvy v samostatnej schéme.*

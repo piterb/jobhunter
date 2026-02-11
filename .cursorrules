@@ -1,0 +1,5 @@
+Always generate Mermaid diagrams within Markdown (.md) files. Do not use the .mermaid extension unless specifically requested. Use standard Mermaid syntax blocks:
+```mermaid
+graph TD;
+    A-->B;
+```

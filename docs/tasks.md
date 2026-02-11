@@ -61,7 +61,7 @@ Integrating Intelligence.
   - [ ] API Endpoint: `POST /ingest`
 - [ ] **Smart Activity Tracking**
   - [ ] Email Parsing Logic (Regex/AI)
-  - [ ] Ghosting Detection Logic (Last Activity > 14 days)
+  - [ ] Ghosting Detection Logic (Konfigurovateľný threshold z profilu)
 
 ## ✨ Phase 5: Polish & Launch
 Final touches before V1.

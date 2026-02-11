@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            950: '#020617',
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            400: '#94a3b8',
+                            50: '#f8fafc',
+                        },
+                        indigo: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #1e293b;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        .loader::after {
+            content: '';
+            box-sizing: border-box;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-bottom-color: #6366f1;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 text-slate-50 h-screen flex flex-col items-center justify-center overflow-hidden">
+
+    <div class="flex flex-col items-center gap-6">
+        <span class="loader"></span>
+        <div class="text-center">
+            <h2 class="text-xl font-semibold text-white mb-2">Authenticating with Google</h2>
+            <p class="text-slate-400 text-sm animate-pulse">Establishing secure connection...</p>
+        </div>
+    </div>
+
+    <script>
+        // Simulate auth redirect
+        setTimeout(() => {
+            const outcome = sessionStorage.getItem('auth_outcome') || 'success';
+            if (outcome === 'success') {
+                window.location.href = 'auth-success.html';
+            } else {
+                window.location.href = 'auth-fail.html';
+            }
+        }, 1500);
+    </script>
+</body>
+
+</html>

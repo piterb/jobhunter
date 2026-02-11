@@ -6,6 +6,7 @@ An intelligent job application tracking system with AI-powered parsing and autom
 All technical specifications and design documents are located in the `docs/` folder. Please read them before starting any work.
 
 - **[Technical Specification](docs/spec.md)** - Architecture, Data Model, API Logic.
+- **[Infrastructure & Setup](docs/diagrams/infrastructure.md)** - Manual vs. Automated (IaC) processes.
 - **[Design System](docs/design_system.md)** - UI Colors, Typography, Component definitions.
 - **[UI Design](docs/ui_design.md)** - Wireframes, Layouts, Mockups.
 

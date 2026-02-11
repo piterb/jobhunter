@@ -32,6 +32,7 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="icon" type="image/png" href="favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -75,8 +76,9 @@
             <div class="relative group">
                 <i data-lucide="link"
                     class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="text" placeholder="Paste job URL to add..."
+                <input type="text" id="job-url-input" placeholder="Paste job URL to add..."
                     class="w-full bg-slate-900 border border-slate-800 rounded-md py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-600 transition-all shadow-sm">
+
                 <div class="absolute right-2 top-1/2 -translate-y-1/2 hidden group-focus-within:block">
                     <span
                         class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Enter</span>
@@ -110,16 +112,7 @@
                     <input type="text" placeholder="Search roles, companies..."
                         class="bg-transparent border-none text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-0 w-full pl-8">
                 </div>
-                <div class="flex items-center gap-2">
-                    <button
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-md hover:border-slate-700 transition-colors">
-                        <i data-lucide="filter" class="w-3.5 h-3.5"></i> Status
-                    </button>
-                    <button
-                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-md hover:border-slate-700 transition-colors">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Date
-                    </button>
-                </div>
+
             </div>
 
             <!-- Table -->
@@ -132,10 +125,26 @@
                                     data-lucide="arrow-up-down"
                                     class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                             </th>
-                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300">Company</th>
-                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300">Location</th>
-                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300">Applied At</th>
-                            <th class="px-6 py-3 text-right">Status</th>
+                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300 group">Company <i
+                                    data-lucide="arrow-up-down"
+                                    class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </th>
+                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300 group">Location <i
+                                    data-lucide="arrow-up-down"
+                                    class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </th>
+                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300 group">Type <i
+                                    data-lucide="arrow-up-down"
+                                    class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </th>
+                            <th class="px-6 py-3 cursor-pointer hover:text-slate-300 group">Applied At <i
+                                    data-lucide="arrow-up-down"
+                                    class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </th>
+                            <th class="px-6 py-3 text-right cursor-pointer hover:text-slate-300 group">Status <i
+                                    data-lucide="arrow-up-down"
+                                    class="w-3 h-3 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/50 text-sm">
@@ -146,6 +155,7 @@
                             <td class="px-6 py-4 font-medium text-white">Senior Software Engineer</td>
                             <td class="px-6 py-4 text-slate-400">TechSolutions Inc.</td>
                             <td class="px-6 py-4 text-slate-400">Remote, USA</td>
+                            <td class="px-6 py-4 text-slate-400 text-xs">Full-time</td>
                             <td class="px-6 py-4 text-slate-500">Oct 26, 2023</td>
                             <td class="px-6 py-4 text-right">
                                 <span
@@ -161,6 +171,7 @@
                             <td class="px-6 py-4 font-medium text-slate-200">Product Manager</td>
                             <td class="px-6 py-4 text-slate-400">Innovate Corp</td>
                             <td class="px-6 py-4 text-slate-400">San Francisco, CA</td>
+                            <td class="px-6 py-4 text-slate-400 text-xs">Full-time</td>
                             <td class="px-6 py-4 text-slate-500">Oct 25, 2023</td>
                             <td class="px-6 py-4 text-right">
                                 <span
@@ -176,6 +187,7 @@
                             <td class="px-6 py-4 font-medium text-slate-200">Data Scientist</td>
                             <td class="px-6 py-4 text-slate-400">DataDynamics</td>
                             <td class="px-6 py-4 text-slate-400">New York, NY</td>
+                            <td class="px-6 py-4 text-slate-400 text-xs">Contract</td>
                             <td class="px-6 py-4 text-slate-500">Oct 24, 2023</td>
                             <td class="px-6 py-4 text-right">
                                 <span
@@ -191,6 +203,7 @@
                             <td class="px-6 py-4 font-medium text-slate-200">UX Designer</td>
                             <td class="px-6 py-4 text-slate-400">Creative Studio</td>
                             <td class="px-6 py-4 text-slate-400">London, UK</td>
+                            <td class="px-6 py-4 text-slate-400 text-xs">Full-time</td>
                             <td class="px-6 py-4 text-slate-500">Oct 23, 2023</td>
                             <td class="px-6 py-4 text-right">
                                 <span
@@ -206,6 +219,7 @@
                             <td class="px-6 py-4 font-medium text-slate-200">Frontend Developer</td>
                             <td class="px-6 py-4 text-slate-400">WebWorks</td>
                             <td class="px-6 py-4 text-slate-400">Austin, TX</td>
+                            <td class="px-6 py-4 text-slate-400 text-xs">Full-time</td>
                             <td class="px-6 py-4 text-slate-500">Oct 22, 2023</td>
                             <td class="px-6 py-4 text-right">
                                 <span
@@ -260,20 +274,19 @@
 
                 <!-- Tabs -->
                 <div class="flex border-b border-slate-800">
-                    <button class="flex-1 pb-3 text-sm font-medium text-white border-b-2 border-indigo-500">Job
+                    <button onclick="switchTab('info', this)"
+                        class="tab-btn flex-1 pb-3 text-sm font-medium text-white border-b-2 border-indigo-500 transition-colors">Job
                         Info</button>
-                    <button
-                        class="flex-1 pb-3 text-sm font-medium text-slate-400 hover:text-white transition-colors">Timeline</button>
-                    <button
-                        class="flex-1 pb-3 text-sm font-medium text-slate-400 hover:text-white transition-colors">Notes</button>
+                    <button onclick="switchTab('activity', this)"
+                        class="tab-btn flex-1 pb-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-white transition-colors">Activity</button>
                 </div>
             </div>
 
             <!-- Panel Content -->
-            <div class="flex-1 overflow-y-auto p-6 pt-4">
+            <div class="flex-1 overflow-y-auto p-6 pt-4 relative">
 
-                <!-- Info Tab Content -->
-                <div class="space-y-6">
+                <!-- Tab: Job Info -->
+                <div id="tab-info" class="space-y-6 tab-content">
 
                     <div class="p-4 bg-slate-900 rounded-lg border border-slate-800 space-y-3">
                         <div class="flex justify-between items-center">
@@ -307,7 +320,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-sm font-medium text-white mb-2">Tech Stack</h3>
+                        <h3 class="text-sm font-medium text-white mb-2">Skills</h3>
                         <div class="flex flex-wrap gap-2">
                             <span
                                 class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">React</span>
@@ -323,13 +336,119 @@
                     </div>
 
                 </div>
+
+                <!-- Tab: Activity -->
+                <div id="tab-activity" class="space-y-4 tab-content hidden">
+
+                    <!-- Add Activity -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="relative">
+                                <select
+                                    class="w-full bg-slate-900 border border-slate-800 rounded-md pl-8 pr-3 py-2 text-xs text-slate-300 appearance-none focus:outline-none focus:border-indigo-500 transition-all">
+                                    <option value="note">Note</option>
+                                    <option value="call">Phone Call</option>
+                                    <option value="email">Email</option>
+                                    <option value="interview">Interview</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <i data-lucide="tag"
+                                    class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500"></i>
+                            </div>
+                            <button
+                                class="bg-indigo-600 text-white text-xs font-medium rounded-md hover:bg-indigo-500 transition-colors shadow-sm">Add
+                                Activity</button>
+                        </div>
+                        <textarea placeholder="Details about this activity..."
+                            class="w-full bg-slate-900 border border-slate-800 rounded-md p-3 text-sm text-white focus:outline-none focus:border-indigo-500 h-20 resize-none transition-all placeholder:text-slate-600"></textarea>
+                    </div>
+
+                    <div class="space-y-3 pt-4 border-t border-slate-800">
+                        <!-- Activity 1: Interview -->
+                        <div
+                            class="group p-3 rounded-md bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="mt-0.5 w-8 h-8 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-0.5">
+                                        <span class="text-xs font-medium text-slate-200">Technical Interview</span>
+                                        <span class="text-[10px] text-slate-500 text-right">Today, 2:00 PM</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 leading-relaxed">Scheduled with Engineering Lead
+                                        (Alex). Focus on System Design and React patterns.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity 2: Call -->
+                        <div
+                            class="group p-3 rounded-md bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="mt-0.5 w-8 h-8 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                    <i data-lucide="phone" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-0.5">
+                                        <span class="text-xs font-medium text-slate-200">Discovery Call</span>
+                                        <span class="text-[10px] text-slate-500 text-right">Oct 28</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 leading-relaxed">Spoke with recruiter about the
+                                        role. Seem interested in my background with Node.js.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity 3: Note -->
+                        <div
+                            class="group p-3 rounded-md bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="mt-0.5 w-8 h-8 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                    <i data-lucide="sticky-note" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-0.5">
+                                        <span class="text-xs font-medium text-slate-200">Note</span>
+                                        <span class="text-[10px] text-slate-500 text-right">Oct 27</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 leading-relaxed">Company recently raised Series B.
+                                        Their main competitor looks like ClickUp.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity 4: Email -->
+                        <div
+                            class="group p-3 rounded-md bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="mt-0.5 w-8 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                                    <i data-lucide="mail" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-0.5">
+                                        <span class="text-xs font-medium text-slate-200">Application Received</span>
+                                        <span class="text-[10px] text-slate-500 text-right">Oct 26</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 leading-relaxed">Automated email confirmation for
+                                        the application.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
             <!-- Panel Footer -->
             <div class="p-4 border-t border-slate-800 bg-slate-950">
                 <div class="flex gap-3">
-                    <button
-                        class="flex-1 py-2 rounded-md border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">Edit</button>
                     <button
                         class="flex-1 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors">Status:
                         Interview</button>
@@ -340,10 +459,202 @@
 
     </div>
 
-    <!-- Init Icons -->
+    <!-- Modals -->
+    <!-- Processing Modal -->
+    <div id="processing-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+        <div
+            class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full mx-4">
+            <div class="relative h-12 w-12">
+                <div class="absolute inset-0 rounded-full border-2 border-slate-800"></div>
+                <div class="absolute inset-0 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin">
+                </div>
+            </div>
+            <div class="text-center">
+                <h3 class="text-lg font-semibold text-white">Processing job post</h3>
+                <p class="text-sm text-slate-400 mt-1">Our AI is extracting details from the URL...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Data Modal -->
+    <div id="job-data-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-white">Review Job Details</h3>
+                <button onclick="closeModals()" class="text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5 cursor-not-allowed opacity-80">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Job URL</label>
+                        <input type="text" id="modal-job-url" readonly
+                            class="w-full bg-slate-950 border border-slate-800 rounded-md py-2 px-3 text-sm text-slate-400 focus:outline-none"
+                            value="https://example.com/job/123">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label
+                            class="text-xs font-medium text-slate-500 uppercase font-bold text-indigo-400">Status</label>
+                        <select
+                            class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <option value="draft" selected>Draft</option>
+                            <option value="applied">Applied</option>
+                            <option value="interviewing">Interviewing</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-1.5 text-indigo-400">
+                    <label class="text-xs font-medium text-slate-500 uppercase">Job Title</label>
+                    <input type="text" id="modal-job-title"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                        value="Senior Fullstack Developer">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Company</label>
+                        <input type="text" id="modal-job-company"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                            value="TechNova Solutions">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Location</label>
+                        <input type="text" id="modal-job-location"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                            value="Remote, EU">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Employment Type</label>
+                        <select id="modal-job-type"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                            <option value="Full-time" selected>Full-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Part-time">Part-time</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-500 uppercase">Salary (Est.)</label>
+                        <input type="text" id="modal-job-salary"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                            value="€70,000 - €90,000">
+                    </div>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-slate-500 uppercase">Description Snippet</label>
+                    <textarea id="modal-job-desc"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500 h-24 resize-none">We are looking for a Senior Developer to lead our core product team. You will work with React, Node.js and AWS...</textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-800 bg-slate-800/20 flex gap-3">
+                <button onclick="closeModals()"
+                    class="flex-1 py-2 px-4 rounded-md border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-800 transition-colors">Cancel</button>
+                <button onclick="saveJob()"
+                    class="flex-1 py-2 px-4 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all font-bold">Save
+                    Job Position</button>
+            </div>
+        </div>
+    </div>
+    <!-- Success Modal -->
+    <div id="success-modal"
+        class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+        <div
+            class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full mx-4">
+            <div
+                class="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <div class="text-center">
+                <h3 class="text-lg font-semibold text-white">Job saved successfully!</h3>
+                <p class="text-sm text-slate-400 mt-1">The position has been added to your dashboard.</p>
+            </div>
+            <button onclick="closeModals()"
+                class="mt-2 w-full py-2 px-4 rounded-md bg-slate-800 text-white text-sm font-medium hover:bg-slate-700 transition-colors">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Init Icons & Tabs Logic -->
     <script>
         lucide.createIcons();
+
+        function switchTab(tabName, btn) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            // Reset buttons
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-white', 'border-indigo-500');
+                el.classList.add('text-slate-400', 'border-transparent');
+            });
+
+            // Highlight active button
+            btn.classList.remove('text-slate-400', 'border-transparent');
+            btn.classList.add('text-white', 'border-indigo-500');
+        }
+
+        // Add Job Interaction
+        const jobUrlInput = document.getElementById('job-url-input');
+        const processingModal = document.getElementById('processing-modal');
+        const jobDataModal = document.getElementById('job-data-modal');
+        const successModal = document.getElementById('success-modal');
+
+        jobUrlInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const url = this.value.trim();
+                if (url) {
+                    startProcessing(url);
+                    this.value = '';
+                }
+            }
+        });
+
+        function startProcessing(url) {
+            // Show processing modal
+            processingModal.classList.remove('hidden');
+
+            // Set URL in hidden field for the next modal
+            document.getElementById('modal-job-url').value = url;
+
+            // Wait 3 seconds
+            setTimeout(() => {
+                processingModal.classList.add('hidden');
+                showJobDataModal();
+            }, 3000);
+        }
+
+        function showJobDataModal() {
+            jobDataModal.classList.remove('hidden');
+        }
+
+        function closeModals() {
+            processingModal.classList.add('hidden');
+            jobDataModal.classList.add('hidden');
+            successModal.classList.add('hidden');
+        }
+
+        function saveJob() {
+            // For the mockup, we just close the data modal and show success
+            jobDataModal.classList.add('hidden');
+            successModal.classList.remove('hidden');
+
+            // Re-init icons for the checkmark
+            lucide.createIcons();
+
+            // Auto-hide success after 3 seconds optionally, but let's keep it until dismissed as user asked for "nasledne po potrvdeni sa zatvori"
+            // Wait, actually the user said "Po potrvdeni sa zatvori" (Closes after confirming).
+            // This could mean the save modal closes and then success shows, or success has a button.
+            // I'll add a "Dismiss" button and also a 3s auto-hide for extra polish.
+            setTimeout(() => {
+                successModal.classList.add('hidden');
+            }, 3000);
+        }
     </script>
+
 </body>
 
 </html>

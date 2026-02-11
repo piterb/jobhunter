@@ -1,0 +1,42 @@
+meta {
+  name: Ingest Job
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/ingest
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "url": "https://www.profesia.sk/praca/softverovy-inzinier/123456"
+  }
+}
+
+docs {
+  # Ingest Job (Smart Ingest)
+  
+  Parses a job posting URL and returns structured data using AI.
+  
+  ## Required Fields
+  - `url`: The URL of the job posting to analyze.
+  
+  ## Response
+  Returns a JSON object with:
+  - `title`
+  - `company`
+  - `salary_min`, `salary_max`
+  - `location`
+  - `employment_type`
+  - `skills_tools`
+  - `description_summary`
+  - `url`
+  - `scraped_at`
+}

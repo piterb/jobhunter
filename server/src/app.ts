@@ -12,6 +12,7 @@ import analyzeRoutes from './routes/analyze';
 import profileRoutes from './routes/profile';
 import aiLogsRoutes from './routes/ai_logs';
 import generateRoutes from './routes/generate';
+import ingestRoutes from './routes/ingest';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/v1/analyze', authMiddleware, analyzeRoutes);
 app.use('/api/v1/profile', authMiddleware, profileRoutes);
 app.use('/api/v1/ai-logs', authMiddleware, aiLogsRoutes);
 app.use('/api/v1/generate', authMiddleware, generateRoutes);
+app.use('/api/v1/ingest', authMiddleware, ingestRoutes);
 
 app.get('/', (req, res) => {
     res.send('JobHunter API is running!');

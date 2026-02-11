@@ -1,0 +1,40 @@
+meta {
+  name: Login (Get Token)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "dev@example.com",
+    "password": "dev123456"
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return access_token", function() {
+    expect(res.body).to.have.property('access_token');
+  });
+}
+
+docs {
+  # Login
+  
+  Get an access token for API testing.
+  
+  Copy the `access_token` from the response and paste it into `environments/Local.bru` as `authToken`.
+  
+  **Default credentials:**
+  - Email: `dev@example.com`
+  - Password: `dev123456`
+}

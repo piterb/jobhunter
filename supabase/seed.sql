@@ -1,12 +1,59 @@
 -- SEED DATA for JobHunter
 -- This script populates the local database with test data for development.
 
--- 1. Create a Test User in Supabase Auth
-INSERT INTO auth.users (id, email, raw_user_meta_data, created_at, updated_at)
+-- 1. Create a Test User in Supabase Auth with password
+-- Email: dev@example.com
+-- Password: dev123456
+INSERT INTO auth.users (
+    id, 
+    instance_id,
+    email, 
+    encrypted_password,
+    email_confirmed_at,
+    raw_user_meta_data, 
+    created_at, 
+    updated_at,
+    confirmation_token,
+    aud,
+    role
+)
 VALUES (
-    'd7b6f3b0-1234-4a5b-8c9d-1234567890ab', 
-    'dev@example.com', 
+    'd7b6f3b0-1234-4a5b-8c9d-1234567890ab',
+    '00000000-0000-0000-0000-000000000000',
+    'dev@example.com',
+    crypt('dev123456', gen_salt('bf')),
+    NOW(),
     '{"full_name": "Test Developer", "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=dev"}'::jsonb,
+    NOW(),
+    NOW(),
+    '',
+    'authenticated',
+    'authenticated'
+) ON CONFLICT (id) DO UPDATE SET
+    encrypted_password = EXCLUDED.encrypted_password,
+    email_confirmed_at = EXCLUDED.email_confirmed_at;
+
+-- Add identity for email/password login
+INSERT INTO auth.identities (
+    id,
+    user_id,
+    identity_data,
+    provider,
+    provider_id,
+    last_sign_in_at,
+    created_at,
+    updated_at
+)
+VALUES (
+    'd7b6f3b0-1234-4a5b-8c9d-1234567890ac', -- Fixed UUID related to  user
+    'd7b6f3b0-1234-4a5b-8c9d-1234567890ab',
+    jsonb_build_object(
+        'sub', 'd7b6f3b0-1234-4a5b-8c9d-1234567890ab',
+        'email', 'dev@example.com'
+    ),
+    'email',
+    'd7b6f3b0-1234-4a5b-8c9d-1234567890ab', -- User ID as provider_id for email provider
+    NOW(),
     NOW(),
     NOW()
 ) ON CONFLICT (id) DO NOTHING;

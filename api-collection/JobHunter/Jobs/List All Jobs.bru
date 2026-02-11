@@ -1,0 +1,42 @@
+meta {
+  name: List All Jobs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/jobs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+params:query {
+  ~status: Applied
+  ~sort: created_at
+  ~order: desc
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return array", function() {
+    expect(Array.isArray(res.body)).to.be.true;
+  });
+}
+
+docs {
+  # List All Jobs
+  
+  Retrieves all jobs for the authenticated user.
+  
+  ## Query Parameters
+  - `status` (optional): Filter by job status (Saved, Applied, Interview, Offer, Rejected, Ghosted)
+  - `sort` (optional): Sort field (default: created_at)
+  - `order` (optional): Sort order (asc/desc, default: desc)
+}

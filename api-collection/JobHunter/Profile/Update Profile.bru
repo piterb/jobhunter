@@ -1,0 +1,43 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "first_name": "Peter",
+    "last_name": "Novák",
+    "professional_headline": "Senior Fullstack Developer",
+    "theme": "dark",
+    "language": "sk"
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return updated profile", function() {
+    expect(res.body.first_name).to.equal('Peter');
+  });
+}
+
+docs {
+  # Update Profile
+  
+  Updates the current user's profile information.
+  
+  All fields are optional - only provided fields will be updated.
+}

@@ -14,6 +14,7 @@ coverage/
 .vitest
 .vitest_tmp
 .npm_cache
+.tmp
 
 # Next.js / Build outputs
 .next/
@@ -34,6 +35,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+server.log
+server.pid
 
 # OS / Misc
 .DS_Store
@@ -45,3 +48,9 @@ supabase/.temp
 
 # Vercel
 .vercel
+
+# Bruno local environment files (may contain sensitive tokens)
+environments/
+
+# Bruno request history
+.bruno/

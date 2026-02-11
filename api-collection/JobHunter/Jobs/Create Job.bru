@@ -1,0 +1,60 @@
+meta {
+  name: Create Job
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/jobs
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "title": "Senior React Developer",
+    "company": "Tech Innovators Inc.",
+    "status": "Saved",
+    "employment_type": "Full-time",
+    "salary_min": 80000,
+    "salary_max": 120000,
+    "location": "Remote",
+    "skills_tools": ["React", "TypeScript", "Node.js"],
+    "url": "https://example.com/jobs/react-senior",
+    "notes": "Great company culture, remote-first"
+  }
+}
+
+tests {
+  test("should return 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("should return created job", function() {
+    expect(res.body).to.have.property('id');
+    expect(res.body.title).to.equal('Senior React Developer');
+  });
+}
+
+docs {
+  # Create Job
+  
+  Creates a new job posting.
+  
+  ## Required Fields
+  - `title`: Job title
+  - `company`: Company name
+  - `url`: Job posting URL
+  
+  ## Optional Fields
+  - `status`: Job status (default: Saved)
+  - `employment_type`: Type of employment (default: Full-time)
+  - `salary_min`, `salary_max`: Salary range
+  - `location`: Job location
+  - `skills_tools`: Array of required skills
+  - `notes`: Additional notes
+}

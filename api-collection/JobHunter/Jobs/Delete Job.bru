@@ -1,0 +1,35 @@
+meta {
+  name: Delete Job
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/jobs/:jobId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+params:path {
+  jobId: a1b2c3d4-e5f6-4321-8765-100000000001
+}
+
+tests {
+  test("should return 204 No Content", function() {
+    expect(res.status).to.equal(204);
+  });
+}
+
+docs {
+  # Delete Job
+  
+  Permanently deletes a job posting.
+  
+  Replace `:jobId` in the URL with the actual job UUID.
+  
+  **Warning**: This action cannot be undone!
+}

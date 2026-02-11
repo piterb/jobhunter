@@ -3,3 +3,20 @@ Always generate Mermaid diagrams within Markdown (.md) files. Do not use the .me
 graph TD;
     A-->B;
 ```
+
+# 🛡️ Stability & Integrity Protocol
+
+## ❌ PROHIBITED ACTIONS (Do Not Do Without Explicit Approval)
+1. **No Silent Hacks**: Do not silently patch errors by modifying unrelated configuration files (e.g., changing `TMPDIR`, modifying `.gitignore` for temporary fixes, or adding environment overrides to scripts) just to make a command succeed.
+2. **No Tool Switching**: Do not switch underlying tools (e.g., replacing `ts-node` with `tsx`, `npm` with `yarn/pnpm`) unless explicitly requested.
+3. **No Config Drift**: Do not modify project-wide configuration (TSConfig, ESLint, prettier, package.json scripts) unless it is the core objective of the task.
+4. **No Destructive Resets**: do not perform full database resets or deletions of large directories (`node_modules`) without first confirming with the user, unless it is a standard part of a requested workflow (e.g. `npm run setup`).
+5. **Architectural Integrity**: Do not revert explicitly agreed-upon architectural decisions (e.g., using a custom database schema like `jobhunter`, specific libraries, or directory structures) to "fix" an error.
+
+## ✅ REQUIRED BEHAVIOR
+1. **Analyze First**: When an error occurs, analyze the root cause. If the error implies a system/environment issue (e.g., EPERM, network timeout), **report it** to the user with a proposed standard fix (e.g., "Run `sudo chown...`") rather than circumventing it with a code hack.
+2. **Standard Solutions**: Prefer standard, documented solutions over "clever" workarounds. If a standard script fails, fixing the environment is better than changing the script.
+3. **Ask for Clarification**: If a task requires modifying infrastructure or core configuration, stop and ask for confirmation before proceeding.
+
+## 🎯 GOAL
+Maintain a stable, predictable, and standard codebase. Avoid accumulating technical debt through temporary fixes.

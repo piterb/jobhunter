@@ -1,0 +1,44 @@
+meta {
+  name: Update Job
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/jobs/:jobId
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+params:path {
+  jobId: a1b2c3d4-e5f6-4321-8765-100000000001
+}
+
+body:json {
+  {
+    "status": "Applied",
+    "notes": "Applied on 2026-02-11. Waiting for response."
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return updated job", function() {
+    expect(res.body.status).to.equal('Applied');
+  });
+}
+
+docs {
+  # Update Job
+  
+  Updates an existing job. Only provided fields will be updated.
+  
+  Replace `:jobId` in the URL with the actual job UUID.
+}

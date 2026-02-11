@@ -55,3 +55,25 @@ npm run dev
 - `npm run supabase:status` - View local access credentials and URLs.
 - `npm run supabase:stop` - Stop local Docker containers.
 
+## 🧪 API Testing
+
+### Automated Tests (Vitest)
+```bash
+# Run all backend tests
+npm run test:run -w server
+
+# Watch mode (auto-rerun on changes)
+npm test -w server
+```
+
+See [server/README.md](server/README.md) for more details.
+
+### Manual Testing (Bruno)
+We use [Bruno](https://www.usebruno.com/) for manual API testing. The collection is in `api-collection/`.
+
+1. Download Bruno from [usebruno.com](https://www.usebruno.com/downloads)
+2. Open the `api-collection` folder in Bruno
+3. Follow instructions in [api-collection/README.md](api-collection/README.md)
+
+**Why Bruno?** Unlike Postman, Bruno stores collections as files in your git repo, making it easy to share with your team.
+

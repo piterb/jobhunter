@@ -5,6 +5,7 @@ import { authMiddleware } from './middleware/auth';
 
 // Import routes
 import healthRoutes from './routes/health';
+import authRoutes from './routes/auth';
 import jobsRoutes from './routes/jobs';
 import activitiesRoutes from './routes/activities';
 import settingsRoutes from './routes/settings';
@@ -22,6 +23,7 @@ app.use(express.json());
 
 // Public routes
 app.use('/api/v1/health', healthRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Protected routes
 app.use('/api/v1/jobs', authMiddleware, jobsRoutes);

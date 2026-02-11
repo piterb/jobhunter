@@ -1,0 +1,39 @@
+meta {
+  name: Get Job by ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/jobs/:jobId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+params:path {
+  jobId: a1b2c3d4-e5f6-4321-8765-100000000001
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return job details", function() {
+    expect(res.body).to.have.property('id');
+    expect(res.body).to.have.property('title');
+    expect(res.body).to.have.property('company');
+  });
+}
+
+docs {
+  # Get Job by ID
+  
+  Retrieves details of a specific job.
+  
+  Replace `:jobId` in the URL with the actual job UUID.
+}

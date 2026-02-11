@@ -1,0 +1,101 @@
+import { Router, Response } from 'express';
+import { supabase } from '../config/supabase';
+import { AuthRequest } from '../middleware/auth';
+
+const router = Router();
+
+// GET /settings - Get user settings (from profiles table)
+router.get('/', async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+
+    return res.json(data);
+});
+
+// PUT /settings - Update user settings
+router.put('/', async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const updates = req.body;
+
+    // List of allowed fields to update through this endpoint
+    const allowedFields = ['theme', 'language', 'ghosting_threshold_days', 'onboarding_completed', 'default_ai_model'];
+    const filteredUpdates: any = {};
+
+    for (const field of allowedFields) {
+        if (updates[field] !== undefined) {
+            filteredUpdates[field] = updates[field];
+        }
+    }
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .update(filteredUpdates)
+        .eq('id', userId)
+        .select('theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model')
+        .single();
+
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+
+    return res.json(data);
+});
+
+// GET /settings/integrations - Get integration status
+router.get('/integrations', async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('openai_api_key, default_ai_model')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+
+    return res.json({
+        openai: {
+            enabled: !!data.openai_api_key,
+            default_model: data.default_ai_model || 'gpt-4o-mini',
+            // last_used could be fetched from ai_usage_logs if needed
+        }
+    });
+});
+
+// PUT /settings/integrations - Update integration settings
+router.put('/integrations', async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider, api_key, enabled, default_model } = req.body;
+
+    if (provider !== 'openai') {
+        return res.status(400).json({ error: 'Unsupported provider' });
+    }
+
+    const updates: any = {};
+    if (api_key !== undefined) updates.openai_api_key = api_key;
+    if (default_model !== undefined) updates.default_ai_model = default_model;
+
+    const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
+
+    if (error) {
+        return res.status(500).json({ error: error.message });
+    }
+
+    return res.json({ message: 'Integration settings updated' });
+});
+
+export default router;

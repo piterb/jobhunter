@@ -11,6 +11,9 @@ node_modules/
 # Testing
 coverage/
 .nyc_output
+.vitest
+.vitest_tmp
+.npm_cache
 
 # Next.js / Build outputs
 .next/
@@ -35,6 +38,10 @@ yarn-error.log*
 # OS / Misc
 .DS_Store
 *.pem
+
+# Supabase
+supabase/.branches
+supabase/.temp
 
 # Vercel
 .vercel

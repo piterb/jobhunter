@@ -163,7 +163,8 @@
                         <div class="pt-4 border-t border-slate-800/50 flex items-center justify-between">
                             <div class="flex gap-4 text-sm text-slate-400">
                                 <div>
-                                    <span class="block text-xs text-slate-500 uppercase tracking-wide mb-1">Model</span>
+                                    <span class="block text-xs text-slate-500 uppercase tracking-wide mb-1">Default
+                                        Model</span>
                                     <select
                                         class="bg-slate-950 border border-slate-700 rounded text-sm text-white px-2 py-1 outline-none focus:border-indigo-500 transition-colors">
                                         <option value="gpt-4o">gpt-4o</option>
@@ -171,6 +172,8 @@
                                         <option value="gpt-4-turbo">gpt-4-turbo</option>
                                         <option value="o1-preview">o1-preview</option>
                                     </select>
+                                    <p class="text-[10px] text-slate-500 mt-1 max-w-[180px]">Used as default for
+                                        background tasks and new actions.</p>
                                 </div>
                                 <div>
                                     <span class="block text-xs text-slate-500 uppercase tracking-wide">Last Used</span>
@@ -184,29 +187,6 @@
                     </div>
                 </section>
 
-                <!-- Usage Limits -->
-                <section class="bg-slate-900 rounded-lg border border-slate-800 p-6 shadow-sm">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-medium text-white">Usage Limits</h2>
-                        <p class="text-sm text-slate-400">Protect against unexpected costs.</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-sm font-medium text-white">Monthly Spend Limit</h3>
-                                <p class="text-xs text-slate-500">Stop AI requests if costs exceed this amount.</p>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-slate-400 text-sm">$</span>
-                                <input type="number" value="5.00"
-                                    class="w-20 rounded-md border-slate-700 bg-slate-950 py-1 text-white shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm px-2 border text-right">
-                            </div>
-                        </div>
-
-
-                    </div>
-                </section>
 
                 <!-- Other Providers (Empty State) -->
                 <section class="bg-slate-900 rounded-lg border border-slate-800 p-6 shadow-sm opacity-50">

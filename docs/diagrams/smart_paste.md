@@ -8,7 +8,7 @@ sequenceDiagram
     participant DB as Supabase DB
 
     U->>FE: Prilepí text (mail/celé vlákno)
-    FE->>BE: POST /api/parse-activity { text, job_id }
+    FE->>BE: POST /api/v1/analyze/activity { text }
     
     activate BE
     BE->>AI: Rozdeľ na správy, extrahuj dátumy, typy a sumáre

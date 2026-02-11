@@ -15,23 +15,43 @@ All technical specifications and design documents are located in the `docs/` fol
 - **`/server`**: Backend API & Logic (Express.js).
 - **`/shared`**: Shared TypeScript types/interfaces.
 
-## 🚀 Getting Started
+## 🚀 Local Development (Quick Start)
 
-### Prerequisites
-- Node.js & npm
-- Supabase Project (for DB & Auth)
-- OpenAI API Key
+The fastest way to get the project running locally:
 
-### Installation
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
-2.  Start development server:
-    ```bash
-    npm run dev
-    ```
-    This will start both Client (port 3000) and Server (port 3001).
+### 1. Prerequisites
+Ensure you have the following installed:
+- **Node.js** (v18+)
+- **Docker Desktop** (required for local Supabase)
+- **Supabase CLI** (`brew install supabase/tap/supabase` on macOS)
 
-## 🔒 Environment Variables
-Copy `.env.example` to `.env` in both client and server directories and fill in your keys.
+### 2. Automated Setup
+This command installs dependencies, starts local Supabase (Docker), and generates `.env` files.
+```bash
+npm run setup
+```
+
+### 3. AI Configuration
+In `server/.env`, fill in your `OPENAI_API_KEY`. If not provided, the app will run, but AI features will be disabled.
+
+### 4. Run the Application
+```bash
+npm run dev
+```
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **Backend:** [http://localhost:3001](http://localhost:3001)
+- **Supabase Dashboard (Local):** [http://localhost:54323](http://localhost:54323)
+
+## 🏗️ Project Structure (Monorepo)
+- **`/client`**: Frontend (Next.js App Router).
+- **`/server`**: Backend API (Express.js).
+- **`/shared`**: Shared TypeScript types and interfaces.
+- **`/supabase`**: Database configuration, migrations, and seed data.
+- **`/docs`**: Complete project documentation.
+
+## 🛠️ Useful Commands
+- `npm run setup` - Initial environment setup.
+- `npm run dev` - Start both FE and BE simultaneously.
+- `npm run supabase:status` - View local access credentials and URLs.
+- `npm run supabase:stop` - Stop local Docker containers.
+

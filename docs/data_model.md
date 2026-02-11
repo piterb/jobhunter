@@ -73,8 +73,7 @@ CREATE TABLE IF NOT EXISTS jobhunter.profiles (
     theme text DEFAULT 'dark',
     language text DEFAULT 'en',
     openai_api_key text, -- Encrypted at rest
-    selected_ai_model text DEFAULT 'gpt-4o-mini',
-    monthly_spend_limit numeric(10, 2) DEFAULT 5.00,
+    default_ai_model text DEFAULT 'gpt-4o-mini',
     ghosting_threshold_days integer DEFAULT 14,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()

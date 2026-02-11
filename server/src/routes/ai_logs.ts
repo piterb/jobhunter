@@ -1,13 +1,19 @@
 import { Router, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+const getClient = (req: AuthRequest) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    return createSupabaseUserClient(token);
+};
 
 // GET /ai-logs - Get AI usage logs for the current user
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { limit = 50, offset = 0 } = req.query;
+    const supabase = getClient(req);
 
     const { data, error, count } = await supabase
         .from('ai_usage_logs')
@@ -37,6 +43,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         ...req.body,
         user_id: userId,
     };
+    const supabase = getClient(req);
 
     const { data, error } = await supabase
         .from('ai_usage_logs')

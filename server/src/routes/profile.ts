@@ -1,12 +1,18 @@
 import { Router, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+const getClient = (req: AuthRequest) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    return createSupabaseUserClient(token);
+};
+
 // GET /profile - Get user profile
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const supabase = getClient(req);
 
     const { data, error } = await supabase
         .from('profiles')
@@ -25,6 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.put('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const updates = req.body;
+    const supabase = getClient(req);
 
     // List of fields allowed to be updated in the profile
     const allowedFields = [
@@ -42,6 +49,11 @@ router.put('/', async (req: AuthRequest, res: Response) => {
         if (updates[field] !== undefined) {
             filteredUpdates[field] = updates[field];
         }
+    }
+
+    // Only update if there are fields provided
+    if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ error: 'No valid fields to update' });
     }
 
     const { data, error } = await supabase

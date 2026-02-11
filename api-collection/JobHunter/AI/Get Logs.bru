@@ -1,0 +1,36 @@
+meta {
+  name: Get AI Logs
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ai-logs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+params:query {
+  limit: 10
+  ~offset: 0
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should have pagination", function() {
+    expect(res.body).to.have.property('pagination');
+  });
+}
+
+docs {
+  # Get AI Usage Logs
+  
+  Returns history of AI generated content.
+}

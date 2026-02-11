@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import OpenAI from 'openai';
 import { logAIUsage } from '../utils/logger';
-import { supabase } from '../config/supabase';
+import { createSupabaseUserClient } from '../config/supabase';
 
 const router = Router();
 
@@ -13,11 +13,17 @@ const getOpenAIClient = (apiKey?: string) => {
     return new OpenAI({ apiKey: key });
 };
 
+const getClient = (req: AuthRequest) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    return createSupabaseUserClient(token);
+};
+
 // POST /generate/cover-letter
 router.post('/cover-letter', async (req: AuthRequest, res: Response) => {
     const { jobId, customInstructions } = req.body;
     const userId = req.user?.id!;
     const startTime = Date.now();
+    const supabase = getClient(req);
 
     if (!jobId) {
         return res.status(400).json({ error: 'jobId is required' });
@@ -28,6 +34,7 @@ router.post('/cover-letter', async (req: AuthRequest, res: Response) => {
         .from('jobs')
         .select('*')
         .eq('id', jobId)
+        // .eq('user_id', userId) // RLS handles this, but good to keep in mind
         .single();
 
     const { data: profile, error: profileError } = await supabase

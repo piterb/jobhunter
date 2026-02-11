@@ -1,12 +1,18 @@
 import { Router, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+const getClient = (req: AuthRequest) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    return createSupabaseUserClient(token);
+};
+
 // GET /settings - Get user settings (from profiles table)
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const supabase = getClient(req);
 
     const { data, error } = await supabase
         .from('profiles')
@@ -25,6 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.put('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const updates = req.body;
+    const supabase = getClient(req);
 
     // List of allowed fields to update through this endpoint
     const allowedFields = ['theme', 'language', 'ghosting_threshold_days', 'onboarding_completed', 'default_ai_model'];
@@ -53,6 +60,7 @@ router.put('/', async (req: AuthRequest, res: Response) => {
 // GET /settings/integrations - Get integration status
 router.get('/integrations', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const supabase = getClient(req);
 
     const { data, error } = await supabase
         .from('profiles')
@@ -77,6 +85,7 @@ router.get('/integrations', async (req: AuthRequest, res: Response) => {
 router.put('/integrations', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { provider, api_key, enabled, default_model } = req.body;
+    const supabase = getClient(req);
 
     if (provider !== 'openai') {
         return res.status(400).json({ error: 'Unsupported provider' });

@@ -1,0 +1,39 @@
+meta {
+  name: Update Integrations
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/settings/integrations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "provider": "openai",
+    "api_key": "sk-new-api-key",
+    "default_model": "gpt-4o"
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return success message", function() {
+    expect(res.body.message).to.equal('Integration settings updated');
+  });
+}
+
+docs {
+  # Update Integration Settings
+  
+  Saves your OpenAI API key.
+}

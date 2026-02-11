@@ -17,6 +17,7 @@ export interface AILogData {
 export const logAIUsage = async (log: AILogData) => {
     try {
         const { error } = await supabase
+            .schema('jobhunter')
             .from('ai_usage_logs')
             .insert([log]);
 

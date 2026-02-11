@@ -5,9 +5,14 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/auth/login
+  url: {{supabaseUrl}}/auth/v1/token?grant_type=password
   body: json
   auth: none
+}
+
+headers {
+  apikey: {{supabaseAnonKey}}
+  Content-Type: application/json
 }
 
 body:json {
@@ -23,18 +28,16 @@ tests {
   });
   
   test("should return access_token", function() {
-    expect(res.body).to.have.property('access_token');
+    expect(res.body.access_token).to.be.a('string');
   });
+  
+  // Example: automatically updating env token (if Bruno supported it via JS like Postman)
+  // For now, user copies it manually.
 }
 
 docs {
-  # Login
+  # Authenticate with Supabase
   
-  Get an access token for API testing.
-  
-  Copy the `access_token` from the response and paste it into `environments/Local.bru` as `authToken`.
-  
-  **Default credentials:**
-  - Email: `dev@example.com`
-  - Password: `dev123456`
+  Directly calls Supabase Auth API to get a user session.
+  Copy the `access_token` from the response and paste it into your Environment `authToken` variable.
 }

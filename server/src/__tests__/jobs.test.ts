@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../app';
 
 // Mock the auth middleware to bypass real Supabase auth
+// Mock the auth middleware to bypass real Supabase auth
 vi.mock('../middleware/auth', () => ({
     authMiddleware: (req: any, res: any, next: any) => {
         // Using the ID from your seed.sql to satisfy foreign key constraints
@@ -10,6 +11,19 @@ vi.mock('../middleware/auth', () => ({
         next();
     }
 }));
+
+// Mock createSupabaseUserClient to use the admin client (which works without a user token in tests)
+vi.mock('../config/supabase', async (importOriginal) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    const actual = await importOriginal<typeof import('../config/supabase')>();
+    return {
+        ...actual,
+        createSupabaseUserClient: () => ({
+            ...actual.supabaseAdmin,
+            from: (table: string) => actual.supabaseAdmin.schema('jobhunter').from(table),
+        }),
+    };
+});
 
 describe('Jobs API', () => {
     const testJob = {

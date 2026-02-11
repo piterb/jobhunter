@@ -33,7 +33,7 @@ CREATE TABLE jobhunter.profiles (
     theme TEXT DEFAULT 'dark',
     language TEXT DEFAULT 'en',
     openai_api_key TEXT, -- Encrypted (logic to be handled in backend)
-    selected_ai_model TEXT DEFAULT 'gpt-4o-mini',
+    default_ai_model TEXT DEFAULT 'gpt-4o-mini',
     ghosting_threshold_days INTEGER DEFAULT 14,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -121,6 +121,9 @@ CREATE INDEX idx_ai_logs_user_id ON jobhunter.ai_usage_logs(user_id);
 -- Grant permissions on all tables to service_role (for API access)
 GRANT ALL ON ALL TABLES IN SCHEMA jobhunter TO service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA jobhunter TO service_role;
+
+GRANT ALL ON ALL TABLES IN SCHEMA jobhunter TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA jobhunter TO authenticated;
 
 -- 4. UPDATED_AT TRIGGER
 CREATE OR REPLACE FUNCTION jobhunter.handle_updated_at()

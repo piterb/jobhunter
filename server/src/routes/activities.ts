@@ -1,13 +1,19 @@
 import { Router, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+const getClient = (req: AuthRequest) => {
+    const token = req.headers.authorization?.split(' ')[1] || '';
+    return createSupabaseUserClient(token);
+};
 
 // GET /jobs/:id/activities - List all activities for a specific job
 router.get('/:jobId/activities', async (req: AuthRequest, res: Response) => {
     const { jobId } = req.params;
     const userId = req.user?.id;
+    const supabase = getClient(req);
 
     // First, verify the job belongs to the user
     const { data: job, error: jobError } = await supabase
@@ -43,6 +49,7 @@ router.post('/:jobId/activities', async (req: AuthRequest, res: Response) => {
         job_id: jobId,
         user_id: userId,
     };
+    const supabase = getClient(req);
 
     // Verify the job belongs to the user
     const { data: job, error: jobError } = await supabase

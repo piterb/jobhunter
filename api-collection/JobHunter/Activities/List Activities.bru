@@ -1,0 +1,39 @@
+meta {
+  name: List Activities for Job
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/jobs/:jobId/activities
+  body: none
+  auth: bearer
+}
+
+params:path {
+  jobId: a1b2c3d4-e5f6-4321-8765-100000000004
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+vars:pre-request {
+  jobId: ba7bae19-8972-44ed-a4a9-a1d2f9a8ea17
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return array", function() {
+    expect(Array.isArray(res.body)).to.be.true;
+  });
+}
+
+docs {
+  # List Activities for Job
+  
+  Returns all activities (notes, interviews, emails) for a specific job.
+}

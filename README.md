@@ -38,9 +38,16 @@ In `server/.env`, fill in your `OPENAI_API_KEY`. If not provided, the app will r
 ```bash
 npm run dev
 ```
-- **Frontend:** [http://localhost:3000](http://localhost:3000)
-- **Backend:** [http://localhost:3001](http://localhost:3001)
-- **Supabase Dashboard (Local):** [http://localhost:54323](http://localhost:54323)
+- **Frontend Application:** [http://localhost:3000](http://localhost:3000)
+- **Backend Server:** [http://localhost:3001](http://localhost:3001)
+- **Supabase Studio (Database UI):** [http://localhost:54323](http://localhost:54323)
+- **Mailpit (Email Inbox):** [http://localhost:54324](http://localhost:54324)
+
+#### 🔑 Credentials & Database Access
+To view all local credentials (API Keys, Postgres Connection String, etc.), run:
+```bash
+npm run supabase:status
+```
 
 ## 🏗️ Project Structure (Monorepo)
 - **`/client`**: Frontend (Next.js App Router).

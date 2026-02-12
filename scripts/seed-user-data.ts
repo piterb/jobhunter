@@ -1,15 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { createClient } = require('@supabase/supabase-js');
+const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
+const axios = require('axios');
 
 dotenv.config({ path: path.resolve(__dirname, '../server/.env') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 
 if (!supabaseServiceKey) {
     console.error('Error: SUPABASE_SERVICE_ROLE_KEY is required in .env');
@@ -53,41 +52,100 @@ async function seedData() {
     await supabase.from('documents').delete().eq('user_id', user.id);
     await supabase.from('ai_usage_logs').delete().eq('user_id', user.id);
 
-    // 3. Ensure profile is ready
+    // 3. Avatar & Profile
+    console.log('🖼️  Setting up avatar...');
+    let avatarUrl = user.user_metadata?.avatar_url || null;
+
+    try {
+        // Ensure 'avatars' bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets?.find(b => b.name === 'avatars')) {
+            console.log("Creating 'avatars' bucket...");
+            await supabase.storage.createBucket('avatars', { public: true });
+        }
+
+        // Generate avatar
+        const styles = ['avataaars', 'bottts', 'pixel-art', 'lorelei'];
+        const randomStyle = random(styles);
+        const randomSeed = Math.random().toString(36).substring(7);
+        const dicebearUrl = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
+
+        console.log(`Downloading avatar from ${dicebearUrl}...`);
+        const response = await axios.get(dicebearUrl, { responseType: 'arraybuffer' });
+        const avatarBuffer = Buffer.from(response.data, 'binary');
+        const storagePath = `${user.id}/avatar_${Date.now()}.svg`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(storagePath, avatarBuffer, {
+                contentType: 'image/svg+xml',
+                upsert: true
+            });
+
+        if (uploadError) {
+            console.warn('Failed to upload avatar:', uploadError.message);
+        } else {
+            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+            avatarUrl = publicUrl;
+            console.log('✅ Avatar uploaded to storage:', avatarUrl);
+        }
+    } catch (err: any) {
+        console.warn('Error processing avatar:', err.message);
+    }
+
     await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email,
         full_name: user.user_metadata?.full_name || 'Demo User',
+        avatar_url: avatarUrl,
         onboarding_completed: true,
         professional_headline: 'Senior Software Engineer'
     });
 
     // 4. Create Documents
-    console.log('📄 Creating documents...');
+    console.log('📄 Creating documents and uploading files...');
+
+    // Ensure 'documents' bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    if (!buckets?.find(b => b.name === 'documents')) {
+        console.log("Creating 'documents' bucket...");
+        await supabase.storage.createBucket('documents', { public: false }); // Documents should likely be private based on schema policies
+    }
+
+    let resumeContentPath = 'resume_placeholder.pdf';
+
+    try {
+        // Try to find the sample resume we created earlier
+        const localResumePath = path.resolve(__dirname, '../server/assets/sample_resume.pdf');
+        if (fs.existsSync(localResumePath)) {
+            const fileBuffer = fs.readFileSync(localResumePath);
+            // Schema policy requires: (split_part(name, '/', 1)) = auth.uid()::text
+            resumeContentPath = `${user.id}/resume_2025_final.pdf`;
+
+            const { error: uploadErr } = await supabase.storage
+                .from('documents')
+                .upload(resumeContentPath, fileBuffer, {
+                    contentType: 'application/pdf',
+                    upsert: true
+                });
+
+            if (uploadErr) console.warn('Failed to upload resume PDF:', uploadErr.message);
+            else console.log('✅ Sample resume PDF uploaded to documents bucket.');
+        } else {
+            console.warn('⚠️ Local sample resume not found at', localResumePath);
+        }
+    } catch (e: any) {
+        console.warn('Error uploading resume file:', e.message);
+    }
+
     const documents = [
         {
             user_id: user.id,
             name: 'Resume_2025_Final.pdf',
             doc_type: 'Resume',
-            storage_path: 'resumes/resume_2025_final.pdf',
+            storage_path: resumeContentPath,
             content_text: 'Experienced Full Stack Engineer with 5+ years of experience in React, Node.js...',
             is_primary: true
-        },
-        {
-            user_id: user.id,
-            name: 'CV_European_Format.docx',
-            doc_type: 'Resume',
-            storage_path: 'resumes/cv_euro.docx',
-            content_text: 'Detailed CV including academic background...',
-            is_primary: false
-        },
-        {
-            user_id: user.id,
-            name: 'Cover_Letter_Generic.txt',
-            doc_type: 'Cover_Letter',
-            storage_path: 'cover_letters/generic_cl.txt',
-            content_text: 'Dear Hiring Manager, I am writing to express my interest...',
-            is_primary: false
         }
     ];
 

@@ -1,4 +1,0 @@
--- SEED DATA for JobHunter
--- This file is intentionally left empty.
--- We use 'npm run seed' in the server directory to populate data via the Supabase Admin API.
--- This ensures strictly correct creation of Auth Users and referential integrity.

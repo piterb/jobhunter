@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 // Rely on process.env (passed via shell command due to EPERM issues with .env file)
 
@@ -54,17 +57,71 @@ const seed = async () => {
 
         if (!userId) throw new Error('Failed to create/find user');
 
-        // 2. Update Profile (created by trigger, but update fields)
-        console.log('Updating profile...');
+        // 2. Update Profile & Avatar
+        console.log('Updating profile and avatar...');
+
+        let avatarUrl = null;
+
+        try {
+            console.log('Generating random avatar via DiceBear...');
+            const styles = ['avataaars', 'bottts', 'pixel-art', 'lorelei', 'notionists'];
+            const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+            const randomSeed = Math.random().toString(36).substring(7);
+            const dicebearUrl = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
+
+            const response = await axios.get(dicebearUrl, { responseType: 'arraybuffer' });
+            const avatarBuffer = Buffer.from(response.data, 'binary');
+            const storagePath = `${userId}/seed_avatar_${randomSeed}.svg`;
+
+            // Ensure 'avatars' bucket exists
+            const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+            if (!buckets?.find(b => b.name === 'avatars')) {
+                console.log("Creating 'avatars' bucket...");
+                await supabaseAdmin.storage.createBucket('avatars', { public: true });
+            }
+
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from('avatars')
+                .upload(storagePath, avatarBuffer, {
+                    contentType: 'image/svg+xml',
+                    upsert: true
+                });
+
+            if (uploadError) {
+                console.warn('Failed to upload generated avatar to bucket:', uploadError.message);
+            } else {
+                const { data: { publicUrl } } = supabaseAdmin.storage
+                    .from('avatars')
+                    .getPublicUrl(storagePath);
+                avatarUrl = publicUrl;
+                console.log('Generated avatar uploaded successfully:', avatarUrl);
+
+                // Verify upload
+                const { data: fileList, error: listError } = await supabaseAdmin.storage.from('avatars').list(userId);
+                if (listError) console.error('Error verifying avatar upload:', listError);
+                else {
+                    const uploadedFile = fileList.find(f => f.name === `seed_avatar_${randomSeed}.svg`);
+                    if (uploadedFile) console.log('✅ Avatar file verified in storage.');
+                    else console.warn('⚠️ Avatar file NOT found in storage after upload.');
+                }
+            }
+        } catch (avatarErr: any) {
+            console.warn('Error generating seed avatar (falling back to default icon):', avatarErr.message);
+            // avatarUrl remains null, which triggers the default letter icon in the UI
+        }
+
         await supabaseAdmin
             .schema('jobhunter')
             .from('profiles')
             .update({
+                full_name: 'Test Developer',
+                avatar_url: avatarUrl,
                 professional_headline: 'Senior Fullstack Engineer',
                 onboarding_completed: true,
                 ghosting_threshold_days: 14,
                 theme: 'dark',
-                default_ai_model: 'gpt-4o-mini'
+                default_ai_model: 'gpt-4o-mini',
+                updated_at: new Date().toISOString()
             })
             .eq('id', userId);
 
@@ -191,6 +248,93 @@ const seed = async () => {
 
             if (actError) throw actError;
             console.log(`Created ${activities.length} activities.`);
+        }
+
+        // 5. Insert Sample Resume
+        console.log('Inserting sample resume...');
+        const resumeContent = `
+        PETER DEVELOPER
+        Senior Software Engineer
+        
+        SUMMARY
+        Full-stack developer with 8+ years of experience building scalable web applications.
+        Expert in React, Node.js, and Cloud Architecture.
+        
+        EXPERIENCE
+        Senior Engineer at Tech Corp (2020 - Present)
+        - Led migration from monolithic architecture to microservices.
+        - Improved application performance by 40%.
+        - Mentored junior developers.
+        
+        Software Developer at StartUp Inc (2016 - 2020)
+        - Built MVP for fintech product.
+        - Implemented CI/CD pipelines.
+        
+        SKILLS
+        - Languages: JavaScript, TypeScript, Python, SQL
+        - Frameworks: React, Next.js, Express, Django
+        - Tools: Docker, Kubernetes, AWS
+        `;
+
+        // Ensure 'resumes' bucket exists
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+        if (!buckets?.find(b => b.name === 'resumes')) {
+            console.log("Creating 'resumes' bucket...");
+            await supabaseAdmin.storage.createBucket('resumes', { public: true });
+        }
+
+        let resumeStoragePath = 'mock/path/resume.pdf';
+
+        try {
+            const resumePath = path.resolve(__dirname, '../../assets/sample_resume.pdf');
+            if (fs.existsSync(resumePath)) {
+                const resumeBuffer = fs.readFileSync(resumePath);
+                resumeStoragePath = `${userId}/sample_resume.pdf`;
+
+                const { error: uploadError } = await supabaseAdmin.storage
+                    .from('resumes')
+                    .upload(resumeStoragePath, resumeBuffer, {
+                        contentType: 'application/pdf',
+                        upsert: true
+                    });
+
+                if (uploadError) {
+                    console.warn('Failed to upload sample resume to bucket:', uploadError.message);
+                } else {
+                    console.log('Sample resume uploaded successfully to storage.');
+
+                    // Verify upload
+                    const { data: fileList, error: listError } = await supabaseAdmin.storage.from('resumes').list(userId);
+                    if (listError) console.error('Error verifying resume upload:', listError);
+                    else {
+                        const uploadedFile = fileList.find(f => f.name === 'sample_resume.pdf');
+                        if (uploadedFile) console.log('✅ Resume file verified in storage.');
+                        else console.warn('⚠️ Resume file NOT found in storage listing after upload.');
+                    }
+                }
+            } else {
+                console.warn('Sample resume file not found at:', resumePath);
+            }
+        } catch (err: any) {
+            console.warn('Error uploading sample resume:', err.message);
+        }
+
+        const { error: docError } = await supabaseAdmin
+            .schema('jobhunter')
+            .from('documents')
+            .insert({
+                user_id: userId,
+                name: 'Main Resume',
+                doc_type: 'Resume',
+                storage_path: resumeStoragePath,
+                content_text: resumeContent,
+                is_primary: true
+            });
+
+        if (docError) {
+            console.warn('Failed to insert sample resume record:', docError.message);
+        } else {
+            console.log('Created sample resume record.');
         }
 
         console.log('✅ Seeding completed successfully!');

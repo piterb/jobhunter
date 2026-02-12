@@ -3,13 +3,14 @@
 
 import { Plus, LogOut, Settings, ChevronDown, LayoutDashboard, Cpu, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { jobService } from "@/services/job-service";
 import { AddJobModal } from "../dashboard/add-job-modal";
+import { ApiKeyMissingModal } from "../dashboard/api-key-missing-modal";
 
 export function Header() {
     const { user, signOut } = useAuth();
@@ -17,38 +18,51 @@ export function Header() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
     const [ingestedData, setIngestedData] = useState<any>(null);
+    const [profile, setProfile] = useState<{ avatar_url: string | null; full_name: string | null } | null>(null);
 
     // Ingest State
     const [url, setUrl] = useState("");
     const [model, setModel] = useState("gpt-4o-mini");
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
     const [isIngesting, setIsIngesting] = useState(false);
+    const [isApiKeyMissingOpen, setIsApiKeyMissingOpen] = useState(false);
 
     const models = [
         { id: "gpt-4o-mini", name: "GPT-4o Mini", desc: "Fast & Cheap", icon: <Cpu size={14} /> },
         { id: "gpt-4o", name: "GPT-4o", desc: "High Quality", icon: <Sparkles size={14} className="text-indigo-400" /> },
     ];
 
-    useEffect(() => {
-        const fetchDefaultModel = async () => {
-            if (!user) return;
-            try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('default_ai_model')
-                    .eq('id', user.id)
-                    .single();
+    const fetchProfileData = useCallback(async () => {
+        if (!user) return;
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('default_ai_model, avatar_url, full_name')
+                .eq('id', user.id)
+                .single();
 
-                if (data?.default_ai_model) {
-                    setModel(data.default_ai_model);
-                }
-            } catch (err) {
-                console.error("Failed to fetch default model:", err);
+            if (data) {
+                if (data.default_ai_model) setModel(data.default_ai_model);
+                setProfile({
+                    avatar_url: data.avatar_url,
+                    full_name: data.full_name
+                });
             }
-        };
-
-        fetchDefaultModel();
+        } catch (err) {
+            console.error("Failed to fetch profile data:", err);
+        }
     }, [user]);
+
+    useEffect(() => {
+        fetchProfileData();
+
+        // Listen for profile updates from other components
+        window.addEventListener('profile-updated', fetchProfileData);
+
+        return () => {
+            window.removeEventListener('profile-updated', fetchProfileData);
+        };
+    }, [fetchProfileData]);
 
     const handleIngest = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -76,9 +90,15 @@ export function Header() {
             });
             setIsAddJobOpen(true);
             setUrl("");
-        } catch (err) {
+        } catch (err: any) {
             console.error("Ingest failed:", err);
-            alert("Failed to ingest job. Make sure the URL is valid and server is running.");
+
+            // Check if it's an API key error
+            if (err.message && (err.message.includes("API key not found") || err.message.includes("OpenAI API key"))) {
+                setIsApiKeyMissingOpen(true);
+            } else {
+                alert("Failed to ingest job. Make sure the URL is valid and server is running.");
+            }
         } finally {
             setIsIngesting(false);
         }
@@ -197,6 +217,11 @@ export function Header() {
                         onJobAdded={() => window.location.reload()}
                         initialData={ingestedData}
                     />
+
+                    <ApiKeyMissingModal
+                        isOpen={isApiKeyMissingOpen}
+                        onClose={() => setIsApiKeyMissingOpen(false)}
+                    />
                 </div>
             ) : (
                 /* Spacer for when controls are hidden */
@@ -216,11 +241,15 @@ export function Header() {
                     >
                         <div className="flex flex-col items-end mr-1 hidden md:flex">
                             <span className="text-xs font-bold text-white">
-                                {user?.email?.split('@')[0]}
+                                {profile?.full_name || user?.email?.split('@')[0]}
                             </span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                            {user?.email?.[0].toUpperCase()}
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform overflow-hidden border border-white/10">
+                            {profile?.avatar_url ? (
+                                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                profile?.full_name ? profile.full_name[0].toUpperCase() : user?.email?.[0].toUpperCase()
+                            )}
                         </div>
                         <ChevronDown size={14} className={cn("text-slate-500 transition-transform", isProfileMenuOpen && "rotate-180")} />
                     </button>

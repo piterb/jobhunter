@@ -26,7 +26,8 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
         );
     }
 
-    const getStatusIcon = (status: string) => {
+    const getStatusIcon = (status: string | null) => {
+        if (!status) return null;
         switch (status) {
             case 'Success': return <CheckCircle size={14} className="text-emerald-400" />;
             case 'Failure': return <AlertCircle size={14} className="text-rose-400" />;
@@ -35,7 +36,8 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
         }
     };
 
-    const formatFullTime = (dateString: string) => {
+    const formatFullTime = (dateString: string | null) => {
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleString();
     };
 
@@ -67,7 +69,7 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
             <div className="p-6 border-b border-slate-800 bg-slate-950/50">
                 <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-semibold text-white leading-tight pr-4">
-                        {log.feature.replace('_', ' ')}
+                        {log.feature?.replace('_', ' ') || 'Unknown'}
                     </h2>
                     <button
                         onClick={onClose}

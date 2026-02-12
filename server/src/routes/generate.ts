@@ -38,12 +38,11 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         });
     }
 
-    // 1. Fetch Job and Profile context
+    // 1. Fetch Job, Profile, and Documents context
     const { data: job, error: jobError } = await supabase
         .from('jobs')
         .select('*')
         .eq('id', jobId)
-        // .eq('user_id', userId) // RLS handles this, but good to keep in mind
         .single();
 
     const { data: profile, error: profileError } = await supabase
@@ -52,23 +51,52 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         .eq('id', userId)
         .single();
 
+    const { data: documents, error: documentsError } = await supabase
+        .from('documents')
+        .select('name, content_text, doc_type, is_primary')
+        .eq('user_id', userId)
+        .eq('doc_type', 'Resume')
+        .order('is_primary', { ascending: false }) // Primary first
+        .limit(1);
+
     if (jobError || !job) return res.status(404).json({ error: 'Job not found' });
 
     const openai = getOpenAIClient(profile?.openai_api_key);
     if (!openai) return res.status(503).json({ error: 'OpenAI not configured' });
 
+    const resumeContent = documents?.[0]?.content_text || '';
+
     try {
         const prompt = `
-      Write a professional cover letter for the following position:
-      Job: ${job.title} at ${job.company}
-      Location: ${job.location || 'N/A'}
-      Description: ${job.notes || ''}
+      Write a professional and personalized cover letter for the following position.
       
-      User Profile:
+      TARGET JOB:
+      Title: ${job.title}
+      Company: ${job.company}
+      Location: ${job.location || 'N/A'}
+      Job Description/Notes:
+      """
+      ${job.notes || ''}
+      """
+      
+      CANDIDATE PROFILE:
       Name: ${profile?.full_name || 'N/A'}
       Headline: ${profile?.professional_headline || 'N/A'}
       
-      Custom Instructions: ${customInstructions || 'None'}
+      CANDIDATE RESUME (Use this to highlight relevant matching skills and experience):
+      """
+      ${resumeContent}
+      """
+      
+      CUSTOM INSTRUCTIONS:
+      ${customInstructions || 'None'}
+      
+      GUIDELINES:
+      - Addres the hiring manager directly if possible, or use a professional greeting.
+      - Use the candidate's resume to specifically mention experience that matches the job requirements.
+      - Keep it professional, concise (300-400 words), and engaging.
+      - Do not invent facts not present in the resume or profile.
+      - Adopt a tone that matches the company culture if inferable, otherwise professional and enthusiastic.
       
       Return the response in JSON format with a "content" field containing the markdown text of the cover letter.
     `;
@@ -90,7 +118,7 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
             tokens_output: response.usage?.completion_tokens,
             latency_ms: latency,
             status: 'success',
-            request_json: { jobId, customInstructions },
+            request_json: { jobId, customInstructions, hasResume: !!resumeContent },
             response_json: { content_length: result.content?.length },
         });
 
@@ -100,7 +128,7 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         await logAIUsage({
             user_id: userId,
             feature: 'cover_letter_gen',
-            model: 'gpt-4o-mini',
+            model: profile?.default_ai_model || 'gpt-4o-mini',
             latency_ms: latency,
             status: 'error',
             response_json: { error: error.message },

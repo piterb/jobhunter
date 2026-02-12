@@ -55,3 +55,22 @@ export type IngestRequest = z.infer<typeof IngestRequestSchema>;
 export type AnalyzeJobRequest = z.infer<typeof AnalyzeJobRequestSchema>;
 export type AnalyzeActivityRequest = z.infer<typeof AnalyzeActivityRequestSchema>;
 export type GenerateCoverLetterRequest = z.infer<typeof GenerateCoverLetterRequestSchema>;
+
+export const GetAILogsQuerySchema = z.object({
+    page: z.string().optional().transform(v => v ? parseInt(v) : undefined),
+    limit: z.string().optional().transform(v => v ? parseInt(v) : undefined),
+    feature: AIFeatureSchema.optional(),
+    status: AIStatusSchema.optional(),
+});
+
+export type GetAILogsQuery = z.infer<typeof GetAILogsQuerySchema>;
+
+export type PaginatedAILogs = {
+    data: AIUsageLog[];
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalTokens: number;
+    avgLatency: number;
+};

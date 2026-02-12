@@ -19,7 +19,10 @@ import {
     CheckCircle2,
     XCircle,
     Loader,
-    Download
+    Download,
+    Wand2,
+    Check,
+    X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
@@ -52,7 +55,9 @@ export default function ProfilePage() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false); // New state for file upload
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [previewAvatar, setPreviewAvatar] = useState<{ url: string, blob: Blob, seed: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (user) {
@@ -113,6 +118,7 @@ export default function ProfilePage() {
 
             if (error) throw error;
 
+            window.dispatchEvent(new Event('profile-updated'));
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             setTimeout(() => setMessage(null), 3000);
         } catch (err: any) {
@@ -200,7 +206,6 @@ export default function ProfilePage() {
 
             // 1. Upload to Storage
             // Sanitize filename to avoid issues
-            const fileExt = file.name.split('.').pop() || '';
             const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
             const filePath = `${user?.id}/${fileName}`;
 
@@ -235,6 +240,126 @@ export default function ProfilePage() {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const handleGenerateAvatar = async () => {
+        try {
+            setSaving(true);
+            setMessage(null);
+
+            // Using DiceBear for random avatars
+            const styles = ['avataaars', 'bottts', 'pixel-art', 'lorelei', 'notionists'];
+            const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+            const seed = Math.random().toString(36).substring(7);
+            const avatarUrl = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${seed}`;
+
+            // Fetch the avatar from DiceBear
+            const response = await fetch(avatarUrl);
+            const blob = await response.blob();
+
+            // Set preview instead of uploading immediately
+            if (previewAvatar) URL.revokeObjectURL(previewAvatar.url);
+            setPreviewAvatar({
+                url: URL.createObjectURL(blob),
+                blob: blob,
+                seed: seed
+            });
+        } catch (err: any) {
+            console.error("Error generating avatar:", err);
+            setMessage({ type: 'error', text: err.message || 'Failed to generate avatar.' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSaveGeneratedAvatar = async () => {
+        if (!previewAvatar || !user) return;
+
+        try {
+            setSaving(true);
+            setMessage(null);
+
+            // 1. Upload to Storage (avatars bucket)
+            const fileExt = previewAvatar.blob.type.split('/')[1] || 'png';
+            const fileName = `avatar_${Date.now()}.${fileExt}`;
+            const filePath = `${user?.id}/${fileName}`;
+            const file = new File([previewAvatar.blob], fileName, { type: previewAvatar.blob.type });
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // 3. Update Profile
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({
+                    avatar_url: publicUrl,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', user?.id);
+
+            if (updateError) throw updateError;
+
+            setProfile(p => p ? { ...p, avatar_url: publicUrl } : null);
+            window.dispatchEvent(new Event('profile-updated'));
+            setMessage({ type: 'success', text: 'Avatar saved successfully!' });
+
+            // Cleanup preview
+            URL.revokeObjectURL(previewAvatar.url);
+            setPreviewAvatar(null);
+        } catch (err: any) {
+            console.error("Error saving avatar:", err);
+            setMessage({ type: 'error', text: err.message || 'Failed to save avatar.' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDiscardGeneratedAvatar = () => {
+        if (previewAvatar) {
+            URL.revokeObjectURL(previewAvatar.url);
+            setPreviewAvatar(null);
+        }
+    };
+
+    const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+
+        // Validation
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+
+        if (!allowedExtensions.includes(fileExt)) {
+            setMessage({
+                type: 'error',
+                text: `Invalid image format. Supported: ${allowedExtensions.join(', ').toUpperCase()}`
+            });
+            return;
+        }
+
+        if (file.size > 1 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'Avatar size must be less than 1MB.' });
+            return;
+        }
+
+        // Set preview instead of uploading immediately
+        if (previewAvatar) URL.revokeObjectURL(previewAvatar.url);
+        setPreviewAvatar({
+            url: URL.createObjectURL(file),
+            blob: file,
+            seed: Date.now().toString()
+        });
+
+        // Clear input so the same file can be selected again
+        if (avatarInputRef.current) avatarInputRef.current.value = '';
     };
 
     if (loading) {
@@ -281,20 +406,85 @@ export default function ProfilePage() {
                             {/* Avatar */}
                             <div className="flex items-center gap-6">
                                 <div className="relative group/avatar">
-                                    <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-2xl font-bold text-slate-300 shadow-inner group-hover/avatar:border-indigo-500/50 transition-all">
-                                        {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User size={32} />}
+                                    <div className={cn(
+                                        "w-20 h-20 rounded-full bg-slate-800 border-2 flex items-center justify-center text-2xl font-bold transition-all overflow-hidden",
+                                        previewAvatar ? "border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)] scale-110" : "border-slate-700 text-slate-300 shadow-inner group-hover/avatar:border-indigo-500/50"
+                                    )}>
+                                        {previewAvatar ? (
+                                            <img src={previewAvatar.url} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : profile?.avatar_url ? (
+                                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User size={32} />
+                                        )}
                                     </div>
                                     <div className="absolute inset-0 rounded-full bg-indigo-500/0 group-hover/avatar:bg-indigo-500/10 transition-all pointer-events-none" />
                                 </div>
-                                <div className="space-y-1">
-                                    <button
-                                        type="button"
-                                        className="px-4 py-2 text-sm font-medium border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-600 transition-all flex items-center gap-2"
-                                    >
-                                        <ImageIcon size={16} />
-                                        Change Avatar
-                                    </button>
-                                    <p className="text-xs text-slate-500">JPG, PNG or GIF. Max 800K.</p>
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex flex-wrap gap-2 items-center min-h-[40px]">
+                                        {!previewAvatar ? (
+                                            <>
+                                                <input
+                                                    type="file"
+                                                    ref={avatarInputRef}
+                                                    className="hidden"
+                                                    onChange={handleAvatarSelect}
+                                                    accept="image/*"
+                                                />
+                                                <div className="flex flex-wrap gap-2 animate-in fade-in duration-300">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => avatarInputRef.current?.click()}
+                                                        disabled={saving}
+                                                        className="px-4 py-2 text-sm font-medium border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-600 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {saving ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
+                                                        Upload Avatar
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleGenerateAvatar}
+                                                        disabled={saving}
+                                                        className="px-4 py-2 text-sm font-medium border border-indigo-500/30 bg-indigo-500/10 rounded-lg text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 hover:border-indigo-500/50 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group/gen"
+                                                    >
+                                                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} className="group-hover/gen:rotate-12 transition-transform" />}
+                                                        Generate Avatar
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-2 items-center animate-in fade-in slide-in-from-left-2 duration-300">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSaveGeneratedAvatar}
+                                                    disabled={saving}
+                                                    className="px-5 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                                                >
+                                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={18} />}
+                                                    Save
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDiscardGeneratedAvatar}
+                                                    disabled={saving}
+                                                    className="px-4 py-2 text-sm font-medium bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                                                >
+                                                    <X size={16} />
+                                                    Discard
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerateAvatar}
+                                                    disabled={saving}
+                                                    className="px-3 py-2 text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1.5 transition-colors hover:bg-indigo-500/5 rounded-lg"
+                                                >
+                                                    <Wand2 size={14} />
+                                                    Try another
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {!previewAvatar && <p className="text-xs text-slate-500">JPG, PNG or GIF. Max 1MB.</p>}
                                 </div>
                             </div>
 
@@ -497,6 +687,6 @@ export default function ProfilePage() {
                     </div>
                 </section>
             </div>
-        </div>
+        </div >
     );
 }

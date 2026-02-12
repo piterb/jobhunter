@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Job } from "@/types/job";
-import { Sparkles, Wand2, Copy, Download, Check, FileText, Cpu } from "lucide-react";
+import { Sparkles, Wand2, Copy, Download, Check, FileText, Cpu, MessageSquare } from "lucide-react";
+import { aiService } from "@/services/ai-service";
+import { ApiKeyMissingModal } from "@/components/dashboard/api-key-missing-modal";
 
 interface CoverLetterTabProps {
     job: Job;
@@ -13,24 +15,26 @@ export function CoverLetterTab({ job }: CoverLetterTabProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const [content, setContent] = useState("");
     const [copying, setCopying] = useState(false);
+    const [customInstructions, setCustomInstructions] = useState("");
+    const [isApiKeyMissingOpen, setIsApiKeyMissingOpen] = useState(false);
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         setIsGenerating(true);
-        // Mock generation delay
-        setTimeout(() => {
-            setContent(`Dear Hiring Manager at ${job.company},
-
-I am writing to express my strong interest in the ${job.title} position as advertised. With my background in software engineering and experience with relevant technologies, I am confident that I can contribute effectively to your team.
-
-I have been following ${job.company}'s work and I am impressed by your commitment to innovation. My skills in ${job.skills_tools?.slice(0, 3).join(', ') || 'modern web development'} would allow me to hit the ground running and add value from day one.
-
-Thank you for your time and consideration.
-
-Best regards,
-Peter Developer`);
+        try {
+            const letter = await aiService.generateCoverLetter(job.id, customInstructions);
+            setContent(letter);
             setHasGenerated(true);
+        } catch (error: any) {
+            console.error("Failed to generate cover letter:", error);
+
+            if (error.message && (error.message.includes("OpenAI not configured") || error.message.includes("API key"))) {
+                setIsApiKeyMissingOpen(true);
+            } else {
+                alert("Failed to generate cover letter. Please try again.");
+            }
+        } finally {
             setIsGenerating(false);
-        }, 1500);
+        }
     };
 
     const handleCopy = () => {
@@ -41,6 +45,11 @@ Peter Developer`);
 
     return (
         <div className="space-y-6">
+            <ApiKeyMissingModal
+                isOpen={isApiKeyMissingOpen}
+                onClose={() => setIsApiKeyMissingOpen(false)}
+            />
+
             {/* AI Tool Box */}
             <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-lg p-4">
                 <div className="flex items-start gap-3 mb-4">
@@ -50,18 +59,23 @@ Peter Developer`);
                     <div>
                         <h4 className="text-sm font-semibold text-white">AI Tailoring</h4>
                         <p className="text-xs text-slate-400 mt-1">
-                            Generate a cover letter based on your profile and this job description.
+                            Generate a cover letter based on your profile, resume, and this job description.
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    <div className="relative">
-                        <select className="w-full bg-slate-900 border border-slate-800 rounded-md pl-8 pr-3 py-2 text-xs text-slate-300 appearance-none focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
-                            <option value="gpt-4o-mini">GPT-4o Mini (Fast)</option>
-                            <option value="gpt-4o">GPT-4o (High Quality)</option>
-                        </select>
-                        <Cpu size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                            <MessageSquare size={12} />
+                            Custom Instructions (Optional)
+                        </label>
+                        <textarea
+                            value={customInstructions}
+                            onChange={(e) => setCustomInstructions(e.target.value)}
+                            placeholder="E.g., Focus on my React experience, or keep it under 200 words..."
+                            className="w-full bg-slate-900 border border-slate-800 rounded-md p-3 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition-all resize-none h-20 placeholder:text-slate-600"
+                        />
                     </div>
 
                     <button
@@ -74,7 +88,7 @@ Peter Developer`);
                         ) : (
                             <Wand2 size={16} />
                         )}
-                        {isGenerating ? "Analyzing..." : "Generate Personalized Letter"}
+                        {isGenerating ? "Analyzing & Writing..." : "Generate Personalized Letter"}
                     </button>
                 </div>
             </div>

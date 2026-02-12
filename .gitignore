@@ -7,6 +7,8 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.pkg_cache_local
+
 
 # Testing
 coverage/
@@ -27,8 +29,11 @@ dist/
 .env
 .env.local
 .env.development.local
+.env.development
 .env.test.local
+.env.test
 .env.production.local
+.env.production
 
 # Logs
 npm-debug.log*

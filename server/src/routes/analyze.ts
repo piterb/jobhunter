@@ -1,14 +1,17 @@
 import { Router, Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest, authMiddleware } from '../middleware/auth';
 import OpenAI from 'openai';
 import { logAIUsage } from '../utils/logger';
+import { supabase } from '../config/supabase';
 
 const router = Router();
 
+// Apply auth middleware to all routes in this router
+router.use(authMiddleware);
+
 const getOpenAIClient = (apiKey?: string) => {
-    const key = apiKey || process.env.OPENAI_API_KEY;
-    if (!key || key.startsWith('sk-placeholder')) return null;
-    return new OpenAI({ apiKey: key });
+    if (!apiKey || apiKey.startsWith('sk-placeholder')) return null;
+    return new OpenAI({ apiKey });
 };
 
 // POST /analyze/job - Smart Ingest
@@ -21,9 +24,16 @@ router.post('/job', async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'URL or text is required' });
     }
 
-    const openai = getOpenAIClient();
+    // Fetch user profile for API key
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('openai_api_key')
+        .eq('id', userId)
+        .single();
+
+    const openai = getOpenAIClient(profile?.openai_api_key);
     if (!openai) {
-        return res.status(503).json({ error: 'OpenAI service not configured on server' });
+        return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
     }
 
     try {
@@ -80,9 +90,16 @@ router.post('/activity', async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const openai = getOpenAIClient();
+    // Fetch user profile for API key
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('openai_api_key')
+        .eq('id', userId)
+        .single();
+
+    const openai = getOpenAIClient(profile?.openai_api_key);
     if (!openai) {
-        return res.status(503).json({ error: 'OpenAI service not configured on server' });
+        return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
     }
 
     try {

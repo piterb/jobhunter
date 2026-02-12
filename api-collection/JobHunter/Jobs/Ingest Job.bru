@@ -16,7 +16,8 @@ auth:bearer {
 
 body:json {
   {
-    "url": "https://www.profesia.sk/praca/softverovy-inzinier/123456"
+    "url": "https://www.profesia.sk/praca/softverovy-inzinier/123456",
+    "model": "gpt-4o"
   }
 }
 
@@ -25,8 +26,9 @@ docs {
   
   Parses a job posting URL and returns structured data using AI.
   
-  ## Required Fields
-  - `url`: The URL of the job posting to analyze.
+  ## Fields
+  - `url` (Required): The URL of the job posting to analyze.
+  - `model` (Optional): The OpenAI model to use (default: `gpt-4o-mini`).
   
   ## Response
   Returns a JSON object with:

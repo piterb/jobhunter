@@ -1,5 +1,5 @@
 export type JobStatus = 'Draft' | 'Applied' | 'Interview' | 'Offer' | 'Rejected' | 'Ghosted';
-export type EmploymentType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+export type EmploymentType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Other';
 
 export interface Job {
     id: string;
@@ -25,4 +25,13 @@ export interface Activity {
     content: string;
     checksum: string;
     created_at: string; // ISO Date
+}
+
+export interface IngestRequest {
+    url: string;
+    model?: string;
+}
+
+export interface IngestResponse extends Omit<Job, 'id' | 'status' | 'last_activity'> {
+    scraped_at: string;
 }

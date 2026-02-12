@@ -9,6 +9,8 @@ All technical specifications and design documents are located in the `docs/` fol
 - **[Infrastructure & Setup](docs/diagrams/infrastructure.md)** - Manual vs. Automated (IaC) processes.
 - **[Design System](docs/design_system.md)** - UI Colors, Typography, Component definitions.
 - **[UI Design](docs/ui_design.md)** - Wireframes, Layouts, Mockups.
+- **[Authentication Setup](docs/auth_setup.md)** - Google OAuth & Supabase configuration.
+- **[Troubleshooting Guide](docs/troubleshooting.md)** - Common local environment issues (e.g., macOS NPM EPERM).
 
 ## 🏗️ Project Structure (Monorepo)
 - **`/client`**: Frontend application (Next.js App Router).

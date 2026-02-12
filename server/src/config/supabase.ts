@@ -11,8 +11,13 @@ if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
     console.error('Missing Supabase environment variables');
 }
 
-// Admin client for system operations (Auth, etc.) - has NO specific schema set globally
+// Admin client for system operations (Auth, etc.) - defaults to 'public' schema
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+// Admin client specifically for 'jobhunter' schema
+export const supabaseAdminJobhunter = createClient(supabaseUrl, supabaseServiceKey, {
+    db: { schema: 'jobhunter' }
+});
 
 // Public client for user-facing operations BEFORE authentication (like login)
 export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey);
@@ -20,7 +25,7 @@ export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey);
 // Helper to create a client for a specific user token
 // This client WILL use the 'jobhunter' schema for data operations
 export const createSupabaseUserClient = (token: string) => {
-    return createClient(supabaseUrl, supabaseServiceKey, {
+    return createClient(supabaseUrl, supabaseAnonKey, {
         global: {
             headers: { Authorization: `Bearer ${token}` },
         },

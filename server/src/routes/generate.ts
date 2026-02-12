@@ -8,9 +8,8 @@ const router = Router();
 
 // Helper to get OpenAI client
 const getOpenAIClient = (apiKey?: string) => {
-    const key = apiKey || process.env.OPENAI_API_KEY;
-    if (!key || key.startsWith('sk-placeholder')) return null;
-    return new OpenAI({ apiKey: key });
+    if (!apiKey || apiKey.startsWith('sk-placeholder')) return null;
+    return new OpenAI({ apiKey: apiKey });
 };
 
 const getClient = (req: AuthRequest) => {

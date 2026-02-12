@@ -1,11 +1,4 @@
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 export interface ParsedJob {
     title: string;
@@ -13,13 +6,24 @@ export interface ParsedJob {
     salary_min: number | null;
     salary_max: number | null;
     location: string | null;
-    employment_type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Other';
+    employment_type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'B2B';
     skills_tools: string[]; // array of strings
     description_summary: string;
 }
 
 export class OpenAIService {
-    async parseJobDescription(text: string): Promise<ParsedJob> {
+    private getClient(apiKey?: string) {
+        const key = apiKey || process.env.OPENAI_API_KEY;
+        if (!key || key === 'sk-placeholder-replace-me') {
+            throw new Error('OpenAI API key is missing. Please set it in your profile.');
+        }
+        return new OpenAI({
+            apiKey: key,
+        });
+    }
+
+    async parseJobDescription(text: string, model: string = 'gpt-4o-mini', apiKey?: string): Promise<ParsedJob> {
+        const client = this.getClient(apiKey);
         const prompt = `
       You are an expert HR assistant. Extract structured data from the following job description text.
       Return strictly a JSON object matching this schema:
@@ -28,8 +32,8 @@ export class OpenAIService {
         "company": "Company Name",
         "salary_min": number | null,
         "salary_max": number | null,
-        "location": "City, Country"Or "Remote",
-        "employment_type": "Full-time" | "Part-time" | "Contract" | "Internship" | "Other",
+        "location": "City, Country" or "Remote",
+        "employment_type": "Full-time" | "Part-time" | "Contract" | "Internship" | "B2B",
         "skills_tools": ["skill1", "skill2", ...],
         "description_summary": "A concise summary of the role in markdown format."
       }
@@ -45,9 +49,9 @@ export class OpenAIService {
     `;
 
         try {
-            const completion = await openai.chat.completions.create({
+            const completion = await client.chat.completions.create({
                 messages: [{ role: 'user', content: prompt }],
-                model: 'gpt-4o-mini', // or 'gpt-3.5-turbo' for cost efficiency, 'gpt-4' for better accuracy
+                model: model,
                 response_format: { type: 'json_object' },
                 temperature: 0.1,
             });

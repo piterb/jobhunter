@@ -20,106 +20,231 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     db: { schema: 'jobhunter' }
 });
 
+// Helper to pick random item from array
+const random = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomDate = (start: Date, end: Date) => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+
 async function seedData() {
-    // 1. Get the first user
+    console.log('🌱 Starting seed script...');
+
+    // 1. Get the target user (Google authenticated)
     const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
 
     if (userError || !users || users.length === 0) {
-        console.error('No users found. Please sign up first.');
+        console.error('❌ No users found. Please sign up first.');
         return;
     }
 
-    const user = users[0];
-    console.log(`Seeding data for user: ${user.email} (${user.id})`);
+    // specific filtering for google user if possible, otherwise first user
+    let user = users.find(u => u.app_metadata?.provider === 'google');
 
-    // 2. Ensure profile exists (trigger should handle this, but let's be safe)
+    if (!user) {
+        console.warn('⚠️ No Google-authenticated user found. Falling back to the first available user.');
+        user = users[0];
+    }
+
+    console.log(`👤 Seeding data for user: ${user.email} (${user.id})`);
+
+    // 2. Clear existing data for this user
+    console.log('🧹 Clearing existing data...');
+    await supabase.from('activities').delete().eq('user_id', user.id);
+    await supabase.from('jobs').delete().eq('user_id', user.id);
+    await supabase.from('documents').delete().eq('user_id', user.id);
+    await supabase.from('ai_usage_logs').delete().eq('user_id', user.id);
+
+    // 3. Ensure profile is ready
     await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email,
-        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-        onboarding_completed: true
+        full_name: user.user_metadata?.full_name || 'Demo User',
+        onboarding_completed: true,
+        professional_headline: 'Senior Software Engineer'
     });
 
-    // 3. Clear existing jobs for this user to have a clean slate
-    await supabase.from('jobs').delete().eq('user_id', user.id);
-
-    // 4. Create realistic jobs
-    const jobs = [
+    // 4. Create Documents
+    console.log('📄 Creating documents...');
+    const documents = [
         {
             user_id: user.id,
-            title: 'Senior Frontend Engineer',
-            company: 'Vercel',
-            status: 'Applied',
-            location: 'Remote',
-            salary_min: 140000,
-            salary_max: 180000,
-            url: 'https://vercel.com/jobs/frontend-engineer',
-            skills_tools: ['React', 'Next.js', 'Typescript', 'Tailwind'],
-            notes: 'Focus on performance and developer experience. Guillermo Rauch mentioned this is a key role.',
-            applied_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            name: 'Resume_2025_Final.pdf',
+            doc_type: 'Resume',
+            storage_path: 'resumes/resume_2025_final.pdf',
+            content_text: 'Experienced Full Stack Engineer with 5+ years of experience in React, Node.js...',
+            is_primary: true
         },
         {
             user_id: user.id,
-            title: 'Full Stack Developer',
-            company: 'Supabase',
-            status: 'Interview',
-            location: 'Remote',
-            salary_min: 130000,
-            salary_max: 170000,
-            url: 'https://supabase.com/careers',
-            skills_tools: ['PostgreSQL', 'Elixir', 'React', 'Go'],
-            notes: 'Open source enthusiast preferred. They use Deno for edge functions.',
-            applied_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            name: 'CV_European_Format.docx',
+            doc_type: 'Resume',
+            storage_path: 'resumes/cv_euro.docx',
+            content_text: 'Detailed CV including academic background...',
+            is_primary: false
         },
         {
             user_id: user.id,
-            title: 'Product Engineer',
-            company: 'Linear',
-            status: 'Saved',
-            location: 'Remote (EU)',
-            salary_min: 120000,
-            salary_max: 160000,
-            url: 'https://linear.app/careers',
-            skills_tools: ['React', 'Node.js', 'GraphQL'],
-            notes: 'Very high bar for UI/UX detail. Their app is incredibly fast.',
+            name: 'Cover_Letter_Generic.txt',
+            doc_type: 'Cover_Letter',
+            storage_path: 'cover_letters/generic_cl.txt',
+            content_text: 'Dear Hiring Manager, I am writing to express my interest...',
+            is_primary: false
         }
     ];
 
-    const { data: createdJobs, error: jobError } = await supabase.from('jobs').insert(jobs).select();
+    const { error: docError } = await supabase.from('documents').insert(documents);
+    if (docError) console.error('Error seeding documents:', docError);
+
+    // 5. Create Jobs (Varied data)
+    console.log('💼 Creating jobs...');
+    const companies = [
+        { name: 'Vercel', url: 'https://vercel.com', loc: 'Remote' },
+        { name: 'Linear', url: 'https://linear.app', loc: 'Remote (EU)' },
+        { name: 'Supabase', url: 'https://supabase.com', loc: 'Remote' },
+        { name: 'OpenAI', url: 'https://openai.com', loc: 'San Francisco, CA' },
+        { name: 'Anthropic', url: 'https://anthropic.com', loc: 'San Francisco, CA' },
+        { name: 'Stripe', url: 'https://stripe.com', loc: 'Dublin, IE' },
+        { name: 'Airbnb', url: 'https://airbnb.com', loc: 'Remote' },
+        { name: 'Netflix', url: 'https://netflix.com', loc: 'Los Gatos, CA' },
+        { name: 'Google', url: 'https://google.com', loc: 'Mountain View, CA' },
+        { name: 'Meta', url: 'https://meta.com', loc: 'Menlo Park, CA' },
+        { name: 'Shopify', url: 'https://shopify.com', loc: 'Remote (Canada)' },
+        { name: 'Discord', url: 'https://discord.com', loc: 'San Francisco, CA' }
+    ];
+
+    const titles = ['Senior Frontend Engineer', 'Staff Software Engineer', 'Product Engineer', 'Full Stack Developer', 'Backend Engineer', 'Engineering Manager'];
+    const statuses = ['Saved', 'Applied', 'Interview', 'Offer', 'Rejected', 'Ghosted'] as const;
+
+    const jobData = companies.map((comp, i) => {
+        const status = statuses[i % statuses.length]; // Distribute statuses
+        const postedDate = new Date();
+        postedDate.setDate(postedDate.getDate() - randomInt(1, 40));
+
+        let appliedAt = null;
+        if (status !== 'Saved') {
+            const d = new Date(postedDate);
+            d.setDate(d.getDate() + randomInt(1, 5));
+            appliedAt = d.toISOString();
+        }
+
+        return {
+            user_id: user!.id,
+            company: comp.name,
+            title: random(titles),
+            url: `${comp.url}/careers`,
+            location: comp.loc,
+            status: status,
+            employment_type: 'Full-time',
+            salary_min: randomInt(120, 160) * 1000,
+            salary_max: randomInt(170, 250) * 1000,
+            skills_tools: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', status === 'Interview' ? 'System Design' : 'Tailwind'],
+            date_posted: postedDate.toISOString(),
+            applied_at: appliedAt,
+            notes: i % 3 === 0 ? `Referral from a friend at ${comp.name}.` : null,
+            contact_email: i % 4 === 0 ? `recruiting@${comp.name.toLowerCase()}.com` : null
+        };
+    });
+
+    const { data: createdJobs, error: jobError } = await supabase.from('jobs').insert(jobData).select();
 
     if (jobError) {
-        console.error('Error creating jobs:', jobError.message);
+        console.error('Error creating jobs:', jobError);
         return;
     }
 
-    console.log(`Created ${createdJobs.length} jobs.`);
+    // 6. Create Activities
+    console.log('📅 Creating activities...');
+    const activities = [];
 
-    // 5. Create activities for the Supabase job
-    const supabaseJob = createdJobs.find(j => j.company === 'Supabase');
-    if (supabaseJob) {
-        const activities = [
-            {
-                job_id: supabaseJob.id,
-                user_id: user.id,
-                event_type: 'Call',
-                category: 'General',
-                content: 'Recruiter screen with Ant. Discussed the vision of the company and role expectations.',
-                occurred_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                job_id: supabaseJob.id,
+    if (createdJobs) {
+        for (const job of createdJobs) {
+            // Base activity: Found the job
+            activities.push({
+                job_id: job.id,
                 user_id: user.id,
                 event_type: 'Manual',
-                category: 'Interview',
-                content: 'Technical interview with Paul. Deep dive into Postgres and RLS. It went well!',
-                occurred_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-            }
-        ];
+                category: 'General',
+                content: 'Added job to tracker.',
+                occurred_at: job.created_at
+            });
 
-        const { error: actError } = await supabase.from('activities').insert(activities);
-        if (actError) console.error('Error creating activities:', actError.message);
-        else console.log('Created activities for Supabase job.');
+            if (job.status === 'Applied' || job.status === 'Interview' || job.status === 'Rejected' || job.status === 'Offer' || job.status === 'Ghosted') {
+                activities.push({
+                    job_id: job.id,
+                    user_id: user.id,
+                    event_type: 'Email',
+                    category: 'General',
+                    content: 'Application submitted via career page.',
+                    occurred_at: job.applied_at || new Date().toISOString()
+                });
+            }
+
+            if (job.status === 'Interview') {
+                activities.push({
+                    job_id: job.id,
+                    user_id: user.id,
+                    event_type: 'Call',
+                    category: 'Interview',
+                    content: 'Recruiter screening call. Went well, discussed salary expectations.',
+                    occurred_at: new Date(new Date(job.created_at).getTime() + 86400000 * 2).toISOString()
+                });
+                activities.push({
+                    job_id: job.id,
+                    user_id: user.id,
+                    event_type: 'Call',
+                    category: 'Interview',
+                    content: 'Technical Interview with the team lead.',
+                    occurred_at: new Date(new Date(job.created_at).getTime() + 86400000 * 7).toISOString()
+                });
+            }
+
+            if (job.status === 'Offer') {
+                activities.push({
+                    job_id: job.id,
+                    user_id: user.id,
+                    event_type: 'Email',
+                    category: 'Offer',
+                    content: 'Received official offer letter!',
+                    occurred_at: new Date().toISOString()
+                });
+            }
+
+            if (job.status === 'Rejected') {
+                activities.push({
+                    job_id: job.id,
+                    user_id: user.id,
+                    event_type: 'Email',
+                    category: 'Rejection',
+                    content: 'Standard rejection email received.',
+                    occurred_at: new Date().toISOString()
+                });
+            }
+        }
     }
+
+    const { error: actError } = await supabase.from('activities').insert(activities);
+    if (actError) console.error('Error creating activities:', actError);
+
+    // 7. Create AI Usage Logs
+    console.log('🤖 Creating AI usage logs...');
+    const aiLogs = [];
+    for (let i = 0; i < 15; i++) {
+        aiLogs.push({
+            user_id: user.id,
+            feature: random(['Job_Parsing', 'Email_Analysis', 'Cover_Letter_Generation']),
+            model: 'gpt-4o-mini',
+            tokens_input: randomInt(500, 2000),
+            tokens_output: randomInt(100, 500),
+            cost: randomInt(1, 10) / 1000, // micro cents
+            latency_ms: randomInt(200, 1500),
+            status: 'Success',
+            created_at: randomDate(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), new Date()).toISOString()
+        });
+    }
+
+    const { error: aiError } = await supabase.from('ai_usage_logs').insert(aiLogs);
+    if (aiError) console.error('Error creating AI logs:', aiError);
+
+    console.log('✅ Seeding complete!');
 }
 
 seedData();

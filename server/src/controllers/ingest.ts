@@ -46,42 +46,44 @@ export const ingestJob = async (req: AuthRequest, res: Response) => {
         console.log(`Scraped ${rawText.length} characters.`);
 
         // 2. Parse with AI
-        const parsedData = await openAIService.parseJobDescription(rawText, model, apiKey);
-        console.log('AI parsing complete.');
+        let aiResponse;
+        try {
+            aiResponse = await openAIService.parseJobDescription(rawText, model, apiKey);
+            console.log('AI parsing complete.');
 
-        // 3. Save to Database (Automatic for now to speed up integration)
-        const { data: savedJob, error: saveError } = await supabase
-            .from('jobs')
-            .insert({
+            // Log successful AI usage
+            await supabase.from('ai_usage_logs').insert({
                 user_id: user.id,
-                title: parsedData.title,
-                company: parsedData.company,
-                salary_min: parsedData.salary_min,
-                salary_max: parsedData.salary_max,
-                location: parsedData.location,
-                employment_type: parsedData.employment_type.toLowerCase().replace('-', '_'), // Align with DB enum if needed
-                skills_tools: parsedData.skills_tools,
-                notes: parsedData.description_summary,
-                url: url,
-                status: 'applied', // Default status for ingested jobs
-                applied_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-        if (saveError) {
-            console.error('DB Save error:', saveError);
-            // Even if DB save fails, we return the parsed data so client could try manual save
-            return res.json({
-                ...parsedData,
-                url,
-                warning: 'Failed to auto-save to database: ' + saveError.message
+                feature: 'Job_Parsing',
+                model: model || 'gpt-4o-mini',
+                prompt_summary: `Parsing job description from ${url}`,
+                tokens_input: aiResponse.usage?.prompt_tokens,
+                tokens_output: aiResponse.usage?.completion_tokens,
+                latency_ms: aiResponse.latency,
+                status: 'Success',
+                request_json: aiResponse.fullRequest,
+                response_json: aiResponse.rawResponse
             });
+
+        } catch (aiError: any) {
+            // Log failed AI usage
+            await supabase.from('ai_usage_logs').insert({
+                user_id: user.id,
+                feature: 'Job_Parsing',
+                model: model || 'gpt-4o-mini',
+                prompt_summary: `Failed to parse job description from ${url}`,
+                status: 'Failure',
+                request_json: { url, model },
+                response_json: { error: aiError.message }
+            });
+            throw aiError;
         }
 
-        console.log('Job saved to DB with ID:', savedJob.id);
-
-        res.json(savedJob);
+        // 3. Return parsed data for review
+        res.json({
+            ...aiResponse.data,
+            url
+        });
 
     } catch (error: any) {
         console.error('Ingest error:', error.message);

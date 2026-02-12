@@ -7,21 +7,21 @@ interface StatusBadgeProps {
 }
 
 const statusStyles: Record<JobStatus, string> = {
-    applied: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-    interview: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-    offer: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    rejected: "bg-red-500/15 text-red-400 border-red-500/20",
-    draft: "bg-slate-700/50 text-slate-400 border-slate-700",
-    ghosted: "bg-purple-500/15 text-purple-400 border-purple-500/20",
+    Applied: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+    Interview: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+    Offer: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+    Rejected: "bg-red-500/15 text-red-400 border-red-500/20",
+    Saved: "bg-slate-700/50 text-slate-400 border-slate-700",
+    Ghosted: "bg-purple-500/15 text-purple-400 border-purple-500/20",
 };
 
 const statusLabels: Record<JobStatus, string> = {
-    applied: "Applied",
-    interview: "Interview",
-    offer: "Offer",
-    rejected: "Rejected",
-    draft: "Draft",
-    ghosted: "Ghosted",
+    Applied: "Applied",
+    Interview: "Interview",
+    Offer: "Offer",
+    Rejected: "Rejected",
+    Saved: "Draft",
+    Ghosted: "Ghosted",
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

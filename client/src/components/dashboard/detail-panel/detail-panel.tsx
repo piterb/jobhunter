@@ -12,11 +12,12 @@ import { CoverLetterTab } from "./tabs/cover-letter";
 interface DetailPanelProps {
     job: Job | null;
     onClose?: () => void;
+    onActivityAdded?: () => void;
 }
 
 type TabType = "overview" | "activity" | "cover-letter";
 
-export function DetailPanel({ job, onClose }: DetailPanelProps) {
+export function DetailPanel({ job, onClose, onActivityAdded }: DetailPanelProps) {
     const [activeTab, setActiveTab] = useState<TabType>("overview");
 
     if (!job) {
@@ -71,7 +72,7 @@ export function DetailPanel({ job, onClose }: DetailPanelProps) {
                 {/* Tabs Navigation */}
                 <div className="flex border-b border-slate-800">
                     {[
-                        { id: "overview", label: "Overview" },
+                        { id: "overview", label: "Job Info" },
                         { id: "activity", label: "Activity" },
                         { id: "cover-letter", label: "Cover Letter" }
                     ].map((tab) => (
@@ -97,7 +98,7 @@ export function DetailPanel({ job, onClose }: DetailPanelProps) {
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto p-6 pt-4 custom-scrollbar">
                 {activeTab === "overview" && <OverviewTab job={job} />}
-                {activeTab === "activity" && <ActivityTab job={job} />}
+                {activeTab === "activity" && <ActivityTab job={job} onActivityAdded={onActivityAdded} />}
                 {activeTab === "cover-letter" && <CoverLetterTab job={job} />}
             </div>
 

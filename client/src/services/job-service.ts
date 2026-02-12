@@ -91,7 +91,7 @@ export const jobService = {
     /**
      * Smart Ingest a job from URL via Express Backend
      */
-    async ingestJob(url: string, token: string): Promise<Job> {
+    async ingestJob(url: string, token: string): Promise<any> {
         const response = await fetch(`${API_URL}/ingest`, {
             method: "POST",
             headers: {
@@ -137,5 +137,86 @@ export const jobService = {
             console.error("Error updating job status:", error);
             throw error;
         }
+    },
+
+    /**
+     * Create a new job manually
+     */
+    async createJob(jobData: Partial<Job>): Promise<Job> {
+        const token = await getAuthToken();
+
+        if (token) {
+            const response = await fetch(`${API_URL}/jobs`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(jobData),
+            });
+
+            if (response.ok) {
+                return response.json();
+            }
+        }
+
+        // Fallback: Create directly in Supabase
+        const { data, error } = await supabase
+            .from("jobs")
+            .insert([{
+                ...jobData,
+                status: jobData.status || "Saved",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error creating job:", error);
+            throw error;
+        }
+
+        return data as Job;
+    },
+
+    /**
+     * Add a new activity to a job
+     */
+    async addActivity(jobId: string, activity: Partial<Activity>): Promise<Activity> {
+        const token = await getAuthToken();
+
+        if (token) {
+            const response = await fetch(`${API_URL}/jobs/${jobId}/activities`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(activity),
+            });
+
+            if (response.ok) {
+                return response.json();
+            }
+        }
+
+        // Fallback: Create directly in Supabase
+        const { data, error } = await supabase
+            .from("activities")
+            .insert([{
+                ...activity,
+                job_id: jobId,
+                occurred_at: activity.occurred_at || new Date().toISOString(),
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error adding activity:", error);
+            throw error;
+        }
+
+        return data as Activity;
     }
 };

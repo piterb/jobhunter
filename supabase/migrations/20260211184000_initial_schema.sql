@@ -187,3 +187,26 @@ CREATE POLICY "Users can delete their own documents" ON jobhunter.documents FOR 
 CREATE POLICY "Users can view their own AI logs" ON jobhunter.ai_usage_logs FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own AI logs" ON jobhunter.ai_usage_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- 7. STORAGE SETUP
+-- Create the bucket for documents
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('documents', 'documents', false, 5242880, '{application/pdf,image/*,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/markdown}')
+ON CONFLICT (id) DO NOTHING;
+
+-- Policies for storage.objects
+CREATE POLICY "Users can upload their own documents" ON storage.objects
+    FOR INSERT TO authenticated
+    WITH CHECK (bucket_id = 'documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
+
+CREATE POLICY "Users can view their own documents" ON storage.objects
+    FOR SELECT TO authenticated
+    USING (bucket_id = 'documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
+
+CREATE POLICY "Users can update their own documents" ON storage.objects
+    FOR UPDATE TO authenticated
+    USING (bucket_id = 'documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
+
+CREATE POLICY "Users can delete their own documents" ON storage.objects
+    FOR DELETE TO authenticated
+    USING (bucket_id = 'documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
+

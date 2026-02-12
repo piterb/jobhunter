@@ -64,6 +64,25 @@ npm run supabase:status
 - `npm run supabase:status` - View local access credentials and URLs.
 - `npm run supabase:stop` - Stop local Docker containers.
 
+## 🔄 Database Reset & Seeding
+
+If you need to reset your database to a clean state or populate it with demo data:
+
+1. **Reset Database**: 
+   ```bash
+   supabase db reset
+   ```
+   *This wipes all data and reapplies all migrations.*
+
+2. **Login**: 
+   Open [http://localhost:3000](http://localhost:3000) and sign in via Google to create your auth record.
+
+3. **Seed Data**: 
+   ```bash
+   npm run db:seed
+   ```
+   *This populates your profile with sample jobs, activities, and logs.*
+
 ## 🧪 API Testing
 
 ### Automated Tests (Vitest)

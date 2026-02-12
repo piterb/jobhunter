@@ -72,8 +72,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     return res.json(data);
 });
 
+import { CreateJobRequest } from 'shared';
+
 // POST /jobs - Create a new job
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', async (req: AuthRequest<{}, {}, CreateJobRequest>, res: Response) => {
     const userId = req.user?.id;
     const supabase = getClient(req);
 

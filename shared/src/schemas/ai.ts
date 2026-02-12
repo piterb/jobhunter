@@ -31,6 +31,7 @@ export type AIUsageLog = Database['jobhunter']['Tables']['ai_usage_logs']['Row']
 export const IngestRequestSchema = z.object({
     url: z.string().url(),
     model: z.string().optional(),
+    dryRun: z.boolean().optional(),
 });
 
 export const AnalyzeJobRequestSchema = z.object({
@@ -47,6 +48,7 @@ export const AnalyzeActivityRequestSchema = z.object({
 export const GenerateCoverLetterRequestSchema = z.object({
     jobId: z.string().uuid("Invalid job ID"),
     customInstructions: z.string().optional(),
+    dryRun: z.boolean().optional(),
 });
 
 export type IngestRequest = z.infer<typeof IngestRequestSchema>;

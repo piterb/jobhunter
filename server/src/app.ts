@@ -25,8 +25,8 @@ app.use(express.json());
 app.use('/api/v1/health', healthRoutes);
 
 // Protected routes
+app.use('/api/v1/jobs', authMiddleware, activitiesRoutes); // Activities use /jobs/:id/activities - MUST be before jobsRoutes
 app.use('/api/v1/jobs', authMiddleware, jobsRoutes);
-app.use('/api/v1/jobs', authMiddleware, activitiesRoutes); // Activities use /jobs/:id/activities
 app.use('/api/v1/settings', authMiddleware, settingsRoutes);
 app.use('/api/v1/analyze', authMiddleware, analyzeRoutes);
 app.use('/api/v1/profile', authMiddleware, profileRoutes);

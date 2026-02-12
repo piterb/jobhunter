@@ -16,8 +16,9 @@ auth:bearer {
 
 body:json {
   {
-    "jobId": "ba7bae19-8972-44ed-a4a9-a1d2f9a8ea17",
-    "customInstructions": "Emphasize my experience with React and TypeScript."
+    "jobId": "{{jobId}}",
+    "customInstructions": "Emphasize my experience with React and TypeScript.",
+    "dryRun": true
   }
 }
 
@@ -28,6 +29,8 @@ tests {
   
   test("should return generated content", function() {
     expect(res.body).to.have.property('content');
+    expect(res.body.content).to.include("MOCK");
+    expect(res.body.warning).to.exist;
   });
 }
 

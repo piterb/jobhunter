@@ -30,6 +30,12 @@ tests {
   });
 }
 
+script:post-response {
+  if (res.status === 200 && Array.isArray(res.body) && res.body.length > 0) {
+    bru.setVar("jobId", res.body[0].id);
+  }
+}
+
 docs {
   # List All Jobs
   

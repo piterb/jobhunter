@@ -21,13 +21,21 @@ const getClient = (req: AuthRequest) => {
 
 // POST /generate/cover-letter
 router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (req: AuthRequest<{}, {}, GenerateCoverLetterRequest>, res: Response) => {
-    const { jobId, customInstructions } = req.body;
+    const { jobId, customInstructions, dryRun } = req.body;
     const userId = req.user?.id!;
     const startTime = Date.now();
     const supabase = getClient(req);
 
     if (!jobId) {
         return res.status(400).json({ error: 'jobId is required' });
+    }
+
+    if (dryRun) {
+        // Return mock response immediately
+        return res.json({
+            content: `[MOCK COVER LETTER]\n\nDear Hiring Manager,\n\nThis is a simulated cover letter for testing purposes. No AI models were invoked.\n\nSincerely,\n[Your Name]`,
+            warning: 'This is a mock response. No external API was called.'
+        });
     }
 
     // 1. Fetch Job and Profile context

@@ -9,7 +9,7 @@ const openAIService = new OpenAIService();
 
 export const ingestJob = async (req: AuthRequest, res: Response) => {
     try {
-        const { url, model } = req.body;
+        const { url, model, dryRun } = req.body;
         const user = req.user;
         const authHeader = req.headers.authorization;
         const token = authHeader?.split(' ')[1];
@@ -38,6 +38,22 @@ export const ingestJob = async (req: AuthRequest, res: Response) => {
         }
 
         const apiKey = profile.openai_api_key;
+
+        if (dryRun) {
+            console.log('Ingest Job: Dry Run active. returning mock data.');
+            return res.json({
+                title: '[MOCK] Senior Software Engineer',
+                company: 'Mock Company Inc.',
+                location: 'Remote (Mock)',
+                description: 'This is a mock job description. No external API was called.',
+                salary_min: 100000,
+                salary_max: 150000,
+                employment_type: 'Full-time',
+                skills_tools: ['React', 'TypeScript', 'Node.js', 'Mocking'],
+                url: url,
+                warning: 'This is a mock response. No external API was called.'
+            });
+        }
 
         console.log(`Ingesting URL: ${url} using model: ${model || 'default'} for user: ${user.id}`);
 

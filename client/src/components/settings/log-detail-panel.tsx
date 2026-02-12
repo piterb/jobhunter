@@ -38,7 +38,7 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
 
     const formatFullTime = (dateString: string | null) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString();
+        return new Date(dateString).toLocaleString('en-GB');
     };
 
     const formatJson = (json: any) => {

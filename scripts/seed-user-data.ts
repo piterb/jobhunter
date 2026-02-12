@@ -1,7 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 const path = require('path');
-const fs = require('fs');
 const axios = require('axios');
 
 dotenv.config({ path: path.resolve(__dirname, '../server/.env') });
@@ -112,28 +111,47 @@ async function seedData() {
         await supabase.storage.createBucket('documents', { public: false }); // Documents should likely be private based on schema policies
     }
 
-    let resumeContentPath = 'resume_placeholder.pdf';
+    const resumeContent = `
+    PETER DEVELOPER
+    Senior Software Engineer
+    
+    SUMMARY
+    Full-stack developer with 8+ years of experience building scalable web applications.
+    Expert in React, Node.js, and Cloud Architecture.
+    
+    EXPERIENCE
+    Senior Engineer at Tech Corp (2020 - Present)
+    - Led migration from monolithic architecture to microservices.
+    - Improved application performance by 40%.
+    - Mentored junior developers.
+    
+    Software Developer at StartUp Inc (2016 - 2020)
+    - Built MVP for fintech product.
+    - Implemented CI/CD pipelines.
+    
+    SKILLS
+    - Languages: JavaScript, TypeScript, Python, SQL
+    - Frameworks: React, Next.js, Express, Django
+    - Tools: Docker, Kubernetes, AWS
+    `;
+
+    let resumeContentPath = 'resume_placeholder.md';
 
     try {
-        // Try to find the sample resume we created earlier
-        const localResumePath = path.resolve(__dirname, '../server/assets/sample_resume.pdf');
-        if (fs.existsSync(localResumePath)) {
-            const fileBuffer = fs.readFileSync(localResumePath);
-            // Schema policy requires: (split_part(name, '/', 1)) = auth.uid()::text
-            resumeContentPath = `${user.id}/resume_2025_final.pdf`;
+        // Generate file from text content directly
+        const fileBuffer = Buffer.from(resumeContent, 'utf-8');
+        // Schema policy requires: (split_part(name, '/', 1)) = auth.uid()::text
+        resumeContentPath = `${user.id}/resume_2025_final.md`;
 
-            const { error: uploadErr } = await supabase.storage
-                .from('documents')
-                .upload(resumeContentPath, fileBuffer, {
-                    contentType: 'application/pdf',
-                    upsert: true
-                });
+        const { error: uploadErr } = await supabase.storage
+            .from('documents')
+            .upload(resumeContentPath, fileBuffer, {
+                contentType: 'text/markdown',
+                upsert: true
+            });
 
-            if (uploadErr) console.warn('Failed to upload resume PDF:', uploadErr.message);
-            else console.log('✅ Sample resume PDF uploaded to documents bucket.');
-        } else {
-            console.warn('⚠️ Local sample resume not found at', localResumePath);
-        }
+        if (uploadErr) console.warn('Failed to upload resume MD:', uploadErr.message);
+        else console.log('✅ Sample resume MD uploaded to documents bucket.');
     } catch (e: any) {
         console.warn('Error uploading resume file:', e.message);
     }
@@ -141,10 +159,10 @@ async function seedData() {
     const documents = [
         {
             user_id: user.id,
-            name: 'Resume_2025_Final.pdf',
+            name: 'Resume_2025_Final.md',
             doc_type: 'Resume',
             storage_path: resumeContentPath,
-            content_text: 'Experienced Full Stack Engineer with 5+ years of experience in React, Node.js...',
+            content_text: resumeContent,
             is_primary: true
         }
     ];

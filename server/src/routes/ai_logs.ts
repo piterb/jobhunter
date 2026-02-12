@@ -33,8 +33,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     let query = supabase
         .from('ai_usage_logs')
         .select('*', { count: 'exact' })
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .eq('user_id', userId);
 
     if (feature) {
         query = query.eq('feature', feature);
@@ -43,6 +42,9 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     if (status) {
         query = query.eq('status', status);
     }
+
+    // Ensure sorting is applied last to avoid being overridden by filters
+    query = query.order('created_at', { ascending: false });
 
     const { data, count, error } = await query.range(from, to);
 

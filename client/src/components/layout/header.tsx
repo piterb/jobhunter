@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Plus, LogOut, Settings, ChevronDown, LayoutDashboard, Cpu, Sparkles, Loader2 } from "lucide-react";
+import { Plus, LogOut, Settings, ChevronDown, LayoutDashboard, Cpu, Sparkles, Loader2, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -91,13 +91,23 @@ export function Header() {
             setIsAddJobOpen(true);
             setUrl("");
         } catch (err: any) {
-            console.error("Ingest failed:", err);
+            let errorMessage = "Unknown error";
+            if (err instanceof Error) {
+                errorMessage = err.message;
+            } else if (typeof err === 'string') {
+                errorMessage = err;
+            } else if (err && typeof err === 'object') {
+                errorMessage = (err as any).message || (err as any).error || JSON.stringify(err);
+            }
 
-            // Check if it's an API key error
-            if (err.message && (err.message.includes("API key not found") || err.message.includes("OpenAI API key"))) {
+            console.error("Ingest detailed error:", errorMessage, err);
+
+            // Check if it's an API key error (case insensitive)
+            const lowerError = (errorMessage || "").toLowerCase();
+            if (lowerError.includes("api key") || lowerError.includes("openai") || lowerError.includes("byok")) {
                 setIsApiKeyMissingOpen(true);
             } else {
-                alert("Failed to ingest job. Make sure the URL is valid and server is running.");
+                alert(`Failed to ingest job: ${errorMessage}`);
             }
         } finally {
             setIsIngesting(false);
@@ -190,7 +200,10 @@ export function Header() {
                             {isIngesting ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
-                                "Ingest"
+                                <>
+                                    <Wand2 size={16} />
+                                    Ingest
+                                </>
                             )}
                         </button>
                     </form>

@@ -52,12 +52,12 @@ describe('AI Usage Logs API', () => {
         it('should list logs for the user with pagination', async () => {
             mockDb['ai_usage_logs'].push({ ...mockLog, id: '1' }, { ...mockLog, id: '2' }, { ...mockLog, id: '3' });
 
-            const response = await request(app).get('/api/v1/ai-logs?limit=2&offset=0');
+            const response = await request(app).get('/api/v1/ai-logs?limit=2&page=1');
 
             expect(response.status).toBe(200);
             expect(response.body.data).toHaveLength(2);
-            expect(response.body.pagination.total).toBe(3);
-            expect(response.body.pagination.limit).toBe(2);
+            expect(response.body.count).toBe(3);
+            expect(response.body.limit).toBe(2);
         });
     });
 

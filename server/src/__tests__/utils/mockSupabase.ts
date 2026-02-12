@@ -78,6 +78,13 @@ export class MockQueryBuilder {
         return this;
     }
 
+    limit(count: number) {
+        if (!this.rangeResult) {
+            this.rangeResult = { start: 0, end: count - 1 };
+        }
+        return this;
+    }
+
     async then(resolve: (res: any) => void, reject: (err: any) => void) {
         try {
             await new Promise((r) => setTimeout(r, 2)); // Tiny delay

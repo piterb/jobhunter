@@ -101,25 +101,28 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
       Return the response in JSON format with a "content" field containing the markdown text of the cover letter.
     `;
 
-        const response = await openai.chat.completions.create({
+        const requestPayload = {
             model: profile?.default_ai_model || "gpt-4o-mini",
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
-        });
+        };
+
+        const response = await openai.chat.completions.create(requestPayload as any);
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         const latency = Date.now() - startTime;
 
         await logAIUsage({
             user_id: userId,
-            feature: 'cover_letter_gen',
+            feature: 'Cover_Letter_Generation',
             model: response.model,
+            prompt_summary: `Generate cover letter for ${job.company} - ${job.title}`,
             tokens_input: response.usage?.prompt_tokens,
             tokens_output: response.usage?.completion_tokens,
             latency_ms: latency,
-            status: 'success',
-            request_json: { jobId, customInstructions, hasResume: !!resumeContent },
-            response_json: { content_length: result.content?.length },
+            status: 'Success',
+            request_json: JSON.parse(JSON.stringify(requestPayload)),
+            response_json: JSON.parse(JSON.stringify(response)),
         });
 
         return res.json(result);
@@ -127,11 +130,13 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
-            feature: 'cover_letter_gen',
+            feature: 'Cover_Letter_Generation',
             model: profile?.default_ai_model || 'gpt-4o-mini',
+            prompt_summary: `Generate cover letter for ${job?.company} - ${job?.title}`,
             latency_ms: latency,
-            status: 'error',
+            status: 'Failure',
             response_json: { error: error.message },
+            request_json: { jobId, customInstructions, hasResume: !!resumeContent } // fallback
         });
         return res.status(500).json({ error: error.message });
     }

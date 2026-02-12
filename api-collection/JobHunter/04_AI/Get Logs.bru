@@ -24,8 +24,11 @@ tests {
     expect(res.status).to.equal(200);
   });
   
-  test("should have pagination", function() {
-    expect(res.body).to.have.property('pagination');
+  test("should have pagination fields", function() {
+    expect(res.body).to.have.property('page');
+    expect(res.body).to.have.property('limit');
+    expect(res.body).to.have.property('totalPages');
+    expect(res.body).to.have.property('count');
   });
 }
 

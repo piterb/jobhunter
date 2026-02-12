@@ -1,8 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
-
 // Rely on process.env (passed via shell command due to EPERM issues with .env file)
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -283,37 +280,33 @@ const seed = async () => {
             await supabaseAdmin.storage.createBucket('resumes', { public: true });
         }
 
-        let resumeStoragePath = 'mock/path/resume.pdf';
+        let resumeStoragePath = 'mock/path/resume.md';
 
         try {
-            const resumePath = path.resolve(__dirname, '../../assets/sample_resume.pdf');
-            if (fs.existsSync(resumePath)) {
-                const resumeBuffer = fs.readFileSync(resumePath);
-                resumeStoragePath = `${userId}/sample_resume.pdf`;
+            // Generate file from text content directly
+            const resumeBuffer = Buffer.from(resumeContent, 'utf-8');
+            resumeStoragePath = `${userId}/sample_resume.md`;
 
-                const { error: uploadError } = await supabaseAdmin.storage
-                    .from('resumes')
-                    .upload(resumeStoragePath, resumeBuffer, {
-                        contentType: 'application/pdf',
-                        upsert: true
-                    });
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from('resumes')
+                .upload(resumeStoragePath, resumeBuffer, {
+                    contentType: 'text/markdown',
+                    upsert: true
+                });
 
-                if (uploadError) {
-                    console.warn('Failed to upload sample resume to bucket:', uploadError.message);
-                } else {
-                    console.log('Sample resume uploaded successfully to storage.');
-
-                    // Verify upload
-                    const { data: fileList, error: listError } = await supabaseAdmin.storage.from('resumes').list(userId);
-                    if (listError) console.error('Error verifying resume upload:', listError);
-                    else {
-                        const uploadedFile = fileList.find(f => f.name === 'sample_resume.pdf');
-                        if (uploadedFile) console.log('✅ Resume file verified in storage.');
-                        else console.warn('⚠️ Resume file NOT found in storage listing after upload.');
-                    }
-                }
+            if (uploadError) {
+                console.warn('Failed to upload generated resume to bucket:', uploadError.message);
             } else {
-                console.warn('Sample resume file not found at:', resumePath);
+                console.log('Generated resume uploaded successfully to storage.');
+
+                // Verify upload
+                const { data: fileList, error: listError } = await supabaseAdmin.storage.from('resumes').list(userId);
+                if (listError) console.error('Error verifying resume upload:', listError);
+                else {
+                    const uploadedFile = fileList.find(f => f.name === 'sample_resume.md');
+                    if (uploadedFile) console.log('✅ Resume file verified in storage.');
+                    else console.warn('⚠️ Resume file NOT found in storage listing after upload.');
+                }
             }
         } catch (err: any) {
             console.warn('Error uploading sample resume:', err.message);

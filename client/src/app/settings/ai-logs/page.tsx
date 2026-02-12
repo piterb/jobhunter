@@ -91,7 +91,7 @@ export default function AiLogsPage() {
 
     const formatFullTime = (dateString: string | null) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString();
+        return new Date(dateString).toLocaleString('en-GB');
     };
 
     const getStatusColor = (status: string) => {

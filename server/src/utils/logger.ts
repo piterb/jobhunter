@@ -1,23 +1,22 @@
-import { supabase } from '../config/supabase';
+import { supabaseAdminJobhunter } from '../config/supabase';
 
 export interface AILogData {
     user_id: string;
-    feature: 'job_analysis' | 'smart_paste' | 'cover_letter_gen' | 'chat';
+    feature: 'Job_Parsing' | 'Email_Analysis' | 'Cover_Letter_Generation' | 'Smart_Paste';
     model: string;
     prompt_summary?: string;
     tokens_input?: number;
     tokens_output?: number;
     cost?: number;
     latency_ms?: number;
-    status: 'success' | 'error';
+    status: 'Success' | 'Failure' | 'Partial_Success';
     request_json?: any;
     response_json?: any;
 }
 
 export const logAIUsage = async (log: AILogData) => {
     try {
-        const { error } = await supabase
-            .schema('jobhunter')
+        const { error } = await supabaseAdminJobhunter
             .from('ai_usage_logs')
             .insert([log]);
 

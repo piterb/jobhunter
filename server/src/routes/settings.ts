@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { UpdateProfileSchema, UpdateProfileRequest } from 'shared';
 
 const router = Router();
 
@@ -28,24 +30,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /settings - Update user settings
-router.put('/', async (req: AuthRequest, res: Response) => {
+router.put('/', validate(UpdateProfileSchema), async (req: AuthRequest<{}, {}, UpdateProfileRequest>, res: Response) => {
     const userId = req.user?.id;
     const updates = req.body;
     const supabase = getClient(req);
 
-    // List of allowed fields to update through this endpoint
-    const allowedFields = ['theme', 'language', 'ghosting_threshold_days', 'onboarding_completed', 'default_ai_model'];
-    const filteredUpdates: any = {};
-
-    for (const field of allowedFields) {
-        if (updates[field] !== undefined) {
-            filteredUpdates[field] = updates[field];
-        }
-    }
-
     const { data, error } = await supabase
         .from('profiles')
-        .update(filteredUpdates)
+        .update(updates)
         .eq('id', userId)
         .select('theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model')
         .single();

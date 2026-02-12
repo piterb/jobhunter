@@ -1,5 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { GenerateCoverLetterRequestSchema, GenerateCoverLetterRequest } from 'shared';
 import OpenAI from 'openai';
 import { logAIUsage } from '../utils/logger';
 import { createSupabaseUserClient } from '../config/supabase';
@@ -18,7 +20,7 @@ const getClient = (req: AuthRequest) => {
 };
 
 // POST /generate/cover-letter
-router.post('/cover-letter', async (req: AuthRequest, res: Response) => {
+router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (req: AuthRequest<{}, {}, GenerateCoverLetterRequest>, res: Response) => {
     const { jobId, customInstructions } = req.body;
     const userId = req.user?.id!;
     const startTime = Date.now();

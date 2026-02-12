@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { CreateAIUsageLogSchema, CreateAIUsageLogRequest } from 'shared';
 
 const router = Router();
 
@@ -37,7 +39,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /ai-logs - Create a new AI usage log (usually called by other backend services, but exposed for FE if needed)
-router.post('/', async (req: AuthRequest, res: Response) => {
+router.post('/', validate(CreateAIUsageLogSchema), async (req: AuthRequest<{}, {}, CreateAIUsageLogRequest>, res: Response) => {
     const userId = req.user?.id;
     const logData = {
         ...req.body,

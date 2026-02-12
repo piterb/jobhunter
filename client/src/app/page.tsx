@@ -5,9 +5,10 @@ import { AppShell } from "@/components/layout/app-shell";
 import { JobTable } from "@/components/dashboard/job-table";
 import { DetailPanel } from "@/components/dashboard/detail-panel/detail-panel";
 import { Job } from "@/types/job";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { jobService } from "@/services/job-service";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AddJobModal } from "@/components/dashboard/add-job-modal";
 
 // Realistic Mock data (fallback) matches aligned Job type
 const MOCK_JOBS: Job[] = [
@@ -28,6 +29,7 @@ const MOCK_JOBS: Job[] = [
     contact_email: "guillermo@vercel.com",
     contact_linkedin: "https://linkedin.com/in/rauchg",
     contact_phone: null,
+    date_posted: "2024-02-09",
     notes: "Join the team that builds the world's most popular web framework. We are looking for engineers who care about performance and DX.",
     applied_at: "2024-02-10T10:00:00Z",
     last_activity: "2024-02-11T12:00:00Z",
@@ -39,18 +41,26 @@ const MOCK_JOBS: Job[] = [
         job_id: "1",
         user_id: "mock-user",
         event_type: "Note",
+        category: "General",
         content: "Technical Interview: Deep dive into React internals and Next.js App Router.",
         occurred_at: "2024-02-11T14:00:00Z",
-        created_at: "2024-02-11T14:00:00Z"
+        created_at: "2024-02-11T14:00:00Z",
+        checksum: null,
+        metadata: {},
+        raw_content: null
       },
       {
         id: "a2",
         job_id: "1",
         user_id: "mock-user",
         event_type: "Call",
+        category: "General",
         content: "Recruiter Screen: Discussed compensation and cultural fit.",
         occurred_at: "2024-02-10T11:00:00Z",
-        created_at: "2024-02-10T11:00:00Z"
+        created_at: "2024-02-10T11:00:00Z",
+        checksum: null,
+        metadata: {},
+        raw_content: null
       }
     ]
   },
@@ -71,6 +81,7 @@ const MOCK_JOBS: Job[] = [
     contact_email: "recruiting@linear.app",
     contact_linkedin: null,
     contact_phone: null,
+    date_posted: "2024-02-08",
     notes: "Building the next generation of issue tracking.",
     applied_at: "2024-02-09T09:00:00Z",
     last_activity: "2024-02-09T09:00:00Z",
@@ -95,6 +106,7 @@ const MOCK_JOBS: Job[] = [
     contact_email: "sam@openai.com",
     contact_linkedin: null,
     contact_phone: null,
+    date_posted: "2023-12-15",
     notes: "Working on AGI.",
     applied_at: "2024-01-15T10:00:00Z",
     last_activity: "2024-02-12T10:00:00Z",
@@ -119,6 +131,7 @@ const MOCK_JOBS: Job[] = [
     contact_email: null,
     contact_linkedin: null,
     contact_phone: null,
+    date_posted: "2024-01-20",
     notes: "E-commerce platform design.",
     applied_at: "2024-02-01T15:00:00Z",
     last_activity: "2024-02-05T10:00:00Z",
@@ -143,6 +156,7 @@ const MOCK_JOBS: Job[] = [
     contact_email: null,
     contact_linkedin: null,
     contact_phone: null,
+    date_posted: "2023-11-15",
     notes: "Large scale distributed systems.",
     applied_at: "2023-12-01T10:00:00Z",
     last_activity: "2023-12-01T10:00:00Z",
@@ -156,6 +170,8 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
 
   const loadJobs = async (silentUpdateId?: string) => {
     try {
@@ -201,14 +217,42 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      await jobService.deleteJob(jobId);
+      if (selectedJob?.id === jobId) {
+        setSelectedJob(null);
+      }
+      loadJobs();
+    } catch (err) {
+      console.error("Failed to delete job:", err);
+      alert("Failed to delete the job application. Please try again.");
+    }
+  };
+
+  const handleEditJob = (job: Job) => {
+    setEditingJob(job);
+    setIsEditModalOpen(true);
+  };
+
   return (
     <ProtectedRoute>
+      <AddJobModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingJob(null);
+        }}
+        onJobAdded={() => loadJobs(selectedJob?.id)}
+        initialData={editingJob || undefined}
+      />
       <AppShell
         detailPanel={selectedJob ? (
           <DetailPanel
             job={selectedJob}
             onClose={() => setSelectedJob(null)}
             onActivityAdded={() => loadJobs(selectedJob.id)}
+            onJobUpdated={() => loadJobs(selectedJob.id)}
           />
         ) : null}
       >
@@ -227,10 +271,6 @@ export default function DashboardPage() {
               />
             </div>
             <div className="flex items-center gap-2 ml-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-md text-xs font-medium transition-colors">
-                <Filter size={14} />
-                <span className="hidden sm:inline">Filters</span>
-              </button>
             </div>
           </div>
 
@@ -245,6 +285,8 @@ export default function DashboardPage() {
               <JobTable
                 jobs={jobs}
                 onSelectJob={handleSelectJob}
+                onEditJob={handleEditJob}
+                onDeleteJob={handleDeleteJob}
                 selectedJobId={selectedJob?.id}
               />
             )}

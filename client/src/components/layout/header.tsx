@@ -218,9 +218,6 @@ export function Header() {
                             <span className="text-xs font-bold text-white">
                                 {user?.email?.split('@')[0]}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-medium">
-                                Pro Plan
-                            </span>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
                             {user?.email?.[0].toUpperCase()}

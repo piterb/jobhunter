@@ -14,6 +14,7 @@
     "setup": "./scripts/setup.sh",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
+    "supabase:gen": "mkdir -p tmp_gen && cd tmp_gen && ln -sf ../supabase supabase && npx supabase gen types typescript --local > ../shared/src/database.types.ts && cd .. && rm -rf tmp_gen",
     "db:seed": "npx tsx scripts/seed-user-data.ts"
   }
 }

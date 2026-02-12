@@ -1,5 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { AnalyzeJobRequestSchema, AnalyzeActivityRequestSchema, AnalyzeJobRequest, AnalyzeActivityRequest } from 'shared';
 import OpenAI from 'openai';
 import { logAIUsage } from '../utils/logger';
 import { supabase } from '../config/supabase';
@@ -15,7 +17,7 @@ const getOpenAIClient = (apiKey?: string) => {
 };
 
 // POST /analyze/job - Smart Ingest
-router.post('/job', async (req: AuthRequest, res: Response) => {
+router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{}, {}, AnalyzeJobRequest>, res: Response) => {
     const { url, text } = req.body;
     const userId = req.user?.id!;
     const startTime = Date.now();
@@ -81,7 +83,7 @@ router.post('/job', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /analyze/activity - Smart Paste
-router.post('/activity', async (req: AuthRequest, res: Response) => {
+router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: AuthRequest<{}, {}, AnalyzeActivityRequest>, res: Response) => {
     const { text } = req.body;
     const userId = req.user?.id!;
     const startTime = Date.now();

@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { OverviewTab } from "./tabs/overview";
 import { ActivityTab } from "./tabs/activity-timeline";
 import { CoverLetterTab } from "./tabs/cover-letter";
+import { jobService } from "@/services/job-service";
+import { StatusSelector } from "./status-selector";
 
 interface DetailPanelProps {
     job: Job | null;
@@ -17,8 +19,22 @@ interface DetailPanelProps {
 
 type TabType = "overview" | "activity" | "cover-letter";
 
-export function DetailPanel({ job, onClose, onActivityAdded }: DetailPanelProps) {
+export function DetailPanel({ job, onClose, onActivityAdded, onJobUpdated }: DetailPanelProps & { onJobUpdated?: () => void }) {
     const [activeTab, setActiveTab] = useState<TabType>("overview");
+
+    const handleStatusChange = async (newStatus: any) => {
+        if (!job) return;
+        try {
+            await jobService.updateJobStatus(job.id, newStatus);
+            // Optimistically update local state if needed, but for now relies on parent refresh
+            if (onJobUpdated) {
+                onJobUpdated();
+            }
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            // Optionally show toast error
+        }
+    };
 
     if (!job) {
         return (
@@ -40,37 +56,47 @@ export function DetailPanel({ job, onClose, onActivityAdded }: DetailPanelProps)
         <div className="flex flex-col h-full bg-slate-950">
             {/* Header */}
             <div className="p-6 pb-2">
-                <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-xl font-semibold text-white leading-tight pr-4">
-                        {job.title}
-                    </h2>
-                    {onClose && (
-                        <button
-                            onClick={onClose}
-                            className="p-1 -mr-1 text-slate-500 hover:text-white transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                    )}
-                </div>
-                <div className="flex items-center gap-2 mb-6">
-                    <span className="text-sm font-medium text-indigo-400">{job.company}</span>
-                    {job.url && (
-                        <>
-                            <span className="text-slate-600">•</span>
-                            <a
-                                href={job.url}
-                                className="text-xs text-slate-400 hover:text-white hover:underline flex items-center gap-1 transition-colors"
-                                target="_blank"
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1 pr-4">
+                        <h2 className="text-xl font-semibold text-white leading-tight mb-1">
+                            {job.title}
+                        </h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-indigo-400">{job.company}</span>
+                            {job.url && (
+                                <>
+                                    <span className="text-slate-600">•</span>
+                                    <a
+                                        href={job.url}
+                                        className="text-xs text-slate-400 hover:text-white hover:underline flex items-center gap-1 transition-colors"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Link <ExternalLink size={10} />
+                                    </a>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                        <StatusSelector
+                            currentStatus={job.status}
+                            onStatusChange={handleStatusChange}
+                        />
+                        {onClose && (
+                            <button
+                                onClick={onClose}
+                                className="p-1 -mr-1 text-slate-500 hover:text-white transition-colors"
                             >
-                                Link <ExternalLink size={10} />
-                            </a>
-                        </>
-                    )}
+                                <X size={20} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Tabs Navigation */}
-                <div className="flex border-b border-slate-800">
+                <div className="flex border-b border-slate-800 mt-6">
                     {[
                         { id: "overview", label: "Job Info" },
                         { id: "activity", label: "Activity" },
@@ -102,14 +128,7 @@ export function DetailPanel({ job, onClose, onActivityAdded }: DetailPanelProps)
                 {activeTab === "cover-letter" && <CoverLetterTab job={job} />}
             </div>
 
-            {/* Footer / Quick Actions */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950/50">
-                <div className="flex gap-3">
-                    <button className="flex-1 py-2 px-4 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
-                        Status: <StatusBadge status={job.status} className="w-auto h-auto px-1.5 py-0 border-none bg-transparent text-white" />
-                    </button>
-                </div>
-            </div>
+            {/* Note: Footer with generic status button removed as requested */}
         </div>
     );
 }

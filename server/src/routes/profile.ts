@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { UpdateProfileSchema, UpdateProfileRequest } from 'shared';
 
 const router = Router();
 
@@ -28,37 +30,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /profile - Update user profile
-router.put('/', async (req: AuthRequest, res: Response) => {
+router.put('/', validate(UpdateProfileSchema), async (req: AuthRequest<{}, {}, UpdateProfileRequest>, res: Response) => {
     const userId = req.user?.id;
     const updates = req.body;
     const supabase = getClient(req);
 
-    // List of fields allowed to be updated in the profile
-    const allowedFields = [
-        'email',
-        'first_name',
-        'last_name',
-        'full_name',
-        'avatar_url',
-        'professional_headline',
-        'onboarding_completed'
-    ];
-
-    const filteredUpdates: any = {};
-    for (const field of allowedFields) {
-        if (updates[field] !== undefined) {
-            filteredUpdates[field] = updates[field];
-        }
-    }
-
-    // Only update if there are fields provided
-    if (Object.keys(filteredUpdates).length === 0) {
-        return res.status(400).json({ error: 'No valid fields to update' });
-    }
-
     const { data, error } = await supabase
         .from('profiles')
-        .update(filteredUpdates)
+        .update(updates)
         .eq('id', userId)
         .select()
         .single();

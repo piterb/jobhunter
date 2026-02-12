@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { CreateActivitySchema } from 'shared';
 
 const router = Router();
 
@@ -41,7 +43,7 @@ router.get('/:jobId/activities', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /jobs/:id/activities - Create a new activity for a job
-router.post('/:jobId/activities', async (req: AuthRequest, res: Response) => {
+router.post('/:jobId/activities', validate(CreateActivitySchema), async (req: AuthRequest, res: Response) => {
     const { jobId } = req.params;
     const userId = req.user?.id;
     const activityData = {

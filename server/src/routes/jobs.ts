@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { CreateJobSchema, UpdateJobSchema, CreateJobRequest, UpdateJobRequest } from 'shared';
 
 const router = Router();
 
@@ -72,10 +74,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     return res.json(data);
 });
 
-import { CreateJobRequest } from 'shared';
+
 
 // POST /jobs - Create a new job
-router.post('/', async (req: AuthRequest<{}, {}, CreateJobRequest>, res: Response) => {
+router.post('/', validate(CreateJobSchema), async (req: AuthRequest<{}, {}, CreateJobRequest>, res: Response) => {
     const userId = req.user?.id;
     const supabase = getClient(req);
 
@@ -99,7 +101,7 @@ router.post('/', async (req: AuthRequest<{}, {}, CreateJobRequest>, res: Respons
 });
 
 // PUT /jobs/:id - Update a job
-router.put('/:id', async (req: AuthRequest, res: Response) => {
+router.put('/:id', validate(UpdateJobSchema), async (req: AuthRequest<{ id: string }, {}, UpdateJobRequest>, res: Response) => {
     const { id } = req.params;
     const userId = req.user?.id;
     const updates = req.body;

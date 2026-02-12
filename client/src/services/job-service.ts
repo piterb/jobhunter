@@ -140,6 +140,45 @@ export const jobService = {
     },
 
     /**
+     * Update a job
+     */
+    async updateJob(id: string, jobData: Partial<Job>): Promise<Job> {
+        const token = await getAuthToken();
+
+        if (token) {
+            const response = await fetch(`${API_URL}/jobs/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(jobData),
+            });
+            if (response.ok) {
+                return response.json();
+            }
+        }
+
+        // Fallback: Update directly in Supabase
+        const { data, error } = await supabase
+            .from("jobs")
+            .update({
+                ...jobData,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error updating job:", error);
+            throw error;
+        }
+
+        return data as Job;
+    },
+
+    /**
      * Create a new job manually
      */
     async createJob(jobData: Partial<Job>): Promise<Job> {
@@ -218,5 +257,33 @@ export const jobService = {
         }
 
         return data as Activity;
+    },
+
+    /**
+     * Delete a job
+     */
+    async deleteJob(id: string): Promise<void> {
+        const token = await getAuthToken();
+
+        if (token) {
+            const response = await fetch(`${API_URL}/jobs/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (response.ok) return;
+        }
+
+        // Fallback: Delete directly in Supabase
+        const { error } = await supabase
+            .from("jobs")
+            .delete()
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error deleting job:", error);
+            throw error;
+        }
     }
 };

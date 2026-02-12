@@ -26,7 +26,7 @@ const statusLabels: Record<JobStatus, string> = {
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
     return (
-        <div
+        <span
             className={cn(
                 "inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-xs font-medium border w-24 uppercase tracking-wider",
                 statusStyles[status],
@@ -34,6 +34,6 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
             )}
         >
             {statusLabels[status]}
-        </div>
+        </span>
     );
 }

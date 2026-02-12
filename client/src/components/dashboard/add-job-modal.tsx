@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Modal } from "@/components/ui/modal";
-import { Job, JobStatus, EmploymentType } from "@/types/job";
+import { Job, JobStatus, EmploymentType, CreateJobSchema } from "@/types/job";
 import { jobService } from "@/services/job-service";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, AlertCircle } from "lucide-react";
+import { ZodError } from "zod";
 
 interface AddJobModalProps {
     isOpen: boolean;
@@ -24,6 +26,7 @@ const JOB_STATUSES: { value: JobStatus; label: string }[] = [
 
 export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJobModalProps) {
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [formData, setFormData] = useState<Partial<Job>>({
         title: "",
         company: "",
@@ -86,9 +89,20 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrors({});
+
         try {
+            // Client-side validation
+            CreateJobSchema.parse(formData);
+
             setLoading(true);
-            await jobService.createJob(formData);
+
+            if (formData.id) {
+                await jobService.updateJob(formData.id, formData);
+            } else {
+                await jobService.createJob(formData);
+            }
+
             onJobAdded();
             onClose();
             // Reset form
@@ -105,8 +119,15 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
                 notes: "",
             });
         } catch (error) {
-            console.error("Failed to add job:", error);
-            // In a real app, show a toast here
+            if (error instanceof ZodError) {
+                const newErrors: Record<string, string> = {};
+                error.errors.forEach(err => {
+                    newErrors[err.path[0]] = err.message;
+                });
+                setErrors(newErrors);
+            } else {
+                console.error("Failed to add job:", error);
+            }
         } finally {
             setLoading(false);
         }
@@ -116,7 +137,7 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Add New Job"
+            title={formData.id ? "Update Job" : "Add New Job"}
             className="sm:max-w-xl"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,9 +151,17 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                            className={cn(
+                                "w-full px-3 py-2 bg-slate-950 border rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all",
+                                errors.title ? "border-rose-500" : "border-slate-800"
+                            )}
                             placeholder="e.g. Senior Frontend Engineer"
                         />
+                        {errors.title && (
+                            <p className="text-[10px] text-rose-500 flex items-center gap-1 mt-1">
+                                <AlertCircle size={10} /> {errors.title}
+                            </p>
+                        )}
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -143,9 +172,17 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
                             type="text"
                             value={formData.company}
                             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                            className={cn(
+                                "w-full px-3 py-2 bg-slate-950 border rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all",
+                                errors.company ? "border-rose-500" : "border-slate-800"
+                            )}
                             placeholder="e.g. Vercel"
                         />
+                        {errors.company && (
+                            <p className="text-[10px] text-rose-500 flex items-center gap-1 mt-1">
+                                <AlertCircle size={10} /> {errors.company}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -157,9 +194,17 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
                         type="url"
                         value={formData.url || ""}
                         onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                        className={cn(
+                            "w-full px-3 py-2 bg-slate-950 border rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all",
+                            errors.url ? "border-rose-500" : "border-slate-800"
+                        )}
                         placeholder="https://careers.company.com/..."
                     />
+                    {errors.url && (
+                        <p className="text-[10px] text-rose-500 flex items-center gap-1 mt-1">
+                            <AlertCircle size={10} /> {errors.url}
+                        </p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -199,7 +244,7 @@ export function AddJobModal({ isOpen, onClose, onJobAdded, initialData }: AddJob
                             Employment Type
                         </label>
                         <select
-                            value={formData.employment_type}
+                            value={formData.employment_type || "Full-time"}
                             onChange={(e) => setFormData({ ...formData, employment_type: e.target.value as EmploymentType })}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all appearance-none"
                         >

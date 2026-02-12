@@ -2,16 +2,26 @@
 
 import { Job } from "@/types/job";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { MapPin, MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { MapPin, ArrowUpDown, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface JobTableProps {
     jobs: Job[];
     onSelectJob: (job: Job) => void;
+    onEditJob: (job: Job) => void;
+    onDeleteJob: (jobId: string) => void;
     selectedJobId?: string;
 }
 
-export function JobTable({ jobs, onSelectJob, selectedJobId }: JobTableProps) {
+export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJobId }: JobTableProps) {
+    const handleDelete = async (e: React.MouseEvent, jobId: string) => {
+        e.stopPropagation();
+        if (window.confirm("Are you sure you want to delete this job? This action cannot be undone and will delete all associated activities.")) {
+            onDeleteJob(jobId);
+        }
+    };
+
     return (
         <div className="w-full bg-slate-950/30">
             {/* Mobile Card View */}
@@ -27,13 +37,41 @@ export function JobTable({ jobs, onSelectJob, selectedJobId }: JobTableProps) {
                     >
                         <div className="flex justify-between items-start mb-1">
                             <h3 className="font-medium text-white">{job.title}</h3>
-                            <StatusBadge status={job.status} />
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEditJob(job);
+                                    }}
+                                    className="p-1 text-slate-500 hover:text-indigo-400 rounded-md transition-colors"
+                                    title="Edit job"
+                                >
+                                    <Pencil size={14} />
+                                </button>
+                                <button
+                                    onClick={(e) => handleDelete(e, job.id)}
+                                    className="p-1 text-slate-500 hover:text-red-400 rounded-md transition-colors"
+                                    title="Delete job"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                                <StatusBadge status={job.status} />
+                            </div>
                         </div>
                         <div className="text-sm text-slate-400 mb-2">{job.company}</div>
                         <div className="flex items-center justify-between text-xs text-slate-500">
-                            <div className="flex items-center gap-1.5">
-                                <MapPin size={12} />
-                                {job.location || "Remote"}
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5">
+                                    <MapPin size={12} />
+                                    {job.location || "Remote"}
+                                </div>
+                                <div className="text-[10px] opacity-70">
+                                    Created: {new Date(job.created_at || "").toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric"
+                                    })}
+                                </div>
                             </div>
                             <span>
                                 {job.applied_at
@@ -88,6 +126,12 @@ export function JobTable({ jobs, onSelectJob, selectedJobId }: JobTableProps) {
                                 <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                         </th>
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell">
+                            <div className="flex items-center gap-1">
+                                Created At
+                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </th>
                         <th className="px-6 py-3 text-right cursor-pointer hover:text-slate-300 group">
                             <div className="flex items-center justify-end gap-1">
                                 Status
@@ -133,25 +177,43 @@ export function JobTable({ jobs, onSelectJob, selectedJobId }: JobTableProps) {
                                     })
                                     : "Draft"}
                             </td>
+                            <td className="px-6 py-4 text-slate-500 hidden xl:table-cell">
+                                {new Date(job.created_at || "").toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric"
+                                })}
+                            </td>
                             <td className="px-6 py-4 text-right">
                                 <StatusBadge status={job.status} />
                             </td>
                             <td className="px-4 py-4 text-right">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                    }}
-                                    className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
-                                >
-                                    <MoreHorizontal size={16} />
-                                </button>
+                                <div className="flex items-center justify-end gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEditJob(job);
+                                        }}
+                                        className="p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-indigo-400/10 rounded-md transition-colors"
+                                        title="Edit job"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDelete(e, job.id)}
+                                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
+                                        title="Delete job"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
 
                     {jobs.length === 0 && (
                         <tr>
-                            <td colSpan={7} className="px-4 py-12 text-center">
+                            <td colSpan={8} className="px-4 py-12 text-center">
                                 <div className="flex flex-col items-center gap-2">
                                     <p className="text-slate-400 font-medium">No applications yet.</p>
                                     <p className="text-xs text-slate-500">

@@ -18,16 +18,12 @@ router.get('/:jobId/activities', async (req: AuthRequest, res: Response) => {
     const supabase = getClient(req);
 
     // First, verify the job belongs to the user
-    console.log(`[Activities] Request for Job ID: ${jobId}, User: ${userId}`);
     const { data: job, error: jobError } = await supabase
         .from('jobs')
         .select('id')
         .eq('id', jobId)
         .eq('user_id', userId)
         .single();
-
-    if (jobError) console.error('[Activities] Job Check Error:', jobError);
-    if (!job) console.warn('[Activities] Job not found for this user.');
 
     if (jobError || !job) {
         return res.status(404).json({ error: 'Job not found or unauthorized' });

@@ -2,7 +2,8 @@ import { Router, Response } from 'express';
 import { createSupabaseUserClient } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { CreateJobSchema, UpdateJobSchema, CreateJobRequest, UpdateJobRequest } from 'shared';
+import { GetJobsQuerySchema, CreateJobSchema, UpdateJobSchema } from 'shared';
+import type { CreateJobRequest, UpdateJobRequest, PaginatedJobs } from 'shared';
 
 const router = Router();
 
@@ -12,20 +13,29 @@ const getClient = (req: AuthRequest) => {
     return createSupabaseUserClient(token);
 };
 
-// GET /jobs - List all jobs for the current user
+// GET /jobs - List all jobs for the current user with pagination
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const { status, sort, order } = req.query;
     const supabase = getClient(req);
+
+    // Validate query parameters
+    const queryResult = GetJobsQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+        return res.status(400).json({ error: queryResult.error.message });
+    }
+
+    const { status, sort, order, page, limit, search } = queryResult.data;
+
+    // Default pagination values
+    const pageNum = page || 1;
+    const limitNum = limit || 10;
+    const from = (pageNum - 1) * limitNum;
+    const to = from + limitNum - 1;
 
     let query = supabase
         .from('jobs')
-        .select('*');
+        .select('*', { count: 'exact' });
 
-    // If not admin (service role), filter by user_id
-    // Note: RLS should handle this, but adding it explicitly is safer/cleaner if we want to rely on the where clause
-    // However, if we trust RLS, we don't strictly need .eq('user_id', userId) if the policy enforces it.
-    // For now, let's keep explicit filtering as it matches previous logic.
     if (userId) {
         query = query.eq('user_id', userId);
     }
@@ -34,17 +44,31 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         query = query.eq('status', status);
     }
 
-    const sortColumn = (sort as string) || 'created_at';
-    const sortOrder = (order as string) === 'asc' ? true : false;
+    if (search) {
+        const searchTerm = `%${search}%`;
+        query = query.or(`title.ilike.${searchTerm},company.ilike.${searchTerm},location.ilike.${searchTerm},notes.ilike.${searchTerm}`);
+    }
 
-    // Use order on the query builder chain correctly
-    const { data, error } = await query.order(sortColumn, { ascending: sortOrder });
+    const sortColumn = sort || 'created_at';
+    const sortOrder = order === 'asc' ? true : false;
+
+    const { data, count, error } = await query
+        .order(sortColumn, { ascending: sortOrder })
+        .range(from, to);
 
     if (error) {
         return res.status(500).json({ error: error.message });
     }
 
-    return res.json(data);
+    const response: PaginatedJobs = {
+        data: data || [],
+        count: count || 0,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: count ? Math.ceil(count / limitNum) : 0
+    };
+
+    return res.json(response);
 });
 
 // GET /jobs/:id - Get specific job

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { JobTable } from "@/components/dashboard/job-table";
 import { DetailPanel } from "@/components/dashboard/detail-panel/detail-panel";
-import { Job } from "@/types/job";
+import { Job, JobStatus } from "@/types/job";
 import { Search, Loader2 } from "lucide-react";
 import { jobService } from "@/services/job-service";
 import { ProtectedRoute } from "@/components/auth/protected-route";
@@ -172,30 +172,71 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const loadJobs = async (silentUpdateId?: string) => {
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset page on search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
+
+  const loadJobs = async (silentUpdateId?: string, page: number = currentPage) => {
     try {
       if (!silentUpdateId) setLoading(true);
-      const data = await jobService.getJobs();
-      setJobs(data || []);
+      const response = await jobService.getJobs(
+        page,
+        pageSize,
+        sortField,
+        sortOrder,
+        debouncedSearchQuery
+      );
+
+      const newJobs = response.data;
+      const count = response.count;
+      const pages = response.totalPages;
+
+      setJobs(newJobs || []);
+      setTotalCount(count);
+      setTotalPages(pages);
 
       // Keep selected job updated if it matches one in the list
       if (selectedJob) {
         const targetId = silentUpdateId || selectedJob.id;
-        const updatedSelected = data?.find(j => j.id === targetId);
+        const updatedSelected = newJobs?.find((j: Job) => j.id === targetId);
 
         if (updatedSelected && (silentUpdateId === targetId || !silentUpdateId)) {
           // Fetch full details again to ensure activities are up to date
           const fullJob = await jobService.getJobById(updatedSelected.id);
           setSelectedJob(fullJob);
         }
-      } else if (data && data.length > 0 && !silentUpdateId) {
-        setSelectedJob(data[0]);
+      } else if (newJobs && newJobs.length > 0 && !silentUpdateId) {
+        setSelectedJob(newJobs[0]);
       }
     } catch (err) {
       console.error("Failed to load jobs:", err);
       if (!silentUpdateId) {
         setJobs(MOCK_JOBS);
+        setTotalCount(MOCK_JOBS.length);
+        setTotalPages(1);
         setSelectedJob(MOCK_JOBS[0]);
       }
     } finally {
@@ -205,7 +246,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [sortField, sortOrder, debouncedSearchQuery, currentPage]);
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("desc");
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    loadJobs(undefined, newPage);
+  };
 
   const handleSelectJob = async (job: Job) => {
     setSelectedJob(job);
@@ -230,6 +286,25 @@ export default function DashboardPage() {
     }
   };
 
+  const handleUpdateJobStatus = async (jobId: string, newStatus: JobStatus) => {
+    try {
+      await jobService.updateJobStatus(jobId, newStatus);
+      // Update local state for immediate feedback
+      setJobs(prevJobs =>
+        prevJobs.map(job =>
+          job.id === jobId ? { ...job, status: newStatus } : job
+        )
+      );
+      // If the updated job is the selected one, update it too
+      if (selectedJob?.id === jobId) {
+        setSelectedJob({ ...selectedJob, status: newStatus });
+      }
+    } catch (err) {
+      console.error("Failed to update job status:", err);
+      alert("Failed to update status. Please try again.");
+    }
+  };
+
   const handleEditJob = (job: Job) => {
     setEditingJob(job);
     setIsEditModalOpen(true);
@@ -243,7 +318,14 @@ export default function DashboardPage() {
           setIsEditModalOpen(false);
           setEditingJob(null);
         }}
-        onJobAdded={() => loadJobs(selectedJob?.id)}
+        onJobAdded={() => {
+          if (!editingJob) {
+            setCurrentPage(1);
+            loadJobs(undefined, 1);
+          } else {
+            loadJobs(selectedJob?.id);
+          }
+        }}
         initialData={editingJob || undefined}
       />
       <AppShell
@@ -266,8 +348,10 @@ export default function DashboardPage() {
               />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search by title, company, location..."
                 className="bg-transparent border-none text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-0 w-full pl-8 h-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="flex items-center gap-2 ml-4">
@@ -287,20 +371,60 @@ export default function DashboardPage() {
                 onSelectJob={handleSelectJob}
                 onEditJob={handleEditJob}
                 onDeleteJob={handleDeleteJob}
+                onStatusChange={handleUpdateJobStatus}
                 selectedJobId={selectedJob?.id}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
               />
             )}
 
-            {/* Pagination Footer (Mock) */}
+            {/* Pagination Footer */}
             <div className="h-12 border-t border-slate-800 flex items-center justify-between px-4 sm:px-6 bg-slate-950/30 text-xs shrink-0 sticky bottom-0 z-20 backdrop-blur-sm">
-              <span className="text-slate-500 hidden sm:inline">Showing 1-{jobs.length} of {jobs.length} results</span>
-              <span className="text-slate-500 sm:hidden">1-{jobs.length} of {jobs.length}</span>
+              <span className="text-slate-500 hidden sm:inline">
+                Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} results
+              </span>
+              <span className="text-slate-500 sm:hidden">
+                {currentPage} of {totalPages}
+              </span>
               <div className="flex gap-2">
-                <button className="px-3 py-1 rounded border border-slate-800 text-slate-500 hover:text-white hover:border-slate-700 transition-colors" disabled>Prev</button>
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="px-3 py-1 rounded border border-slate-800 text-slate-500 hover:text-white hover:border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
                 <div className="flex gap-1">
-                  <button className="px-3 py-1 rounded bg-indigo-600 text-white border border-indigo-500">1</button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    // Simple logic to show a window of pages around current
+                    let p = i + 1;
+                    if (totalPages > 5) {
+                      if (currentPage > 3) {
+                        p = currentPage - 2 + i;
+                      }
+                      if (p > totalPages) {
+                        p = totalPages - (4 - i);
+                      }
+                    }
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className={`px-3 py-1 rounded border ${currentPage === p ? 'bg-indigo-600 text-white border-indigo-500' : 'border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'} transition-colors`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
                 </div>
-                <button className="px-3 py-1 rounded border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors">Next</button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="px-3 py-1 rounded border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
             </div>
           </div>

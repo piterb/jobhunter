@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Job, Activity } from "@/types/job";
+import { Job, Activity, PaginatedJobs } from "@/types/job";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
@@ -13,15 +13,29 @@ async function getAuthToken(): Promise<string | null> {
 
 export const jobService = {
     /**
-     * Fetch all jobs for the current user via Express Backend
+     * Fetch all jobs for the current user via Express Backend with pagination
      */
-    async getJobs(): Promise<Job[]> {
+    async getJobs(
+        page: number = 1,
+        limit: number = 10,
+        sort: string = 'created_at',
+        order: 'asc' | 'desc' = 'desc',
+        search?: string
+    ): Promise<PaginatedJobs> {
         const token = await getAuthToken();
 
         // For now, if no token, try direct Supabase (might fail RLS)
         // but the user says "API funguje", so they likely want to use the Express API
         if (token) {
-            const response = await fetch(`${API_URL}/jobs`, {
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                sort: sort,
+                order: order
+            });
+            if (search) queryParams.append('search', search);
+
+            const response = await fetch(`${API_URL}/jobs?${queryParams}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -32,17 +46,34 @@ export const jobService = {
         }
 
         // Fallback or if no token yet (useful for initial demo if they are not logged in)
-        const { data, error } = await supabase
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        let query = supabase
             .from("jobs")
-            .select("*")
-            .order("created_at", { ascending: false });
+            .select("*", { count: 'exact' });
+
+        if (search) {
+            const searchTerm = `%${search}%`;
+            query = query.or(`title.ilike.${searchTerm},company.ilike.${searchTerm},location.ilike.${searchTerm},notes.ilike.${searchTerm}`);
+        }
+
+        const { data, count, error } = await query
+            .order(sort as any, { ascending: order === 'asc' })
+            .range(from, to);
 
         if (error) {
             console.error("Error fetching jobs from Supabase:", error);
             throw error;
         }
 
-        return data as Job[];
+        return {
+            data: data as Job[],
+            count: count || 0,
+            page,
+            limit,
+            totalPages: count ? Math.ceil(count / limit) : 0
+        };
     },
 
     /**

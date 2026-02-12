@@ -62,6 +62,12 @@ class MockQueryBuilder {
         return this;
     }
 
+    range(from: number, to: number) {
+        // We'll just ignore range in the simple mock or we could implement it
+        // For now, let's just return our data since we usually have small datasets in tests
+        return this;
+    }
+
     // Checking if the response should be an error or success
     async then(resolve: (res: any) => void, reject: (err: any) => void) {
         try {
@@ -141,18 +147,17 @@ class MockQueryBuilder {
                 });
             }
 
+            const totalCount = matchingRows.length;
+
             // Validate single() expectation
             if (this.singleResult) {
                 if (matchingRows.length === 0) {
-                    return resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } });
+                    return resolve({ data: null, count: 0, error: { code: 'PGRST116', message: 'Not found' } });
                 }
-                // (Supabase returns error if multiple rows found for single(), but we can be lenient or strict)
-                // strict:
-                // if (matchingRows.length > 1) return resolve({ data: null, error: { code: 'PGRST116', message: 'Multiple rows found' } });
-                return resolve({ data: matchingRows[0], error: null });
+                return resolve({ data: matchingRows[0], count: 1, error: null });
             }
 
-            return resolve({ data: matchingRows, error: null });
+            return resolve({ data: matchingRows, count: totalCount, error: null });
 
         } catch (err: any) {
             reject(err);
@@ -264,11 +269,13 @@ describe('Jobs API (Unit Tests / Isolated Integration)', () => {
             const response = await request(app).get('/api/v1/jobs');
 
             expect(response.status).toBe(200);
-            expect(response.body).toHaveLength(2); // Only MOCK_USER_ID jobs
-            const ids = response.body.map((j: any) => j.id);
+            expect(response.body.data).toHaveLength(2); // Only MOCK_USER_ID jobs
+            const ids = response.body.data.map((j: any) => j.id);
             expect(ids).toContain('job-1');
             expect(ids).toContain('job-2');
             expect(ids).not.toContain('job-3');
+            expect(response.body.count).toBe(2);
+            expect(response.body.totalPages).toBeDefined();
         });
 
         it('should sort jobs by creation date', async () => {
@@ -279,8 +286,8 @@ describe('Jobs API (Unit Tests / Isolated Integration)', () => {
 
             const response = await request(app).get('/api/v1/jobs?sort=created_at&order=desc');
             expect(response.status).toBe(200);
-            expect(response.body[0].id).toBe('job-2');
-            expect(response.body[1].id).toBe('job-1');
+            expect(response.body.data[0].id).toBe('job-2');
+            expect(response.body.data[1].id).toBe('job-1');
         });
     });
 

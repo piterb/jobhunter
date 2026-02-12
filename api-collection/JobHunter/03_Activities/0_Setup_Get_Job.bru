@@ -21,7 +21,7 @@ tests {
 }
 
 script:post-response {
-  if (res.status === 200 && Array.isArray(res.body) && res.body.length > 0) {
-    bru.setVar("jobId", res.body[0].id);
+  if (res.status === 200 && res.body.data && Array.isArray(res.body.data) && res.body.data.length > 0) {
+    bru.setVar("jobId", res.body.data[0].id);
   }
 }

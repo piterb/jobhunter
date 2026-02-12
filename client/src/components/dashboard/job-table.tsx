@@ -1,8 +1,8 @@
 "use client";
 
-import { Job } from "@/types/job";
+import { Job, JobStatus } from "@/types/job";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { MapPin, ArrowUpDown, Trash2, Pencil } from "lucide-react";
+import { MapPin, ArrowUpDown, Trash2, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -11,15 +11,34 @@ interface JobTableProps {
     onSelectJob: (job: Job) => void;
     onEditJob: (job: Job) => void;
     onDeleteJob: (jobId: string) => void;
+    onStatusChange: (jobId: string, status: JobStatus) => void;
     selectedJobId?: string;
+    sortField: string;
+    sortOrder: "asc" | "desc";
+    onSort: (field: string) => void;
 }
 
-export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJobId }: JobTableProps) {
+export function JobTable({
+    jobs,
+    onSelectJob,
+    onEditJob,
+    onDeleteJob,
+    onStatusChange,
+    selectedJobId,
+    sortField,
+    sortOrder,
+    onSort
+}: JobTableProps) {
     const handleDelete = async (e: React.MouseEvent, jobId: string) => {
         e.stopPropagation();
         if (window.confirm("Are you sure you want to delete this job? This action cannot be undone and will delete all associated activities.")) {
             onDeleteJob(jobId);
         }
+    };
+
+    const SortIcon = ({ field }: { field: string }) => {
+        if (sortField !== field) return <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex-shrink-0" />;
+        return sortOrder === "asc" ? <ChevronUp size={12} className="ml-1 text-indigo-400 flex-shrink-0" /> : <ChevronDown size={12} className="ml-1 text-indigo-400 flex-shrink-0" />;
     };
 
     return (
@@ -55,7 +74,10 @@ export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJo
                                 >
                                     <Trash2 size={14} />
                                 </button>
-                                <StatusBadge status={job.status} />
+                                <StatusBadge
+                                    status={job.status}
+                                    onStatusChange={(newStatus) => onStatusChange(job.id, newStatus)}
+                                />
                             </div>
                         </div>
                         <div className="text-sm text-slate-400 mb-2">{job.company}</div>
@@ -96,46 +118,46 @@ export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJo
             <table className="w-full text-left border-collapse hidden lg:table">
                 <thead className="bg-slate-950/80 text-xs font-semibold text-slate-500 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm border-b border-slate-800">
                     <tr>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("title")}>
+                            <div className="flex items-center">
                                 Title
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="title" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("company")}>
+                            <div className="flex items-center">
                                 Company
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="company" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell" onClick={() => onSort("location")}>
+                            <div className="flex items-center">
                                 Location
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="location" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden 2xl:table-cell">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden 2xl:table-cell" onClick={() => onSort("employment_type")}>
+                            <div className="flex items-center">
                                 Type
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="employment_type" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("applied_at")}>
+                            <div className="flex items-center">
                                 Applied At
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="applied_at" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell">
-                            <div className="flex items-center gap-1">
+                        <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell" onClick={() => onSort("created_at")}>
+                            <div className="flex items-center">
                                 Created At
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="created_at" />
                             </div>
                         </th>
-                        <th className="px-6 py-3 text-right cursor-pointer hover:text-slate-300 group">
-                            <div className="flex items-center justify-end gap-1">
+                        <th className="px-6 py-3 text-right cursor-pointer hover:text-slate-300 group" onClick={() => onSort("status")}>
+                            <div className="flex items-center justify-end">
                                 Status
-                                <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <SortIcon field="status" />
                             </div>
                         </th>
                         <th className="px-4 py-3 w-10"></th>
@@ -175,7 +197,7 @@ export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJo
                                         day: "numeric",
                                         year: "numeric"
                                     })
-                                    : "Draft"}
+                                    : "Not applied yet"}
                             </td>
                             <td className="px-6 py-4 text-slate-500 hidden xl:table-cell">
                                 {new Date(job.created_at || "").toLocaleDateString("en-US", {
@@ -185,7 +207,10 @@ export function JobTable({ jobs, onSelectJob, onEditJob, onDeleteJob, selectedJo
                                 })}
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <StatusBadge status={job.status} />
+                                <StatusBadge
+                                    status={job.status}
+                                    onStatusChange={(newStatus) => onStatusChange(job.id, newStatus)}
+                                />
                             </td>
                             <td className="px-4 py-4 text-right">
                                 <div className="flex items-center justify-end gap-1">

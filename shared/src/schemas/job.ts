@@ -37,6 +37,25 @@ export type Job = Database['jobhunter']['Tables']['jobs']['Row'] & {
     activities?: Activity[];
 };
 
+export const GetJobsQuerySchema = z.object({
+    status: JobStatusSchema.optional(),
+    sort: z.string().optional(),
+    order: z.enum(['asc', 'desc']).optional(),
+    page: z.string().optional().transform(v => v ? parseInt(v) : undefined),
+    limit: z.string().optional().transform(v => v ? parseInt(v) : undefined),
+    search: z.string().optional(),
+});
+
+export type GetJobsQuery = z.infer<typeof GetJobsQuerySchema>;
+
+export type PaginatedJobs = {
+    data: Job[];
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};
+
 // Activity Schemas
 export const ActivityEventTypeSchema = z.enum(['Manual', 'Email', 'Call', 'Status_Change', 'Note']);
 export type ActivityEventType = z.infer<typeof ActivityEventTypeSchema>;

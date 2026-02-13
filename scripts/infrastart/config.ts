@@ -10,6 +10,7 @@ export interface EnvironmentConfig {
     workloadIdProvider: string;
     wifProviderPath?: string;
     appName?: string; // App name for migrations (e.g. jobhunter)
+    serverUrl?: string; // Cloud Run URL for Server (provisioned early)
 }
 
 export interface DeploymentState {

@@ -7,6 +7,7 @@ import { loadState, saveState, EnvironmentConfig } from './config.js';
 import { IS_DRY_RUN } from './utils.js';
 import { setupGcpWif } from './gcp.js';
 import { setupGithubEnv } from './github.js';
+import { setupSupabaseSecrets } from './supabase.js';
 
 async function main() {
     console.log(boxen(chalk.bold.cyan(' 🚀  INFRASTART MANAGER \n v3.0.0 (Infra Only) '), { padding: 1, borderStyle: 'round', borderColor: 'cyan' }));
@@ -35,6 +36,7 @@ async function main() {
                 { name: '🚀 Provision Infrastructure (GCP + GitHub Secrets)', value: 'full' },
                 { name: '☁️  Setup GCP Infrastructure Only', value: 'gcp-only' },
                 { name: '🐙  Setup GitHub Environment Only (Secrets)', value: 'github-only' },
+                { name: '🔥  Setup Supabase Secrets Only', value: 'supabase-only' },
                 { name: '🚪  Exit', value: 'exit' }
             ]
         }
@@ -43,7 +45,7 @@ async function main() {
     if (action === 'exit') process.exit(0);
 
     try {
-        if (action === 'full' || action === 'gcp-only' || action === 'github-only') {
+        if (action === 'full' || action === 'gcp-only' || action === 'github-only' || action === 'supabase-only') {
             await setupEnvironmentFlow(state, action, hasGh);
         }
 
@@ -99,6 +101,15 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
     if (action === 'full' || action === 'github-only') {
         if (hasGh) await setupGithubEnv(envConfig, githubRepo);
         else console.log(chalk.yellow(`\n⚠ Skipping GitHub setup (No 'gh').`));
+    }
+
+    if (action === 'full' || action === 'github-only' || action === 'supabase-only') {
+        if (hasGh) {
+            const { doSupabase } = await inquirer.prompt([{ type: 'confirm', name: 'doSupabase', message: 'Configure Supabase Secrets now?', default: true }]);
+            if (doSupabase) {
+                await setupSupabaseSecrets(envConfig, githubRepo);
+            }
+        }
     }
 
     // Update State

@@ -163,6 +163,8 @@ export async function setupGcpWif(env: EnvironmentConfig, githubRepo: string) {
         }
     }
     spinner.succeed('Secrets ready');
+
+    await provisionServerService(env);
 }
 
 async function enableBilling(projectId: string): Promise<boolean> {
@@ -180,5 +182,39 @@ async function enableBilling(projectId: string): Promise<boolean> {
         const { billingAccount } = await inquirer.prompt([{ type: 'list', name: 'billingAccount', message: 'Select Billing Account:', choices }]);
         await execa('gcloud', ['billing', 'projects', 'link', projectId, '--billing-account', billingAccount]);
         return true;
+        return true;
     } catch { return false; }
+}
+
+async function provisionServerService(env: EnvironmentConfig) {
+    if (IS_DRY_RUN) return;
+    const serviceName = `${env.appName || 'jobhunter'}-server`;
+    const spinner = ora(`Provisioning Server (Hello World) to get URL...`).start();
+
+    try {
+        // Check if exists
+        const { stdout } = await execa('gcloud', ['run', 'services', 'describe', serviceName, '--region', env.region, '--format=value(status.url)'], { reject: false });
+        if (stdout && stdout.trim().startsWith('http')) {
+            env.serverUrl = stdout.trim();
+            spinner.succeed(`Server already exists: ${env.serverUrl}`);
+            return;
+        }
+
+        // Deploy Hello World
+        spinner.text = `Deploying Hello World to ${serviceName}...`;
+        await runCmd('gcloud', [
+            'run', 'deploy', serviceName,
+            '--image', 'us-docker.pkg.dev/cloudrun/container/hello',
+            '--region', env.region,
+            '--allow-unauthenticated',
+            '--project', env.projectId
+        ]);
+
+        // Get URL
+        const { stdout: newUrl } = await execa('gcloud', ['run', 'services', 'describe', serviceName, '--region', env.region, '--format=value(status.url)']);
+        env.serverUrl = newUrl.trim();
+        spinner.succeed(`Server provisioned: ${env.serverUrl}`);
+    } catch (e: any) {
+        spinner.warn(`Failed to provision server (skipping URL): ${e.message}`);
+    }
 }

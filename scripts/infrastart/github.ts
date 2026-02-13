@@ -27,6 +27,10 @@ export async function setupGithubEnv(env: EnvironmentConfig, repo: string) {
         await runCmd('gh', ['variable', 'set', 'GCP_REGION', '--env', env.name, '--body', env.region, ...repoFlag]);
         await runCmd('gh', ['variable', 'set', 'ARTIFACT_REPO', '--env', env.name, '--body', `${env.region}-docker.pkg.dev/${env.projectId}/${env.repoName}`, ...repoFlag]);
         await runCmd('gh', ['variable', 'set', 'APP_NAME', '--env', env.name, '--body', env.appName || 'jobhunter', ...repoFlag]);
+
+        if (env.serverUrl) {
+            await runCmd('gh', ['variable', 'set', 'NEXT_PUBLIC_API_URL', '--env', env.name, '--body', env.serverUrl, ...repoFlag]);
+        }
     };
 
     try {

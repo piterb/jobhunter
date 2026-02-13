@@ -11,7 +11,8 @@
       "serviceAccountName": "deployer-tst",
       "workloadIdPool": "github-pool-tst",
       "workloadIdProvider": "github-provider-tst",
-      "wifProviderPath": "projects/698374829680/locations/global/workloadIdentityPools/github-pool-tst/providers/github-provider-tst"
+      "wifProviderPath": "projects/698374829680/locations/global/workloadIdentityPools/github-pool-tst/providers/github-provider-tst",
+      "serverUrl": "https://jobhunter-server-xkggbklufa-ew.a.run.app"
     }
   }
 }

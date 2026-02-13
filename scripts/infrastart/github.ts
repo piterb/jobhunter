@@ -29,7 +29,8 @@ export async function setupGithubEnv(env: EnvironmentConfig, repo: string) {
         await runCmd('gh', ['variable', 'set', 'APP_NAME', '--env', env.name, '--body', env.appName || 'jobhunter', ...repoFlag]);
 
         if (env.serverUrl) {
-            await runCmd('gh', ['variable', 'set', 'NEXT_PUBLIC_API_URL', '--env', env.name, '--body', env.serverUrl, ...repoFlag]);
+            const apiUrl = env.serverUrl.endsWith('/') ? `${env.serverUrl}api/v1` : `${env.serverUrl}/api/v1`;
+            await runCmd('gh', ['variable', 'set', 'NEXT_PUBLIC_API_URL', '--env', env.name, '--body', apiUrl, ...repoFlag]);
         }
     };
 

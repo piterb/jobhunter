@@ -62,4 +62,3 @@ jobs:
           image: ${{ vars.ARTIFACT_REPO }}/client:${{ github.sha }}
           env_vars: |-
             NODE_ENV=production
-            PORT=3000

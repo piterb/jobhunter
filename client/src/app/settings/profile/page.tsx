@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
+import { CONFIG } from "@/lib/config";
 
 interface Profile {
     id: string;
@@ -135,7 +136,7 @@ export default function ProfilePage() {
         try {
             // 1. Delete from Storage
             const { error: storageError } = await supabase.storage
-                .from('documents')
+                .from(CONFIG.buckets.documents)
                 .remove([storagePath]);
 
             if (storageError) console.warn("Storage deletion error (continuing):", storageError);
@@ -158,7 +159,7 @@ export default function ProfilePage() {
     const handleDownloadDocument = async (storagePath: string, fileName: string) => {
         try {
             const { data, error } = await supabase.storage
-                .from('documents')
+                .from(CONFIG.buckets.documents)
                 .download(storagePath);
 
             if (error) throw error;
@@ -210,7 +211,7 @@ export default function ProfilePage() {
             const filePath = `${user?.id}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('documents')
+                .from(CONFIG.buckets.documents)
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
@@ -286,14 +287,14 @@ export default function ProfilePage() {
             const file = new File([previewAvatar.blob], fileName, { type: previewAvatar.blob.type });
 
             const { error: uploadError } = await supabase.storage
-                .from('avatars')
+                .from(CONFIG.buckets.avatars)
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             // 2. Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
+                .from(CONFIG.buckets.avatars)
                 .getPublicUrl(filePath);
 
             // 3. Update Profile

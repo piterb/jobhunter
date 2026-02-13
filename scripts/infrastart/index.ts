@@ -61,6 +61,8 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
     // Check if env exists in state to pre-fill defaults
     const existing = state.environments[envName] || {};
 
+    const { appName } = await inquirer.prompt([{ type: 'input', name: 'appName', message: 'App Name (for DB migration prefix):', default: existing.appName || 'jobhunter' }]);
+
     const { branch } = await inquirer.prompt([{ type: 'input', name: 'branch', message: 'Trigger Branch (e.g. main):', default: existing.branch }]);
     const { projectId } = await inquirer.prompt([{ type: 'input', name: 'projectId', message: 'GCP Project ID:', default: existing.projectId || `jobhunter-${envName}` }]);
     const { region } = await inquirer.prompt([{ type: 'list', name: 'region', message: 'Region:', choices: ['europe-west1', 'europe-west3', 'us-central1'], default: existing.region || 'europe-west1' }]);
@@ -79,6 +81,7 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
 
     const envConfig: EnvironmentConfig = {
         name: envName.trim(),
+        appName: appName.trim(),
         branch: branch.trim(),
         projectId: projectId.trim(),
         region,

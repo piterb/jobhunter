@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 const path = require('path');
 const axios = require('axios');
+const { CONFIG } = require('./config');
 
 dotenv.config({ path: path.resolve(__dirname, '../server/.env') });
 
@@ -58,9 +59,9 @@ async function seedData() {
     try {
         // Ensure 'avatars' bucket exists
         const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets?.find(b => b.name === 'avatars')) {
-            console.log("Creating 'avatars' bucket...");
-            await supabase.storage.createBucket('avatars', { public: true });
+        if (!buckets?.find(b => b.name === CONFIG.buckets.avatars)) {
+            console.log(`Creating '${CONFIG.buckets.avatars}' bucket...`);
+            await supabase.storage.createBucket(CONFIG.buckets.avatars, { public: true });
         }
 
         // Generate avatar
@@ -75,7 +76,7 @@ async function seedData() {
         const storagePath = `${user.id}/avatar_${Date.now()}.svg`;
 
         const { error: uploadError } = await supabase.storage
-            .from('avatars')
+            .from(CONFIG.buckets.avatars)
             .upload(storagePath, avatarBuffer, {
                 contentType: 'image/svg+xml',
                 upsert: true
@@ -84,7 +85,7 @@ async function seedData() {
         if (uploadError) {
             console.warn('Failed to upload avatar:', uploadError.message);
         } else {
-            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+            const { data: { publicUrl } } = supabase.storage.from(CONFIG.buckets.avatars).getPublicUrl(storagePath);
             avatarUrl = publicUrl;
             console.log('✅ Avatar uploaded to storage:', avatarUrl);
         }
@@ -106,9 +107,9 @@ async function seedData() {
 
     // Ensure 'documents' bucket exists
     const { data: buckets } = await supabase.storage.listBuckets();
-    if (!buckets?.find(b => b.name === 'documents')) {
-        console.log("Creating 'documents' bucket...");
-        await supabase.storage.createBucket('documents', { public: false }); // Documents should likely be private based on schema policies
+    if (!buckets?.find(b => b.name === CONFIG.buckets.documents)) {
+        console.log(`Creating '${CONFIG.buckets.documents}' bucket...`);
+        await supabase.storage.createBucket(CONFIG.buckets.documents, { public: false }); // Documents should likely be private based on schema policies
     }
 
     const resumeContent = `
@@ -144,7 +145,7 @@ async function seedData() {
         resumeContentPath = `${user.id}/resume_2025_final.md`;
 
         const { error: uploadErr } = await supabase.storage
-            .from('documents')
+            .from(CONFIG.buckets.documents)
             .upload(resumeContentPath, fileBuffer, {
                 contentType: 'text/markdown',
                 upsert: true

@@ -9,6 +9,7 @@ export interface EnvironmentConfig {
     workloadIdPool: string;
     workloadIdProvider: string;
     wifProviderPath?: string;
+    appName?: string; // App name for migrations (e.g. jobhunter)
 }
 
 export interface DeploymentState {

@@ -3,6 +3,7 @@
   "environments": {
     "tst": {
       "name": "tst",
+      "appName": "jobhunter",
       "branch": "tst",
       "projectId": "jobhunter-tst",
       "region": "europe-west1",

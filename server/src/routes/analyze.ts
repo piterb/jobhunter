@@ -57,12 +57,12 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
         // Log the success
         await logAIUsage({
             user_id: userId,
-            feature: 'job_analysis',
+            feature: 'Job_Parsing',
             model: response.model,
             tokens_input: response.usage?.prompt_tokens,
             tokens_output: response.usage?.completion_tokens,
             latency_ms: latency,
-            status: 'success',
+            status: 'Success',
             request_json: { url, text_length: text?.length },
             response_json: result,
         });
@@ -72,10 +72,10 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
-            feature: 'job_analysis',
+            feature: 'Job_Parsing',
             model: 'gpt-4o-mini',
             latency_ms: latency,
-            status: 'error',
+            status: 'Failure',
             response_json: { error: error.message },
         });
         return res.status(500).json({ error: error.message });
@@ -123,12 +123,12 @@ router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: Aut
 
         await logAIUsage({
             user_id: userId,
-            feature: 'smart_paste',
+            feature: 'Smart_Paste',
             model: response.model,
             tokens_input: response.usage?.prompt_tokens,
             tokens_output: response.usage?.completion_tokens,
             latency_ms: latency,
-            status: 'success',
+            status: 'Success',
             request_json: { text_length: text.length },
             response_json: result,
         });
@@ -138,10 +138,10 @@ router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: Aut
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
-            feature: 'smart_paste',
+            feature: 'Smart_Paste',
             model: 'gpt-4o-mini',
             latency_ms: latency,
-            status: 'error',
+            status: 'Failure',
             response_json: { error: error.message },
         });
         return res.status(500).json({ error: error.message });

@@ -7,10 +7,9 @@ import { loadState, saveState, EnvironmentConfig } from './config.js';
 import { IS_DRY_RUN } from './utils.js';
 import { setupGcpWif } from './gcp.js';
 import { setupGithubEnv } from './github.js';
-import { generateWorkflows, generateDocker } from './workflows.js';
 
 async function main() {
-    console.log(boxen(chalk.bold.cyan(' 🚀  INFRASTART MANAGER \n v1.0.0 (Modular) '), { padding: 1, borderStyle: 'round', borderColor: 'cyan' }));
+    console.log(boxen(chalk.bold.cyan(' 🚀  INFRASTART MANAGER \n v3.0.0 (Infra Only) '), { padding: 1, borderStyle: 'round', borderColor: 'cyan' }));
 
     if (IS_DRY_RUN) console.log(chalk.yellow.bold('⚠ DRY RUN MODE ACTIVE\n'));
 
@@ -33,11 +32,9 @@ async function main() {
             name: 'action',
             message: 'What do you want to do?',
             choices: [
-                { name: '🚀 Full Setup (GCP + GH Env + Workflows + Docker)', value: 'full' },
+                { name: '🚀 Provision Infrastructure (GCP + GitHub Secrets)', value: 'full' },
                 { name: '☁️  Setup GCP Infrastructure Only', value: 'gcp-only' },
                 { name: '🐙  Setup GitHub Environment Only (Secrets)', value: 'github-only' },
-                { name: '🔄 Regenerate Workflows Only', value: 'workflows' },
-                { name: '🐳  Generate Dockerfiles Only', value: 'docker' },
                 { name: '🚪  Exit', value: 'exit' }
             ]
         }
@@ -46,9 +43,6 @@ async function main() {
     if (action === 'exit') process.exit(0);
 
     try {
-        if (action === 'docker' || action === 'full') await generateDocker();
-        if (action === 'workflows') await generateWorkflows(state);
-
         if (action === 'full' || action === 'gcp-only' || action === 'github-only') {
             await setupEnvironmentFlow(state, action, hasGh);
         }
@@ -112,10 +106,7 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
         console.log(chalk.green(`\n✔ Configuration saved to ${'infrastart.json'}`));
     }
 
-    if (action === 'full') {
-        const { regen } = await inquirer.prompt([{ type: 'confirm', name: 'regen', message: 'Regenerate Workflows?', default: true }]);
-        if (regen) await generateWorkflows(state, true);
-    }
+
 
     finalReport(envConfig, hasGh);
 }

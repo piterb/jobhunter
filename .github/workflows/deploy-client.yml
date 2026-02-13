@@ -60,5 +60,6 @@ jobs:
           service: ${{ env.ServiceName }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ vars.ARTIFACT_REPO }}/client:${{ github.sha }}
+          flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production

@@ -1,8 +1,8 @@
 
-name: Client Deploy ({{ENV_NAME}})
+name: Client Deploy (tst) (tst)
 on:
   push:
-    branches: [{{BRANCH_NAME}}]
+    branches: [tst]
     paths: ['client/**', 'shared/**']
   workflow_dispatch:
 
@@ -13,7 +13,7 @@ jobs:
       contents: 'read'
       id-token: 'write'
     environment:
-      name: {{ENV_NAME}}
+      name: tst
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4

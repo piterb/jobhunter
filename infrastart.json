@@ -1,0 +1,16 @@
+{
+  "githubRepo": "piterb/jobhunter",
+  "environments": {
+    "tst": {
+      "name": "tst",
+      "branch": "tst",
+      "projectId": "jobhunter-tst",
+      "region": "europe-west1",
+      "repoName": "repo-tst",
+      "serviceAccountName": "deployer-tst",
+      "workloadIdPool": "github-pool-tst",
+      "workloadIdProvider": "github-provider-tst",
+      "wifProviderPath": "projects/698374829680/locations/global/workloadIdentityPools/github-pool-tst/providers/github-provider-tst"
+    }
+  }
+}

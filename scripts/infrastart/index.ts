@@ -109,7 +109,7 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
     state.githubRepo = githubRepo;
     if (!IS_DRY_RUN) {
         saveState(state);
-        console.log(chalk.green(`\n✔ Configuration saved to ${'state.json'}`));
+        console.log(chalk.green(`\n✔ Configuration saved to ${'infrastart.json'}`));
     }
 
     if (action === 'full') {
@@ -127,8 +127,28 @@ function finalReport(env: EnvironmentConfig, hasGh: boolean) {
         console.log(`WIF: ${env.wifProviderPath}`);
         console.log(`SA: ${env.serviceAccountName}@${env.projectId}.iam.gserviceaccount.com`);
     }
-    console.log(chalk.bold('\nREQUIRED: OAuth Consent Screen & Client ID'));
-    console.log(`https://console.cloud.google.com/apis/credentials/consent?project=${env.projectId}`);
+    console.log(chalk.bold.underline('\n🔑 REQUIRED MANUAL STEP: Google OAuth Setup'));
+    console.log(chalk.gray(`This is needed for "Sign in with Google" to work.`));
+
+    console.log(chalk.cyan(`\n1. OAuth Consent Screen`));
+    console.log(`   URL: https://console.cloud.google.com/apis/credentials/consent?project=${env.projectId}`);
+    console.log(`   - Select ${chalk.bold('External')} (unless you use Workspace).`);
+    console.log(`   - App Name: ${chalk.white('JobHunter ' + env.name)}`);
+    console.log(`   - Support Email: ${chalk.white('Your email')}`);
+    console.log(`   - Scopes: Add ${chalk.green('.../auth/userinfo.email')}, ${chalk.green('.../auth/userinfo.profile')}, ${chalk.green('openid')}`);
+    console.log(`   - Test Users: Add ${chalk.white('your email')} (important for testing!)`);
+
+    console.log(chalk.cyan(`\n2. Create OAuth Client ID`));
+    console.log(`   URL: https://console.cloud.google.com/apis/credentials/oauthclient?project=${env.projectId}`);
+    console.log(`   - Application Type: ${chalk.bold('Web application')}`);
+    console.log(`   - Name: ${chalk.white('Supabase Client')}`);
+    console.log(`   - Authorized Redirect URIs:`);
+    console.log(`     - ${chalk.yellow('http://localhost:3000/auth/callback')}`);
+    console.log(`     - ${chalk.yellow('https://<YOUR_SUPABASE_PROJECT>.supabase.co/auth/v1/callback')}`);
+
+    console.log(chalk.cyan(`\n3. Configure Supabase Auth`));
+    console.log(`   - Go to Supabase Dashboard -> Authentication -> Providers -> Google`);
+    console.log(`   - Paste ${chalk.bold('Client ID')} & ${chalk.bold('Client Secret')} from GCP.`);
 }
 
 main();

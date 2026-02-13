@@ -25,51 +25,49 @@ export async function generateWorkflows(config: DeploymentState, skipConfirmatio
 
     const clientTemplate = fs.readFileSync(path.join(__dirname, 'templates', 'client-deploy.yml'), 'utf8');
     const serverTemplate = fs.readFileSync(path.join(__dirname, 'templates', 'server-deploy.yml'), 'utf8');
+    const ciTemplate = fs.readFileSync(path.join(__dirname, 'templates', 'ci.yml'), 'utf8');
 
-    const replaceVars = (template: string) => {
+    const replaceVars = (template: string, branch: string, envName: string) => {
         return template
-            .replace(/{{BRANCH_NAME}}/g, branches)
-            .replace(/{{ENV_NAME}}/g, `{ name: \${{ ${branchMapping} }}, url: \${{ steps.deploy.outputs.url }} }`) // This handles the complex env mapping line
-            .replace(/environment: {{ENV_NAME}}/g, `environment: \${{ ${branchMapping} }}`); // This handles simple env name in server update-secrets
+            .replace(/{{BRANCH_NAME}}/g, branch)
+            .replace(/{{ENV_NAME}}/g, envName);
     };
-
-    // Actually the placeholder strategy needs to be robust for both 'environment: {name: ...}' and 'environment: prod' usage.
-    // In current templates:
-    // Client: environment: { name: {{ENV_NAME}}, ... } -> NO, I put 'environment: name: {{ENV_NAME}}' inside template.
-    // Let's refine the replacement strategy based on what I wrote in templates.
-
-    // Client Template I wrote:
-    // environment:
-    //   name: {{ENV_NAME}}
-
-    // Server Template I wrote:
-    // environment: {{ENV_NAME}} 
-
-    // We want the result to be:
-    // environment:
-    //   name: ${{ github.ref == ... && 'dev' || 'prod' }}
-
-    // So {{ENV_NAME}} should trigger the expression.
-
-    const expression = `\${{ ${branchMapping} }}`;
-
-    const filledClient = clientTemplate
-        .replace(/{{BRANCH_NAME}}/g, branches)
-        .replace(/{{ENV_NAME}}/g, expression);
-
-    const filledServer = serverTemplate
-        .replace(/{{BRANCH_NAME}}/g, branches)
-        .replace(/{{ENV_NAME}}/g, expression);
 
     if (!IS_DRY_RUN) {
         fs.ensureDirSync('.github/workflows');
-        fs.writeFileSync('.github/workflows/client-deploy.yml', filledClient);
-        fs.writeFileSync('.github/workflows/server-deploy.yml', filledServer);
     }
+
+    // Generate separate workflow file for each environment
+    for (const [envName, env] of Object.entries(config.environments)) {
+        let clientContent = replaceVars(clientTemplate, env.branch, env.name);
+        let serverContent = replaceVars(serverTemplate, env.branch, env.name);
+
+        // Ensure workflow NAME is unique in UI so they don't look identical
+        clientContent = clientContent.replace(/^name: (.*)$/m, `name: $1 (${envName})`);
+        serverContent = serverContent.replace(/^name: (.*)$/m, `name: $1 (${envName})`);
+
+        if (!IS_DRY_RUN) {
+            fs.writeFileSync(`.github/workflows/deploy-client-${envName}.yml`, clientContent);
+            fs.writeFileSync(`.github/workflows/deploy-server-${envName}.yml`, serverContent);
+        }
+        console.log(chalk.gray(`   - Generated workflows for ${envName}`));
+    }
+
+    // Generate CI Workflow (PR to Prod)
+    const prodEnv = Object.values(config.environments).find(e => e.name === 'prod' || e.name === 'production');
+    const prodBranch = prodEnv ? prodEnv.branch : 'main';
+    const ciContent = ciTemplate.replace(/{{PROD_BRANCH}}/g, prodBranch);
+
+    if (!IS_DRY_RUN) {
+        fs.writeFileSync(`.github/workflows/ci.yml`, ciContent);
+        console.log(chalk.gray(`   - Generated CI workflow for PRs to '${prodBranch}'`));
+    }
+
     console.log(chalk.green('✔ Workflows updated'));
 }
 
 export async function generateDocker() {
     console.log(chalk.blue.bold('\n🐳  DOCKERFILES'));
+    // In a real implementation, this would copy Dockerfiles from templates
     console.log(chalk.green('✔ Dockerfiles generated'));
 }

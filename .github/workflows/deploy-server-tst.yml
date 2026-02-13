@@ -1,8 +1,8 @@
 
-name: Server Deploy ({{ENV_NAME}})
+name: Server Deploy (tst) (tst)
 on:
   push:
-    branches: [{{BRANCH_NAME}}]
+    branches: [tst]
     paths: ['server/**', 'shared/**']
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    environment: {{ENV_NAME}}
+    environment: tst
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
@@ -39,7 +39,7 @@ jobs:
       contents: 'read'
       id-token: 'write'
     environment:
-      name: {{ENV_NAME}}
+      name: tst
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4

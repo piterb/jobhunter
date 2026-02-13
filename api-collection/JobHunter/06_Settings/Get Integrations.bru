@@ -1,0 +1,31 @@
+meta {
+  name: Get Integrations
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/settings/integrations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should include openai status", function() {
+    expect(res.body.openai).to.exist;
+  });
+}
+
+docs {
+  # Get Integrations Status
+  
+  Checks if API keys (like OpenAI) are configured. Does not return the full key for security.
+}

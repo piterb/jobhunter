@@ -10,6 +10,21 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "start": "npm run start --workspaces --if-present"
+    "start": "npm run start --workspaces --if-present",
+    "setup": "./scripts/setup.sh",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:gen": "mkdir -p tmp_gen && cd tmp_gen && ln -sf ../supabase supabase && npx supabase gen types typescript --local > ../shared/src/database.types.ts && cd .. && rm -rf tmp_gen",
+    "db:seed": "npx tsx scripts/seed-user-data.ts"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "boxen": "^7.1.1",
+    "chalk": "^5.3.0",
+    "dotenv": "^17.3.1",
+    "execa": "^8.0.1",
+    "fs-extra": "^11.3.3",
+    "inquirer": "^9.2.14",
+    "ora": "^8.0.1"
   }
 }

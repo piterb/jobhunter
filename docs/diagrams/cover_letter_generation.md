@@ -14,7 +14,7 @@ sequenceDiagram
     U->>FE: Vyberie AI model a tón (napr. Profesionálny)
     U->>FE: Klikne na "Generovať Cover Letter"
     
-    FE->>BE: POST /api/jobs/{id}/generate-cover-letter
+    FE->>BE: POST /api/v1/generate/cover-letter (jobId, customInstructions)
     activate BE
     
     BE->>DB: Získaj kontext (Job Desc + User Bio + Primárne CV)

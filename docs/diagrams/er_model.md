@@ -22,8 +22,7 @@ erDiagram
         string theme "DEFAULT 'dark' (dark, light, system)"
         string language "DEFAULT 'en' (en, sk)"
         string openai_api_key "Encrypted"
-        string selected_ai_model "DEFAULT 'gpt-4o-mini'"
-        numeric monthly_spend_limit "DEFAULT 5.00"
+        string default_ai_model "DEFAULT 'gpt-4o-mini'"
         int ghosting_threshold_days "DEFAULT 14"
         timestamp created_at
         timestamp updated_at

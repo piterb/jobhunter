@@ -1,0 +1,26 @@
+meta {
+  name: Dev Login
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/auth/dev-login
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.access_token) {
+    bru.setVar("authToken", res.body.access_token);
+    console.log("Dev Login successful. Token saved.");
+  }
+}
+
+docs {
+  # Dev Login
+  
+  This is a development-only endpoint that generates a valid Supabase JWT for the naseeded test user.
+  
+  **Note:** This only works if `NODE_ENV=development` and the server is running locally.
+}

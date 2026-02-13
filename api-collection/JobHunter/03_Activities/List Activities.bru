@@ -1,0 +1,37 @@
+meta {
+  name: List Activities for Job
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/jobs/:jobId/activities
+  body: none
+  auth: bearer
+}
+
+params:path {
+  jobId: {{jobId}}
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return array", function() {
+    expect(Array.isArray(res.body)).to.be.true;
+  });
+}
+
+docs {
+  # List Activities for Job
+  
+  Returns all activities (notes, interviews, emails) for a specific job.
+}

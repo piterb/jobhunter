@@ -1,0 +1,32 @@
+meta {
+  name: Get Settings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/settings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should include settings fields", function() {
+    expect(res.body).to.have.property('theme');
+    expect(res.body).to.have.property('language');
+  });
+}
+
+docs {
+  # Get User Settings
+  
+  Returns user preferences and settings.
+}

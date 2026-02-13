@@ -1,0 +1,80 @@
+name: Deploy Server
+
+on:
+  push:
+    branches: [ "master", "tst" ]
+    paths:
+      - 'server/**'
+      - 'shared/**'
+      - 'db/**'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+
+env:
+  NODE_ENV: production
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  Region: ${{ vars.GCP_REGION }}
+  ArtifactRepo: ${{ vars.ARTIFACT_REPO }}
+  ServiceName: ${{ vars.APP_NAME }}-server
+  AppSchemaPrefix: ${{ vars.APP_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'master' && 'prod' || 'tst' }}
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- 1. DB MIGRATIONS (Pre-Deploy) ---
+      - name: Install dbmate
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+          sudo chmod +x /usr/local/bin/dbmate
+
+      - name: Run Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DBMATE_MIGRATIONS_DIR: db/migrations
+          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_schema_migrations"
+        run: dbmate up
+
+      # --- 2. BUILD & PUSH ---
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build and Push Container
+        run: |
+          docker build \
+            --file server/Dockerfile \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }} \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:latest \
+            .
+          docker push ${{ vars.ARTIFACT_REPO }}/server --all-tags
+
+      # --- 3. DEPLOY ---
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.ServiceName }}
+          region: ${{ vars.GCP_REGION }}
+          image: ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }}
+          env_vars: |-
+            NODE_ENV=production
+            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            PORT=8080

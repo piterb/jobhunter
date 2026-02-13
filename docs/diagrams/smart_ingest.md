@@ -9,7 +9,7 @@ sequenceDiagram
     participant DB as Supabase DB
 
     U->>FE: Vloží URL inzerátu
-    FE->>BE: POST /api/ingest { url }
+    FE->>BE: POST /api/v1/analyze/job { url, text }
     
     activate BE
     BE->>SCR: Stiahni HTML/Text z URL

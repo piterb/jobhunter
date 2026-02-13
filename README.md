@@ -9,29 +9,99 @@ All technical specifications and design documents are located in the `docs/` fol
 - **[Infrastructure & Setup](docs/diagrams/infrastructure.md)** - Manual vs. Automated (IaC) processes.
 - **[Design System](docs/design_system.md)** - UI Colors, Typography, Component definitions.
 - **[UI Design](docs/ui_design.md)** - Wireframes, Layouts, Mockups.
+- **[Authentication Setup](docs/auth_setup.md)** - Google OAuth & Supabase configuration.
+- **[Troubleshooting Guide](docs/troubleshooting.md)** - Common local environment issues (e.g., macOS NPM EPERM).
 
 ## 🏗️ Project Structure (Monorepo)
 - **`/client`**: Frontend application (Next.js App Router).
 - **`/server`**: Backend API & Logic (Express.js).
 - **`/shared`**: Shared TypeScript types/interfaces.
 
-## 🚀 Getting Started
+## 🚀 Local Development (Quick Start)
 
-### Prerequisites
-- Node.js & npm
-- Supabase Project (for DB & Auth)
-- OpenAI API Key
+The fastest way to get the project running locally:
 
-### Installation
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
-2.  Start development server:
-    ```bash
-    npm run dev
-    ```
-    This will start both Client (port 3000) and Server (port 3001).
+### 1. Prerequisites
+Ensure you have the following installed:
+- **Node.js** (v18+)
+- **Docker Desktop** (required for local Supabase)
+- **Supabase CLI** (`brew install supabase/tap/supabase` on macOS)
 
-## 🔒 Environment Variables
-Copy `.env.example` to `.env` in both client and server directories and fill in your keys.
+### 2. Automated Setup
+This command installs dependencies, starts local Supabase (Docker), and generates `.env` files.
+```bash
+npm run setup
+```
+
+### 3. AI Configuration
+In `server/.env`, fill in your `OPENAI_API_KEY`. If not provided, the app will run, but AI features will be disabled.
+
+### 4. Run the Application
+```bash
+npm run dev
+```
+- **Frontend Application:** [http://localhost:3000](http://localhost:3000)
+- **Backend Server:** [http://localhost:3001](http://localhost:3001)
+- **Supabase Studio (Database UI):** [http://localhost:54323](http://localhost:54323)
+- **Mailpit (Email Inbox):** [http://localhost:54324](http://localhost:54324)
+
+#### 🔑 Credentials & Database Access
+To view all local credentials (API Keys, Postgres Connection String, etc.), run:
+```bash
+npm run supabase:status
+```
+
+## 🏗️ Project Structure (Monorepo)
+- **`/client`**: Frontend (Next.js App Router).
+- **`/server`**: Backend API (Express.js).
+- **`/shared`**: Shared TypeScript types and interfaces.
+- **`/supabase`**: Database configuration, migrations, and seed data.
+- **`/docs`**: Complete project documentation.
+
+## 🛠️ Useful Commands
+- `npm run setup` - Initial environment setup.
+- `npm run dev` - Start both FE and BE simultaneously.
+- `npm run supabase:status` - View local access credentials and URLs.
+- `npm run supabase:stop` - Stop local Docker containers.
+
+## 🔄 Database Reset & Seeding
+
+If you need to reset your database to a clean state or populate it with demo data:
+
+1. **Reset Database**: 
+   ```bash
+   supabase db reset
+   ```
+   *This wipes all data and reapplies all migrations.*
+
+2. **Login**: 
+   Open [http://localhost:3000](http://localhost:3000) and sign in via Google to create your auth record.
+
+3. **Seed Data**: 
+   ```bash
+   npm run db:seed
+   ```
+   *This populates your profile with sample jobs, activities, and logs.*
+
+## 🧪 API Testing
+
+### Automated Tests (Vitest)
+```bash
+# Run all backend tests
+npm run test:run -w server
+
+# Watch mode (auto-rerun on changes)
+npm test -w server
+```
+
+See [server/README.md](server/README.md) for more details.
+
+### Manual Testing (Bruno)
+We use [Bruno](https://www.usebruno.com/) for manual API testing. The collection is in `api-collection/`.
+
+1. Download Bruno from [usebruno.com](https://www.usebruno.com/downloads)
+2. Open the `api-collection` folder in Bruno
+3. Follow instructions in [api-collection/README.md](api-collection/README.md)
+
+**Why Bruno?** Unlike Postman, Bruno stores collections as files in your git repo, making it easy to share with your team.
+

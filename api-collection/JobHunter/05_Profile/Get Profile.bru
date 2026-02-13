@@ -1,0 +1,32 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return profile data", function() {
+    expect(res.body).to.have.property('email');
+    expect(res.body).to.have.property('full_name');
+  });
+}
+
+docs {
+  # Get Profile
+  
+  Retrieves the current user's profile information.
+}

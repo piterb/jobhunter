@@ -1,0 +1,46 @@
+meta {
+  name: Generate Cover Letter
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/generate/cover-letter
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "jobId": "{{jobId}}",
+    "customInstructions": "Emphasize my experience with React and TypeScript.",
+    "dryRun": true
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return generated content", function() {
+    expect(res.body).to.have.property('content');
+    expect(res.body.content).to.include("MOCK");
+    expect(res.body.warning).to.exist;
+  });
+}
+
+docs {
+  # Generate Cover Letter
+  
+  Uses AI to generate a cover letter based on the job description and your profile.
+  
+  **Requires:**
+  - `jobId`: ID of an existing job in your list
+  - `customInstructions` (optional): Additional context for the AI
+  - OpenAI API Key configured in Settings
+}

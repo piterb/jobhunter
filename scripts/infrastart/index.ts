@@ -154,6 +154,14 @@ function finalReport(env: EnvironmentConfig, hasGh: boolean) {
     console.log(chalk.cyan(`\n3. Configure Supabase Auth`));
     console.log(`   - Go to Supabase Dashboard -> Authentication -> Providers -> Google`);
     console.log(`   - Paste ${chalk.bold('Client ID')} & ${chalk.bold('Client Secret')} from GCP.`);
+
+    console.log(chalk.cyan(`\n4. Configure Supabase Redirects (AFTER DEPLOY)`));
+    console.log(`   - Go to Supabase Dashboard -> Authentication -> URL Configuration.`);
+    console.log(`   - Add your Cloud Run Client URL to ${chalk.bold('Redirect URLs')}.`);
+    console.log(`     Example: ${chalk.gray('https://jobhunter-client-xyz.a.run.app')}`);
+    if (env.serverUrl) {
+        console.log(`     (Server URL is known: ${chalk.green(env.serverUrl)} - but Client URL will be different!)`);
+    }
 }
 
 main();

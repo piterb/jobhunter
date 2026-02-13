@@ -73,6 +73,7 @@ jobs:
           service: ${{ env.ServiceName }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }}
+          flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}

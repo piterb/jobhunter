@@ -162,6 +162,12 @@ function finalReport(env: EnvironmentConfig, hasGh: boolean) {
     if (env.serverUrl) {
         console.log(`     (Server URL is known: ${chalk.green(env.serverUrl)} - but Client URL will be different!)`);
     }
+
+    console.log(chalk.cyan(`\n5. Expose Database Schema`));
+    console.log(`   - Go to Supabase Dashboard -> Project Settings -> API.`);
+    console.log(`   - In ${chalk.bold('Data API')} section, find ${chalk.bold('Exposed schemas')}.`);
+    console.log(`   - Add ${chalk.green(env.appName || 'jobhunter')} to the list.`);
+    console.log(`   - Click ${chalk.bold('Save')}.`);
 }
 
 main();

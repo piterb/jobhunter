@@ -13,6 +13,8 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/lib/auth-context";
+import { FeedbackInitializer } from "@/components/feedback-initializer";
+import { FeedbackButton } from "@/components/feedback-button";
 
 export default function RootLayout({
   children,
@@ -23,7 +25,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans`}>
         <AuthProvider>
+          <FeedbackInitializer />
           {children}
+          <FeedbackButton />
         </AuthProvider>
       </body>
     </html>

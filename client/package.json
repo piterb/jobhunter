@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "clsx": "^2.1.1",
+    "html-to-image": "^1.11.13",
     "is-buffer": "^2.0.5",
     "is-number": "^7.0.0",
     "is-odd": "^3.0.1",

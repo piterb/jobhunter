@@ -8,6 +8,7 @@
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "test": "TMPDIR=./.vitest_tmp vitest",
         "test:run": "TMPDIR=./.vitest_tmp vitest run",
+        "type-check": "tsc --noEmit",
         "seed": "TMPDIR=./.vitest_tmp ts-node-dev --transpile-only src/scripts/seed.ts"
     },
     "dependencies": {

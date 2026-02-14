@@ -1,0 +1,44 @@
+meta {
+  name: "Feedback"
+  type: "http"
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/feedback
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "subject": "Test Feedback",
+    "description": "This is a test feedback from Bruno",
+    "screenshot": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "networkLogs": [],
+    "consoleLogs": [],
+    "metadata": {
+      "url": "http://localhost:3000/dashboard",
+      "browser": "Bruno",
+      "os": "MacOS",
+      "viewport": { "width": 1024, "height": 768 },
+      "timestamp": "2026-02-14T17:53:52Z"
+    },
+    "dryRun": true
+  }
+}
+
+tests {
+  test("should return 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("should return success flag", function() {
+    expect(res.body.success).to.be.true;
+  });
+
+  test("should return reportUrl", function() {
+    expect(res.body.reportUrl).to.be.a("string");
+    expect(res.body.reportUrl).to.include("dummy-storage");
+  });
+}

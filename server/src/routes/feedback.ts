@@ -11,6 +11,10 @@ router.post('/', async (req, res) => {
     try {
         const data: FeedbackData = req.body;
 
+        if (data.dryRun) {
+            console.log(`[Feedback] DRY RUN request received for subject: ${data.subject}`);
+        }
+
         if (!data.subject || !data.description) {
             return res.status(400).json({ error: 'Subject and description are required' });
         }

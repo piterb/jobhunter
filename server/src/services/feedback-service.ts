@@ -1,12 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../config/supabase';
 import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''; // Use service role for storage access
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface FeedbackData {
     subject: string;
@@ -22,6 +18,7 @@ export interface FeedbackData {
         viewport: { width: number; height: number };
         timestamp: string;
     };
+    dryRun?: boolean;
 }
 
 const appName = process.env.APP_NAME || 'jobhunter';
@@ -33,6 +30,11 @@ export class FeedbackService {
         const htmlContent = this.generateHtml(data);
         const uniqueId = Math.random().toString(36).substring(2, 8);
         const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${uniqueId}.html`;
+
+        if (data.dryRun) {
+            console.log('[FeedbackService] DryRun enabled: skipping upload and GitHub issue creation');
+            return `https://dummy-storage.supabase.co/storage/v1/object/public/${this.BUCKET_NAME}/${fileName}`;
+        }
 
         // Ensure bucket exists
         const { data: buckets } = await supabase.storage.listBuckets();

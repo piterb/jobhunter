@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Job, Activity, ActivityEventType } from "@/types/job";
-import { Calendar, Phone, Mail, StickyNote, Tag, History, Loader2 } from "lucide-react";
+import { Calendar, Phone, Mail, StickyNote, Tag, History, Loader2, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { jobService } from "@/services/job-service";
 
@@ -9,7 +9,7 @@ interface ActivityTabProps {
     onActivityAdded?: () => void;
 }
 
-const activityIcons: Record<string, any> = {
+const activityIcons: Record<string, LucideIcon> = {
     Note: StickyNote,
     Status_Change: History,
     Email: Mail,

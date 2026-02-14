@@ -22,7 +22,7 @@ const getClient = (req: AuthRequest) => {
 // POST /generate/cover-letter
 router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (req: AuthRequest<{}, {}, GenerateCoverLetterRequest>, res: Response) => {
     const { jobId, customInstructions, dryRun } = req.body;
-    const userId = req.user?.id!;
+    const userId = req.user!.id;
     const startTime = Date.now();
     const supabase = getClient(req);
 

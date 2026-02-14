@@ -74,7 +74,7 @@ class MockQueryBuilder {
             // Simulate async delay
             await new Promise((r) => setTimeout(r, 5));
 
-            let currentTableData = mockDb[this.table] || [];
+            const currentTableData = mockDb[this.table] || [];
 
             // 1. Handle INSERT
             if (this.inserts) {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 
 export default function AuthCallback() {
     const router = useRouter();
@@ -21,10 +21,10 @@ export default function AuthCallback() {
                 setTimeout(() => {
                     router.push('/');
                 }, 1500);
-            } catch (error: any) {
-                console.error('Error during auth callback:', error.message);
+            } catch (error: unknown) {
+                console.error('Error during auth callback:', error instanceof Error ? error.message : 'Unknown error');
                 setStatus('error');
-                setErrorMessage(error.message || 'Authentication failed');
+                setErrorMessage(error instanceof Error ? error.message : 'Authentication failed');
             }
         };
 
@@ -39,7 +39,7 @@ export default function AuthCallback() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">Authentication Failed</h2>
                 <p className="text-slate-400 max-w-sm mb-6">
-                    We couldn't verify your account. This might be a temporary issue or the connection was interrupted.
+                    We couldn&apos;t verify your account. This might be a temporary issue or the connection was interrupted.
                 </p>
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full max-w-md mb-8">
                     <div className="flex items-center gap-3 text-sm text-slate-300">

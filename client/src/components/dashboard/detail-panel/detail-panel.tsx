@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Job } from "@/types/job";
+import { Job, JobStatus } from "@/types/job";
 import { X, ExternalLink, Search } from "lucide-react";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 import { OverviewTab } from "./tabs/overview";
 import { ActivityTab } from "./tabs/activity-timeline";
@@ -22,7 +21,7 @@ type TabType = "overview" | "activity" | "cover-letter";
 export function DetailPanel({ job, onClose, onActivityAdded, onJobUpdated }: DetailPanelProps & { onJobUpdated?: () => void }) {
     const [activeTab, setActiveTab] = useState<TabType>("overview");
 
-    const handleStatusChange = async (newStatus: any) => {
+    const handleStatusChange = async (newStatus: JobStatus) => {
         if (!job) return;
         try {
             await jobService.updateJobStatus(job.id, newStatus);

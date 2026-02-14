@@ -19,7 +19,7 @@ const getOpenAIClient = (apiKey?: string) => {
 // POST /analyze/job - Smart Ingest
 router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{}, {}, AnalyzeJobRequest>, res: Response) => {
     const { url, text } = req.body;
-    const userId = req.user?.id!;
+    const userId = req.user!.id;
     const startTime = Date.now();
 
     if (!url && !text) {
@@ -85,7 +85,7 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
 // POST /analyze/activity - Smart Paste
 router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: AuthRequest<{}, {}, AnalyzeActivityRequest>, res: Response) => {
     const { text } = req.body;
-    const userId = req.user?.id!;
+    const userId = req.user!.id;
     const startTime = Date.now();
 
     if (!text) {

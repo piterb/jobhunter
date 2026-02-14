@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Job, Activity, PaginatedJobs } from "@/types/job";
+import { Job, Activity, PaginatedJobs, IngestedJobResponse } from "@/types/job";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
@@ -59,7 +59,7 @@ export const jobService = {
         }
 
         const { data, count, error } = await query
-            .order(sort as any, { ascending: order === 'asc' })
+            .order(sort, { ascending: order === 'asc' })
             .range(from, to);
 
         if (error) {
@@ -122,7 +122,7 @@ export const jobService = {
     /**
      * Smart Ingest a job from URL via Express Backend
      */
-    async ingestJob(url: string, token: string): Promise<any> {
+    async ingestJob(url: string, token: string): Promise<IngestedJobResponse> {
         const response = await fetch(`${API_URL}/ingest`, {
             method: "POST",
             headers: {

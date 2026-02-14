@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import {
@@ -12,20 +13,17 @@ import {
     FileText,
     Image as ImageIcon,
     FileCode,
-    Eye,
     Trash2,
     Save,
     Loader2,
     CheckCircle2,
     XCircle,
-    Loader,
     Download,
     Wand2,
     Check,
     X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRef } from "react";
 import { CONFIG } from "@/lib/config";
 
 interface Profile {
@@ -60,14 +58,7 @@ export default function ProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        if (user) {
-            fetchProfile();
-            fetchDocuments();
-        }
-    }, [user]);
-
-    async function fetchProfile() {
+    const fetchProfile = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -82,9 +73,9 @@ export default function ProfilePage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [user?.id]);
 
-    async function fetchDocuments() {
+    const fetchDocuments = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from('documents')
@@ -97,7 +88,14 @@ export default function ProfilePage() {
         } catch (err) {
             console.error("Error fetching documents:", err);
         }
-    }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (user) {
+            fetchProfile();
+            fetchDocuments();
+        }
+    }, [user, fetchProfile, fetchDocuments]);
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -122,9 +120,10 @@ export default function ProfilePage() {
             window.dispatchEvent(new Event('profile-updated'));
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             setTimeout(() => setMessage(null), 3000);
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to update profile.';
             console.error("Error updating profile:", err);
-            setMessage({ type: 'error', text: err.message || 'Failed to update profile.' });
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setSaving(false);
         }
@@ -150,9 +149,10 @@ export default function ProfilePage() {
             if (error) throw error;
             setDocuments(docs => docs.filter(d => d.id !== id));
             setMessage({ type: 'success', text: 'Document deleted successfully.' });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to delete document.';
             console.error("Error deleting document:", err);
-            setMessage({ type: 'error', text: err.message || 'Failed to delete document.' });
+            setMessage({ type: 'error', text: errorMessage });
         }
     };
 
@@ -172,9 +172,10 @@ export default function ProfilePage() {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
             console.error("Error downloading document:", err);
-            alert("Failed to download document: " + err.message);
+            alert("Failed to download document: " + errorMessage);
         }
     };
 
@@ -234,9 +235,10 @@ export default function ProfilePage() {
             // 3. Update local state
             setDocuments(prev => [docData, ...prev]);
             setMessage({ type: 'success', text: 'Document uploaded successfully!' });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to upload document.';
             console.error("Error uploading document:", err);
-            setMessage({ type: 'error', text: err.message || 'Failed to upload document.' });
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -265,9 +267,10 @@ export default function ProfilePage() {
                 blob: blob,
                 seed: seed
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to generate avatar.';
             console.error("Error generating avatar:", err);
-            setMessage({ type: 'error', text: err.message || 'Failed to generate avatar.' });
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setSaving(false);
         }
@@ -315,9 +318,10 @@ export default function ProfilePage() {
             // Cleanup preview
             URL.revokeObjectURL(previewAvatar.url);
             setPreviewAvatar(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to save avatar.';
             console.error("Error saving avatar:", err);
-            setMessage({ type: 'error', text: err.message || 'Failed to save avatar.' });
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setSaving(false);
         }
@@ -412,9 +416,9 @@ export default function ProfilePage() {
                                         previewAvatar ? "border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)] scale-110" : "border-slate-700 text-slate-300 shadow-inner group-hover/avatar:border-indigo-500/50"
                                     )}>
                                         {previewAvatar ? (
-                                            <img src={previewAvatar.url} alt="Preview" className="w-full h-full object-cover" />
+                                            <Image src={previewAvatar.url} alt="Preview" width={80} height={80} unoptimized className="w-full h-full object-cover" />
                                         ) : profile?.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                            <Image src={profile.avatar_url} alt="Profile" width={80} height={80} unoptimized className="w-full h-full object-cover" />
                                         ) : (
                                             profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User size={32} />
                                         )}

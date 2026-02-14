@@ -7,9 +7,9 @@ export interface NetworkLog {
     method: string;
     status: number;
     requestHeaders: Record<string, string>;
-    requestBody: any;
+    requestBody: unknown;
     responseHeaders: Record<string, string>;
-    responseBody: any;
+    responseBody: unknown;
     timestamp: string;
     duration: number;
 }
@@ -98,7 +98,7 @@ class FeedbackLogger {
                 });
 
                 return response;
-            } catch (error: any) {
+            } catch (error: unknown) {
                 this.addNetworkLog({
                     url,
                     method,
@@ -106,7 +106,7 @@ class FeedbackLogger {
                     requestHeaders,
                     requestBody,
                     responseHeaders: {},
-                    responseBody: { error: error.message },
+                    responseBody: { error: error instanceof Error ? error.message : String(error) },
                     timestamp: new Date().toISOString(),
                     duration: Date.now() - start
                 });
@@ -120,7 +120,7 @@ class FeedbackLogger {
 
         types.forEach(type => {
             const original = console[type];
-            console[type] = (...args: any[]) => {
+            console[type] = (...args: unknown[]) => {
                 const message = args.map(arg =>
                     typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
                 ).join(' ');

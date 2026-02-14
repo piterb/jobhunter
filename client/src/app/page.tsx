@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { JobTable } from "@/components/dashboard/job-table";
 import { DetailPanel } from "@/components/dashboard/detail-panel/detail-panel";
@@ -175,6 +175,12 @@ export default function DashboardPage() {
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Ref to track selected job without triggering infinite loops in useCallback
+  const selectedJobRef = useRef<Job | null>(null);
+  useEffect(() => {
+    selectedJobRef.current = selectedJob;
+  }, [selectedJob]);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -199,7 +205,7 @@ export default function DashboardPage() {
     setCurrentPage(1);
   }, [debouncedSearchQuery]);
 
-  const loadJobs = async (silentUpdateId?: string, page: number = currentPage) => {
+  const loadJobs = useCallback(async (silentUpdateId?: string, page: number = currentPage) => {
     try {
       if (!silentUpdateId) setLoading(true);
       const response = await jobService.getJobs(
@@ -219,8 +225,9 @@ export default function DashboardPage() {
       setTotalPages(pages);
 
       // Keep selected job updated if it matches one in the list
-      if (selectedJob) {
-        const targetId = silentUpdateId || selectedJob.id;
+      const currentSelected = selectedJobRef.current;
+      if (currentSelected) {
+        const targetId = silentUpdateId || currentSelected.id;
         const updatedSelected = newJobs?.find((j: Job) => j.id === targetId);
 
         if (updatedSelected && (silentUpdateId === targetId || !silentUpdateId)) {
@@ -242,11 +249,11 @@ export default function DashboardPage() {
     } finally {
       if (!silentUpdateId) setLoading(false);
     }
-  };
+  }, [currentPage, debouncedSearchQuery, pageSize, sortField, sortOrder]);
 
   useEffect(() => {
     loadJobs();
-  }, [sortField, sortOrder, debouncedSearchQuery, currentPage]);
+  }, [loadJobs]);
 
   const handleSort = (field: string) => {
     if (field === sortField) {

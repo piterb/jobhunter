@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Job } from "@/types/job";
-import { Sparkles, Wand2, Copy, Download, Check, FileText, Cpu, MessageSquare } from "lucide-react";
+import { Sparkles, Wand2, Copy, Download, Check, FileText, MessageSquare } from "lucide-react";
 import { aiService } from "@/services/ai-service";
 import { ApiKeyMissingModal } from "@/components/dashboard/api-key-missing-modal";
 
@@ -24,10 +24,10 @@ export function CoverLetterTab({ job }: CoverLetterTabProps) {
             const letter = await aiService.generateCoverLetter(job.id, customInstructions);
             setContent(letter);
             setHasGenerated(true);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to generate cover letter:", error);
 
-            if (error.message && (error.message.includes("OpenAI not configured") || error.message.includes("API key"))) {
+            if (error instanceof Error && (error.message.includes("OpenAI not configured") || error.message.includes("API key"))) {
                 setIsApiKeyMissingOpen(true);
             } else {
                 alert("Failed to generate cover letter. Please try again.");

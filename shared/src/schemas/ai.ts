@@ -56,6 +56,17 @@ export type AnalyzeJobRequest = z.infer<typeof AnalyzeJobRequestSchema>;
 export type AnalyzeActivityRequest = z.infer<typeof AnalyzeActivityRequestSchema>;
 export type GenerateCoverLetterRequest = z.infer<typeof GenerateCoverLetterRequestSchema>;
 
+export type IngestedJobResponse = {
+    title: string;
+    company: string;
+    location?: string;
+    salary_min?: number;
+    salary_max?: number;
+    employment_type?: string;
+    skills_tools?: string[];
+    description_summary?: string;
+};
+
 export const GetAILogsQuerySchema = z.object({
     page: z.string().optional().transform(v => v ? parseInt(v) : undefined),
     limit: z.string().optional().transform(v => v ? parseInt(v) : undefined),

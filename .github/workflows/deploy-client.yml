@@ -18,7 +18,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'master' && 'prod' || 'tst' }}
+    environment: ${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -63,3 +63,4 @@ jobs:
           flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production
+            APP_ENV=${{ github.ref_name == 'master' && 'prod' || github.ref_name }}

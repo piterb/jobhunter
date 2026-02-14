@@ -4,6 +4,10 @@ import { FeedbackService, FeedbackData } from '../services/feedback-service';
 const router = Router();
 
 router.post('/', async (req, res) => {
+    if (process.env.FEEDBACK_ENABLED === 'false') {
+        return res.status(403).json({ error: 'Feedback feature is currently disabled' });
+    }
+
     try {
         const data: FeedbackData = req.body;
 

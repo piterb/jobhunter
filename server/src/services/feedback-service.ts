@@ -78,13 +78,13 @@ export class FeedbackService {
     }
 
     private static async createGitHubIssue(data: FeedbackData, reportUrl: string) {
-        const token = process.env.GITHUB_TOKEN;
-        const owner = process.env.GITHUB_OWNER;
-        const repo = process.env.GITHUB_REPO;
+        const token = process.env.FEEDBACK_GITHUB_TOKEN;
+        const owner = process.env.GITHUB_OWNER || process.env.GITHUB_REPOSITORY_OWNER;
+        const repo = process.env.GITHUB_REPO || process.env.GITHUB_REPOSITORY_NAME;
         const env = process.env.APP_ENV || 'local';
 
         if (!token || !owner || !repo) {
-            console.warn('GitHub integration skipped: GITHUB_TOKEN, GITHUB_OWNER or GITHUB_REPO missing');
+            console.warn('GitHub integration skipped: FEEDBACK_GITHUB_TOKEN, owner or repo missing');
             return;
         }
 

@@ -5,7 +5,8 @@ export default defineConfig({
     test: {
         environment: 'node',
         setupFiles: ['./src/__tests__/setup.ts'],
-        exclude: ['dist', 'node_modules'],
+        include: ['src/**/*.{test,spec}.ts'],
+        exclude: ['**/node_modules/**', '**/dist/**'],
     },
     cacheDir: './.vitest',
 });

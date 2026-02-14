@@ -18,7 +18,6 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_ENV: production
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   Region: ${{ vars.GCP_REGION }}
   ArtifactRepo: ${{ vars.ARTIFACT_REPO }}

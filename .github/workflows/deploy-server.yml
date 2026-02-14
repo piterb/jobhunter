@@ -21,7 +21,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'master' && 'prod' || 'tst' }}
+    environment: ${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -79,3 +79,9 @@ jobs:
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
             SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            FEEDBACK_GITHUB_TOKEN=${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+            FEEDBACK_ENABLED=${{ vars.FEEDBACK_ENABLED || 'true' }}
+            GITHUB_OWNER=${{ github.repository_owner }}
+            GITHUB_REPO=${{ github.event.repository.name }}
+            APP_NAME=${{ vars.APP_NAME }}
+            APP_ENV=${{ github.ref_name == 'master' && 'prod' || github.ref_name }}

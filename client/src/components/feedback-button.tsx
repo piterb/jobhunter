@@ -15,6 +15,8 @@ export function FeedbackButton() {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    if (process.env.NEXT_PUBLIC_FEEDBACK_ENABLED === 'false') return null;
+
     const takeScreenshot = async () => {
         // Hide the feedback button and modal to not include them in the screenshot
         const elementsToHide = document.querySelectorAll('.feedback-ignore');

@@ -18,7 +18,8 @@ if (!supabaseUrl || !serviceRoleKey) {
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function setupFeedbackBucket() {
-    const bucketName = 'feedback-reports';
+    const appName = process.env.APP_NAME || 'jobhunter';
+    const bucketName = `${appName}-feedback-reports`;
 
     console.log(`🔍 Checking bucket: ${bucketName}...`);
 

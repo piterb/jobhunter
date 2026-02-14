@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -30,7 +31,8 @@ export class FeedbackService {
 
     static async generateAndUploadReport(data: FeedbackData): Promise<string> {
         const htmlContent = this.generateHtml(data);
-        const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${data.subject.replace(/\s+/g, '_').substring(0, 20)}.html`;
+        const uniqueId = Math.random().toString(36).substring(2, 8);
+        const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${uniqueId}.html`;
 
         // Ensure bucket exists
         const { data: buckets } = await supabase.storage.listBuckets();
@@ -39,8 +41,7 @@ export class FeedbackService {
         if (!exists) {
             const { error: createError } = await supabase.storage.createBucket(this.BUCKET_NAME, {
                 public: true,
-                fileSizeLimit: 50 * 1024 * 1024, // 50MB to match Express limit
-                allowedMimeTypes: ['text/html']
+                fileSizeLimit: 50 * 1024 * 1024
             });
             if (createError) {
                 console.error('Error creating bucket:', createError);
@@ -65,7 +66,66 @@ export class FeedbackService {
             .from(this.BUCKET_NAME)
             .getPublicUrl(fileName);
 
+        // Optional: Create GitHub Issue
+        try {
+            await this.createGitHubIssue(data, publicUrl);
+        } catch (err) {
+            console.error('Failed to create GitHub issue:', err);
+            // Don't fail the whole request if GitHub fails
+        }
+
         return publicUrl;
+    }
+
+    private static async createGitHubIssue(data: FeedbackData, reportUrl: string) {
+        const token = process.env.GITHUB_TOKEN;
+        const owner = process.env.GITHUB_OWNER;
+        const repo = process.env.GITHUB_REPO;
+        const env = process.env.APP_ENV || 'local';
+
+        if (!token || !owner || !repo) {
+            console.warn('GitHub integration skipped: GITHUB_TOKEN, GITHUB_OWNER or GITHUB_REPO missing');
+            return;
+        }
+
+        const body = `
+### 📝 Feedback Details
+**Subject:** ${data.subject}
+**User:** ${data.metadata.userEmail || 'Anonymous'}
+**Environment:** \`${env.toUpperCase()}\`
+**Timestamp:** ${new Date(data.metadata.timestamp).toLocaleString()}
+
+---
+
+### 🔍 Analysis
+**[📥 Download & View Interactive Report](${reportUrl}?download=feedback_report.html)**
+
+---
+
+### 🛠 Metadata
+- **URL:** ${data.metadata.url}
+- **Browser:** ${data.metadata.browser}
+- **OS:** ${data.metadata.os}
+- **Viewport:** ${data.metadata.viewport.width}x${data.metadata.viewport.height}
+
+### 📝 Description
+${data.description}
+        `;
+
+        await axios.post(
+            `https://api.github.com/repos/${owner}/${repo}/issues`,
+            {
+                title: `[Feedback][${env.toUpperCase()}] ${data.subject}`,
+                body,
+                labels: ['feedback', `env:${env.toLowerCase()}`]
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/vnd.github.v3+json'
+                }
+            }
+        );
     }
 
     private static generateHtml(data: FeedbackData): string {
@@ -104,8 +164,7 @@ export class FeedbackService {
             </div>
         `).join('');
 
-        return `
-<!DOCTYPE html>
+        return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">

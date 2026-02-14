@@ -23,14 +23,32 @@ export interface FeedbackData {
     };
 }
 
+const appName = process.env.APP_NAME || 'jobhunter';
+
 export class FeedbackService {
-    private static BUCKET_NAME = 'feedback-reports';
+    private static BUCKET_NAME = `${appName}-feedback-reports`;
 
     static async generateAndUploadReport(data: FeedbackData): Promise<string> {
         const htmlContent = this.generateHtml(data);
         const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${data.subject.replace(/\s+/g, '_').substring(0, 20)}.html`;
 
-        // Ensure bucket exists (or handle error if it doesn't)
+        // Ensure bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const exists = buckets?.find(b => b.name === this.BUCKET_NAME);
+
+        if (!exists) {
+            const { error: createError } = await supabase.storage.createBucket(this.BUCKET_NAME, {
+                public: true,
+                fileSizeLimit: 50 * 1024 * 1024, // 50MB to match Express limit
+                allowedMimeTypes: ['text/html']
+            });
+            if (createError) {
+                console.error('Error creating bucket:', createError);
+                throw new Error(`Failed to create bucket: ${createError.message}`);
+            }
+        }
+
+        // Upload report
         const { error: uploadError } = await supabase.storage
             .from(this.BUCKET_NAME)
             .upload(fileName, htmlContent, {

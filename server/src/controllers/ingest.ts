@@ -81,7 +81,7 @@ export const ingestJob = async (req: AuthRequest, res: Response) => {
                 response_json: aiResponse.rawResponse
             });
 
-        } catch (aiError: any) {
+        } catch (aiError) {
             // Log failed AI usage
             await supabase.from('ai_usage_logs').insert({
                 user_id: user.id,
@@ -90,7 +90,7 @@ export const ingestJob = async (req: AuthRequest, res: Response) => {
                 prompt_summary: `Failed to parse job description from ${url}`,
                 status: 'Failure',
                 request_json: { url, model },
-                response_json: { error: aiError.message }
+                response_json: { error: (aiError as Error).message }
             });
             throw aiError;
         }
@@ -101,8 +101,9 @@ export const ingestJob = async (req: AuthRequest, res: Response) => {
             url
         });
 
-    } catch (error: any) {
-        console.error('Ingest error:', error.message);
-        res.status(500).json({ error: error.message || 'Failed to ingest job posting' });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Ingest error:', errorMessage);
+        res.status(500).json({ error: errorMessage || 'Failed to ingest job posting' });
     }
 };

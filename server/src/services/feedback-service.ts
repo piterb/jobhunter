@@ -4,12 +4,29 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+export interface NetworkLog {
+    method: string;
+    status: number;
+    url: string;
+    duration: number;
+    requestHeaders: Record<string, string>;
+    responseHeaders: Record<string, string>;
+    requestBody: unknown;
+    responseBody: unknown;
+}
+
+export interface ConsoleLog {
+    type: 'log' | 'warn' | 'error' | 'info';
+    timestamp: string;
+    message: string;
+}
+
 export interface FeedbackData {
     subject: string;
     description: string;
     screenshot?: string; // Base64
-    networkLogs: any[];
-    consoleLogs: any[];
+    networkLogs: NetworkLog[];
+    consoleLogs: ConsoleLog[];
     metadata: {
         url: string;
         userEmail?: string;

@@ -45,13 +45,13 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         .eq('id', jobId)
         .single();
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: _profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-    const { data: documents, error: documentsError } = await supabase
+    const { data: documents, error: _documentsError } = await supabase
         .from('documents')
         .select('name, content_text, doc_type, is_primary')
         .eq('user_id', userId)
@@ -107,7 +107,7 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
             response_format: { type: "json_object" },
         };
 
-        const response = await openai.chat.completions.create(requestPayload as any);
+        const response = await openai.chat.completions.create(requestPayload as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         const latency = Date.now() - startTime;
@@ -126,7 +126,8 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
         });
 
         return res.json(result);
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
@@ -135,10 +136,10 @@ router.post('/cover-letter', validate(GenerateCoverLetterRequestSchema), async (
             prompt_summary: `Generate cover letter for ${job?.company} - ${job?.title}`,
             latency_ms: latency,
             status: 'Failure',
-            response_json: { error: error.message },
+            response_json: { error: errorMessage },
             request_json: { jobId, customInstructions, hasResume: !!resumeContent } // fallback
         });
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: errorMessage });
     }
 });
 

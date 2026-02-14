@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AuthRequest<P = any, ResBody = any, ReqBody = any, ReqQuery = any> extends Request<P, ResBody, ReqBody, ReqQuery> {
     user?: {
         id: string;
         email?: string;
-        app_metadata?: any;
-        user_metadata?: any;
+        app_metadata?: Record<string, unknown>;
+        user_metadata?: Record<string, unknown>;
     };
 }
 

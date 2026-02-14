@@ -68,7 +68,8 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
         });
 
         return res.json(result);
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
@@ -76,9 +77,9 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
             model: 'gpt-4o-mini',
             latency_ms: latency,
             status: 'Failure',
-            response_json: { error: error.message },
+            response_json: { error: errorMessage },
         });
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: errorMessage });
     }
 });
 
@@ -134,7 +135,8 @@ router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: Aut
         });
 
         return res.json(result);
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const latency = Date.now() - startTime;
         await logAIUsage({
             user_id: userId,
@@ -142,9 +144,9 @@ router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: Aut
             model: 'gpt-4o-mini',
             latency_ms: latency,
             status: 'Failure',
-            response_json: { error: error.message },
+            response_json: { error: errorMessage },
         });
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: errorMessage });
     }
 });
 

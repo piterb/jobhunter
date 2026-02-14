@@ -21,7 +21,7 @@ class LocalMockQueryBuilder {
         this.insertsRows = rows.map(r => ({ id: Math.random().toString(), ...r }));
         return this;
     }
-    update(data: any) { return this; }
+    update(_data: any) { return this; }
     private insertsRows: any[] | null = null;
 
     async then(resolve: any) {

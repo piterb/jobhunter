@@ -25,9 +25,10 @@ router.post('/', async (req, res) => {
             success: true,
             reportUrl
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error('Feedback route error:', error);
-        res.status(500).json({ error: error.message || 'Failed to process feedback' });
+        res.status(500).json({ error: errorMessage || 'Failed to process feedback' });
     }
 });
 

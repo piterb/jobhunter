@@ -21,7 +21,7 @@ async function checkStorage() {
         const bucket = buckets.find(b => b.name === bucketName);
         if (!bucket) {
             console.log(`Bucket '${bucketName}' NOT found. Attempting creation...`);
-            const { data, error } = await supabase.storage.createBucket(bucketName, { public: true });
+            const { data: _data, error } = await supabase.storage.createBucket(bucketName, { public: true });
             if (error) console.error(`Error creating '${bucketName}':`, error);
             else console.log(`Created '${bucketName}'`);
         } else {

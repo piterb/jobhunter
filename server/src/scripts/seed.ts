@@ -102,8 +102,9 @@ const seed = async () => {
                     else console.warn('⚠️ Avatar file NOT found in storage after upload.');
                 }
             }
-        } catch (avatarErr: any) {
-            console.warn('Error generating seed avatar (falling back to default icon):', avatarErr.message);
+        } catch (avatarErr) {
+            const errorMessage = avatarErr instanceof Error ? avatarErr.message : String(avatarErr);
+            console.warn('Error generating seed avatar (falling back to default icon):', errorMessage);
             // avatarUrl remains null, which triggers the default letter icon in the UI
         }
 
@@ -308,8 +309,9 @@ const seed = async () => {
                     else console.warn('⚠️ Resume file NOT found in storage listing after upload.');
                 }
             }
-        } catch (err: any) {
-            console.warn('Error uploading sample resume:', err.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            console.warn('Error uploading sample resume:', errorMessage);
         }
 
         const { error: docError } = await supabaseAdmin

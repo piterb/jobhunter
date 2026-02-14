@@ -1,11 +1,10 @@
-import { vi } from 'vitest';
 import crypto from 'crypto';
 
 // -------------------------------------------------------------------------
 // REUSABLE MOCK DB & QUERY BUILDER
 // -------------------------------------------------------------------------
 
-export let mockDb: Record<string, any[]> = {
+export const mockDb: Record<string, any[]> = {
     jobs: [],
     activities: [],
     profiles: [],
@@ -89,7 +88,7 @@ export class MockQueryBuilder {
         try {
             await new Promise((r) => setTimeout(r, 2)); // Tiny delay
 
-            let currentTableData = mockDb[this.table] || [];
+            const currentTableData = mockDb[this.table] || [];
 
             // 1. Handle INSERT
             if (this.inserts) {

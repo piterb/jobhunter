@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { toJpeg } from 'html-to-image';
 import { MessageSquare, X, Send, Loader2, Camera, Trash2 } from 'lucide-react';
 import { feedbackLogger } from '@/lib/feedback-logger';
@@ -19,8 +20,8 @@ export function FeedbackButton() {
 
     const takeScreenshot = async () => {
         // Hide the feedback button and modal to not include them in the screenshot
-        const elementsToHide = document.querySelectorAll('.feedback-ignore');
-        elementsToHide.forEach((el: any) => el.style.opacity = '0');
+        const elementsToHide = document.querySelectorAll<HTMLElement>('.feedback-ignore');
+        elementsToHide.forEach((el) => el.style.opacity = '0');
 
         try {
             const dataUrl = await toJpeg(document.body, {
@@ -44,7 +45,7 @@ export function FeedbackButton() {
         } catch (err) {
             console.error('Failed to take screenshot', err);
         } finally {
-            elementsToHide.forEach((el: any) => el.style.opacity = '1');
+            (document.querySelectorAll<HTMLElement>('.feedback-ignore')).forEach((el) => el.style.opacity = '1');
         }
     };
 
@@ -92,6 +93,7 @@ export function FeedbackButton() {
                 setPreviewImage(null);
             }, 3000);
         } catch (err) {
+            console.error('Failed to send feedback', err);
             alert('Failed to send feedback. Please try again.');
         } finally {
             setIsSending(false);
@@ -121,7 +123,7 @@ export function FeedbackButton() {
                                 <Send size={32} />
                             </div>
                             <h4 className="text-lg font-bold text-white">Report Sent!</h4>
-                            <p className="mt-1 text-sm text-slate-400">Thank you for your feedback. We'll check it out soon.</p>
+                            <p className="mt-1 text-sm text-slate-400">Thank you for your feedback. We&apos;ll check it out soon.</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -167,7 +169,7 @@ export function FeedbackButton() {
 
                                 {previewImage ? (
                                     <div className="relative group overflow-hidden rounded-lg border border-slate-700">
-                                        <img src={previewImage} alt="Preview" className="w-full object-cover max-h-40" />
+                                        <Image src={previewImage} alt="Preview" width={400} height={300} unoptimized className="w-full object-cover max-h-40" />
                                         <div className="absolute top-2 right-2">
                                             <button
                                                 type="button"

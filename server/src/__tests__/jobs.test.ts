@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import crypto from 'crypto';
 
@@ -26,7 +26,7 @@ class MockQueryBuilder {
         this.table = table;
     }
 
-    select(columns?: string) {
+    select(_columns?: string) {
         // In this mock, we always return all columns '*'
         // Does not support column filtering yet, but API usually selects *
         return this;
@@ -62,7 +62,7 @@ class MockQueryBuilder {
         return this;
     }
 
-    range(from: number, to: number) {
+    range(_from: number, _to: number) {
         // We'll just ignore range in the simple mock or we could implement it
         // For now, let's just return our data since we usually have small datasets in tests
         return this;
@@ -74,7 +74,7 @@ class MockQueryBuilder {
             // Simulate async delay
             await new Promise((r) => setTimeout(r, 5));
 
-            let currentTableData = mockDb[this.table] || [];
+            const currentTableData = mockDb[this.table] || [];
 
             // 1. Handle INSERT
             if (this.inserts) {

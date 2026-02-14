@@ -1,23 +1,25 @@
 "use client";
 
 
-import { Plus, LogOut, Settings, ChevronDown, LayoutDashboard, Cpu, Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Plus, LogOut, Settings, ChevronDown, LayoutDashboard, Cpu, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { jobService } from "@/services/job-service";
 import { AddJobModal } from "../dashboard/add-job-modal";
 import { ApiKeyMissingModal } from "../dashboard/api-key-missing-modal";
+import { Job } from "@/types/job";
 
 export function Header() {
     const { user, signOut } = useAuth();
     const pathname = usePathname();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
-    const [ingestedData, setIngestedData] = useState<any>(null);
+    const [ingestedData, setIngestedData] = useState<Partial<Job> | null>(null);
     const [profile, setProfile] = useState<{ avatar_url: string | null; full_name: string | null } | null>(null);
 
     // Ingest State
@@ -40,6 +42,8 @@ export function Header() {
                 .select('default_ai_model, avatar_url, full_name')
                 .eq('id', user.id)
                 .single();
+
+            if (error) throw error;
 
             if (data) {
                 if (data.default_ai_model) setModel(data.default_ai_model);
@@ -90,14 +94,16 @@ export function Header() {
             });
             setIsAddJobOpen(true);
             setUrl("");
-        } catch (err: any) {
+        } catch (err: unknown) {
             let errorMessage = "Unknown error";
             if (err instanceof Error) {
                 errorMessage = err.message;
             } else if (typeof err === 'string') {
                 errorMessage = err;
+            } else if (err && typeof err === 'object' && 'message' in err) {
+                errorMessage = (err as { message: string }).message;
             } else if (err && typeof err === 'object') {
-                errorMessage = (err as any).message || (err as any).error || JSON.stringify(err);
+                errorMessage = JSON.stringify(err);
             }
 
             console.error("Ingest detailed error:", errorMessage, err);
@@ -118,7 +124,7 @@ export function Header() {
         <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 z-50 px-6 flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <img src="/logo.png" alt="Job hunter logo" className="w-8 h-8 rounded-lg object-contain" />
+                <Image src="/logo.png" alt="Job hunter logo" width={32} height={32} className="w-8 h-8 rounded-lg object-contain" />
                 <span className="text-white font-semibold text-xl tracking-tight hidden sm:block">
                     JobHunter
                 </span>
@@ -228,7 +234,7 @@ export function Header() {
                             setIngestedData(null);
                         }}
                         onJobAdded={() => window.location.reload()}
-                        initialData={ingestedData}
+                        initialData={ingestedData || undefined}
                     />
 
                     <ApiKeyMissingModal
@@ -257,9 +263,9 @@ export function Header() {
                                 {profile?.full_name || user?.email?.split('@')[0]}
                             </span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform overflow-hidden border border-white/10">
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform overflow-hidden border border-white/10 relative">
                             {profile?.avatar_url ? (
-                                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                <Image src={profile.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
                             ) : (
                                 profile?.full_name ? profile.full_name[0].toUpperCase() : user?.email?.[0].toUpperCase()
                             )}

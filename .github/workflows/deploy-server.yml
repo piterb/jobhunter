@@ -1,4 +1,4 @@
-name: Deploy Server
+name: Server CI/CD
 
 on:
   push:
@@ -8,10 +8,16 @@ on:
       - 'shared/**'
       - 'db/**'
       - '.github/workflows/deploy-server.yml'
+  pull_request:
+    branches: [ "master", "tst" ]
+    paths:
+      - 'server/**'
+      - 'shared/**'
+      - 'db/**'
+      - '.github/workflows/deploy-server.yml'
   workflow_dispatch:
 
 env:
-  NODE_ENV: production
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   Region: ${{ vars.GCP_REGION }}
   ArtifactRepo: ${{ vars.ARTIFACT_REPO }}
@@ -19,18 +25,39 @@ env:
   AppSchemaPrefix: ${{ vars.APP_NAME }}
 
 jobs:
+  ci:
+    name: Server CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build Shared
+        run: npm run build -w shared
+      - name: Lint Server
+        run: npm run lint -w server
+      - name: Type Check Server
+        run: npm run type-check -w server
+      - name: Test Server
+        run: npm test -w server
+
   deploy:
+    name: Deploy Server
+    needs: ci
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
     permissions:
       contents: 'read'
       id-token: 'write'
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- 1. DB MIGRATIONS (Pre-Deploy) ---
       - name: Install dbmate
         run: |
           sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
@@ -43,9 +70,7 @@ jobs:
           DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_schema_migrations"
         run: dbmate up
 
-      # --- 2. BUILD & PUSH ---
       - name: Google Auth
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
@@ -57,7 +82,7 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build and Push Container
+      - name: Build and Push Server
         run: |
           docker build \
             --file server/Dockerfile \
@@ -66,7 +91,6 @@ jobs:
             .
           docker push ${{ vars.ARTIFACT_REPO }}/server --all-tags
 
-      # --- 3. DEPLOY ---
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:

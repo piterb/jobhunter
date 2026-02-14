@@ -37,9 +37,10 @@ export class ScraperService {
             }
 
             return text.substring(0, 15000); // Limit to 15k characters for LLM context window
-        } catch (error: any) {
-            console.error('Scraping error:', error.message);
-            throw new Error(`Failed to scrape URL: ${error.message}`);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('Scraping error:', errorMessage);
+            throw new Error(`Failed to scrape URL: ${errorMessage}`);
         }
     }
 }

@@ -8,6 +8,8 @@
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "test": "TMPDIR=./.vitest_tmp vitest",
         "test:run": "TMPDIR=./.vitest_tmp vitest run",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint .",
         "seed": "TMPDIR=./.vitest_tmp ts-node-dev --transpile-only src/scripts/seed.ts"
     },
     "dependencies": {
@@ -26,6 +28,8 @@
         "@types/node": "^20.11.25",
         "@types/supertest": "^6.0.3",
         "@vitest/ui": "^4.0.18",
+        "eslint": "^9.0.0",
+        "typescript-eslint": "^8.0.0",
         "supertest": "^7.2.2",
         "ts-node-dev": "^2.0.0",
         "typescript": "^5.4.2",

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Database } from '../database.types';
+import { EmploymentType } from './job';
 
 export const AIFeatureSchema = z.enum(['Job_Parsing', 'Email_Analysis', 'Cover_Letter_Generation', 'Smart_Paste']);
 export type AIFeature = z.infer<typeof AIFeatureSchema>;
@@ -55,6 +56,17 @@ export type IngestRequest = z.infer<typeof IngestRequestSchema>;
 export type AnalyzeJobRequest = z.infer<typeof AnalyzeJobRequestSchema>;
 export type AnalyzeActivityRequest = z.infer<typeof AnalyzeActivityRequestSchema>;
 export type GenerateCoverLetterRequest = z.infer<typeof GenerateCoverLetterRequestSchema>;
+
+export type IngestedJobResponse = {
+    title: string;
+    company: string;
+    location?: string;
+    salary_min?: number;
+    salary_max?: number;
+    employment_type?: EmploymentType;
+    skills_tools?: string[];
+    description_summary?: string;
+};
 
 export const GetAILogsQuerySchema = z.object({
     page: z.string().optional().transform(v => v ? parseInt(v) : undefined),

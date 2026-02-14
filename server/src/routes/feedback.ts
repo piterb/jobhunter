@@ -11,6 +11,10 @@ router.post('/', async (req, res) => {
     try {
         const data: FeedbackData = req.body;
 
+        if (data.dryRun) {
+            console.log(`[Feedback] DRY RUN request received for subject: ${data.subject}`);
+        }
+
         if (!data.subject || !data.description) {
             return res.status(400).json({ error: 'Subject and description are required' });
         }
@@ -21,9 +25,10 @@ router.post('/', async (req, res) => {
             success: true,
             reportUrl
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error('Feedback route error:', error);
-        res.status(500).json({ error: error.message || 'Failed to process feedback' });
+        res.status(500).json({ error: errorMessage || 'Failed to process feedback' });
     }
 });
 

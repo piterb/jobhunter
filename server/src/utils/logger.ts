@@ -10,8 +10,8 @@ export interface AILogData {
     cost?: number;
     latency_ms?: number;
     status: 'Success' | 'Failure' | 'Partial_Success';
-    request_json?: any;
-    response_json?: any;
+    request_json?: unknown;
+    response_json?: unknown;
 }
 
 export const logAIUsage = async (log: AILogData) => {

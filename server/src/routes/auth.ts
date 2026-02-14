@@ -60,9 +60,10 @@ router.get('/dev-login', async (req: Request, res: Response) => {
             expires_in: signInData.session.expires_in,
             warning: 'This token was generated via Dev-Login. The user password was reset to a default dev value.'
         });
-    } catch (error: any) {
-        console.error('[Dev-Login] Error:', error);
-        return res.status(500).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('[Dev-Login] Error:', errorMessage);
+        return res.status(500).json({ error: errorMessage });
     }
 });
 

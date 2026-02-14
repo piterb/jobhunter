@@ -1,26 +1,53 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import request from 'supertest';
-import { mockDb, MockQueryBuilder } from './utils/mockSupabase';
+// 1. Setup Mocks BEFORE imports
+const MOCK_USER_ID = 'test-user-123';
+const mockDb: Record<string, any[]> = {
+    jobs: [],
+    activities: []
+};
 
-// -------------------------------------------------------------------------
-// MOCK DEPENDENCIES
-// -------------------------------------------------------------------------
+class LocalMockQueryBuilder {
+    private table: string;
+    private filters: any[] = [];
+    private singleResult = false;
 
-// Mock Supabase
-vi.mock('../config/supabase', () => ({
-    createSupabaseUserClient: vi.fn(() => ({
-        from: (table: string) => new MockQueryBuilder(table),
-    })),
-    supabaseAdmin: {
-        from: (table: string) => new MockQueryBuilder(table),
-    },
-    supabase: {
-        from: (table: string) => new MockQueryBuilder(table),
+    constructor(table: string) { this.table = table; }
+    select() { return this; }
+    eq(col: string, val: any) { this.filters.push({ col, val }); return this; }
+    order() { return this; }
+    single() { this.singleResult = true; return this; }
+    insert(data: any) {
+        const rows = Array.isArray(data) ? data : [data];
+        this.insertsRows = rows.map(r => ({ id: Math.random().toString(), ...r }));
+        return this;
     }
+    update(_data: any) { return this; }
+    private insertsRows: any[] | null = null;
+
+    async then(resolve: any) {
+        if (this.insertsRows) {
+            mockDb[this.table].push(...this.insertsRows);
+            const res = this.singleResult ? this.insertsRows[0] : this.insertsRows;
+            return resolve({ data: res, error: null });
+        }
+        let data = mockDb[this.table] || [];
+        for (const f of this.filters) {
+            data = data.filter(item => item[f.col] === f.val);
+        }
+        if (this.singleResult) {
+            if (data.length === 0) return resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } });
+            return resolve({ data: data[0], error: null });
+        }
+        return resolve({ data, error: null });
+    }
+}
+
+vi.mock('../config/supabase', () => ({
+    createSupabaseUserClient: vi.fn(() => ({ from: (t: string) => new LocalMockQueryBuilder(t) })),
+    supabaseAdmin: { from: (t: string) => new LocalMockQueryBuilder(t) },
+    supabase: { from: (t: string) => new LocalMockQueryBuilder(t) }
 }));
 
-// Mock Auth
-const MOCK_USER_ID = 'test-user-123';
 vi.mock('../middleware/auth', () => ({
     authMiddleware: (req: any, res: any, next: any) => {
         req.user = { id: MOCK_USER_ID, email: 'test@example.com' };
@@ -28,8 +55,9 @@ vi.mock('../middleware/auth', () => ({
     }
 }));
 
-// Import App
+// 2. Import App
 import app from '../app';
+import request from 'supertest';
 
 describe('Activities API', () => {
 

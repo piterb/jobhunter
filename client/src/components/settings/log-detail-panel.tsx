@@ -1,8 +1,7 @@
 "use client";
 
-import { X, ScrollText, Cpu, Clock, Zap, ExternalLink, Code, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { X, ScrollText, Clock, Code, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 import { AIUsageLog } from "shared";
-import { cn } from "@/lib/utils";
 
 interface LogDetailPanelProps {
     log: AIUsageLog | null;
@@ -41,15 +40,16 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
         return new Date(dateString).toLocaleString('en-GB');
     };
 
-    const formatJson = (json: any) => {
+    const formatJson = (json: unknown) => {
         if (!json) return "null";
 
         // Deep clone to avoid modifying the original log object
         const cloned = JSON.parse(JSON.stringify(json));
 
         // Truncate message content if it exists (common for OpenAI requests)
-        if (cloned.messages && Array.isArray(cloned.messages)) {
-            cloned.messages = cloned.messages.map((msg: any) => {
+        const typedCloned = cloned as { messages?: Array<{ content?: string }> };
+        if (typedCloned.messages && Array.isArray(typedCloned.messages)) {
+            typedCloned.messages = typedCloned.messages.map((msg) => {
                 if (msg.content && typeof msg.content === 'string' && msg.content.length > 500) {
                     return {
                         ...msg,
@@ -60,7 +60,7 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
             });
         }
 
-        return JSON.stringify(cloned, null, 2);
+        return JSON.stringify(typedCloned, null, 2);
     };
 
     return (

@@ -8,10 +8,10 @@ export const validate = (schema: ZodTypeAny) => {
             req.body = parsedData; // Replace body with parsed/validated data
             next();
         } catch (error) {
-            if (error instanceof ZodError || (error as any).name === 'ZodError') {
+            if (error instanceof ZodError) {
                 return res.status(400).json({
                     error: 'Validation failed',
-                    details: (error as any).errors.map((err: any) => ({
+                    details: error.errors.map((err) => ({
                         path: err.path.join('.'),
                         message: err.message
                     }))

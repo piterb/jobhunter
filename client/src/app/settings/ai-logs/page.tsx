@@ -1,7 +1,7 @@
 "use client";
 
-import { ScrollText, Cpu, Clock, Zap, ExternalLink, CheckCircle, AlertCircle, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Cpu, Clock, Zap, ExternalLink, CheckCircle, AlertCircle, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 import { aiService } from "@/services/ai-service";
 import { AIUsageLog } from "shared";
 import { LogDetailPanel } from "@/components/settings/log-detail-panel";

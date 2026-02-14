@@ -24,7 +24,7 @@ export class OpenAIService {
         });
     }
 
-    async parseJobDescription(text: string, model: string = 'gpt-4o-mini', apiKey?: string): Promise<{ data: ParsedJob; usage: any; rawResponse: any; latency: number; fullRequest: any }> {
+    async parseJobDescription(text: string, model: string = 'gpt-4o-mini', apiKey?: string): Promise<{ data: ParsedJob; usage: OpenAI.CompletionUsage | undefined; rawResponse: OpenAI.Chat.ChatCompletion; latency: number; fullRequest: unknown }> {
         const client = this.getClient(apiKey);
         const startTime = Date.now();
         const prompt = `
@@ -59,7 +59,7 @@ export class OpenAIService {
         };
 
         try {
-            const completion = await client.chat.completions.create(requestPayload as any);
+            const completion = await client.chat.completions.create(requestPayload as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
 
             const latency = Date.now() - startTime;
             const content = completion.choices[0].message.content;
@@ -76,8 +76,8 @@ export class OpenAIService {
                 fullRequest: requestPayload
             };
 
-        } catch (error: any) {
-            console.error('OpenAI parsing error:', error.message);
+        } catch (error) {
+            console.error('OpenAI parsing error:', error instanceof Error ? error.message : String(error));
             throw error; // Rethrow to let caller handle logging
         }
     }

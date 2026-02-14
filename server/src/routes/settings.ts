@@ -76,14 +76,14 @@ router.get('/integrations', async (req: AuthRequest, res: Response) => {
 // PUT /settings/integrations - Update integration settings
 router.put('/integrations', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const { provider, api_key, enabled, default_model } = req.body;
+    const { provider, api_key, enabled: _enabled, default_model } = req.body;
     const supabase = getClient(req);
 
     if (provider !== 'openai') {
         return res.status(400).json({ error: 'Unsupported provider' });
     }
 
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (api_key !== undefined) updates.openai_api_key = api_key;
     if (default_model !== undefined) updates.default_ai_model = default_model;
 

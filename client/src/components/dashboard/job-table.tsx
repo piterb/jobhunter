@@ -4,7 +4,6 @@ import { Job, JobStatus } from "@/types/job";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MapPin, ArrowUpDown, Trash2, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 interface JobTableProps {
     jobs: Job[];
@@ -17,6 +16,19 @@ interface JobTableProps {
     sortOrder: "asc" | "desc";
     onSort: (field: string) => void;
 }
+
+const SortIcon = ({
+    field,
+    sortField,
+    sortOrder
+}: {
+    field: string,
+    sortField: string,
+    sortOrder: "asc" | "desc"
+}) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex-shrink-0" />;
+    return sortOrder === "asc" ? <ChevronUp size={12} className="ml-1 text-indigo-400 flex-shrink-0" /> : <ChevronDown size={12} className="ml-1 text-indigo-400 flex-shrink-0" />;
+};
 
 export function JobTable({
     jobs,
@@ -34,11 +46,6 @@ export function JobTable({
         if (window.confirm("Are you sure you want to delete this job? This action cannot be undone and will delete all associated activities.")) {
             onDeleteJob(jobId);
         }
-    };
-
-    const SortIcon = ({ field }: { field: string }) => {
-        if (sortField !== field) return <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex-shrink-0" />;
-        return sortOrder === "asc" ? <ChevronUp size={12} className="ml-1 text-indigo-400 flex-shrink-0" /> : <ChevronDown size={12} className="ml-1 text-indigo-400 flex-shrink-0" />;
     };
 
     return (
@@ -121,43 +128,43 @@ export function JobTable({
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("title")}>
                             <div className="flex items-center">
                                 Title
-                                <SortIcon field="title" />
+                                <SortIcon field="title" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("company")}>
                             <div className="flex items-center">
                                 Company
-                                <SortIcon field="company" />
+                                <SortIcon field="company" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell" onClick={() => onSort("location")}>
                             <div className="flex items-center">
                                 Location
-                                <SortIcon field="location" />
+                                <SortIcon field="location" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden 2xl:table-cell" onClick={() => onSort("employment_type")}>
                             <div className="flex items-center">
                                 Type
-                                <SortIcon field="employment_type" />
+                                <SortIcon field="employment_type" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group" onClick={() => onSort("applied_at")}>
                             <div className="flex items-center">
                                 Applied At
-                                <SortIcon field="applied_at" />
+                                <SortIcon field="applied_at" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 cursor-pointer hover:text-slate-300 group hidden xl:table-cell" onClick={() => onSort("created_at")}>
                             <div className="flex items-center">
                                 Created At
-                                <SortIcon field="created_at" />
+                                <SortIcon field="created_at" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-6 py-3 text-right cursor-pointer hover:text-slate-300 group" onClick={() => onSort("status")}>
                             <div className="flex items-center justify-end">
                                 Status
-                                <SortIcon field="status" />
+                                <SortIcon field="status" sortField={sortField} sortOrder={sortOrder} />
                             </div>
                         </th>
                         <th className="px-4 py-3 w-10"></th>

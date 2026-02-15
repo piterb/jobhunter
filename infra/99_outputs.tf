@@ -43,7 +43,7 @@ output "generated_workflows" {
 # --- Supabase Outputs (Non-sensitive only) ---
 output "supabase_api_url" {
   description = "The Supabase API URL being used"
-  value       = data.supabase_project.current.api_url
+  value       = local.supabase_url
 }
 
 output "supabase_project_ref" {

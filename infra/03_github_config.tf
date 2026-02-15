@@ -27,10 +27,10 @@ resource "github_actions_environment_secret" "secrets" {
     "GCP_WIF_PROVIDER"          = google_iam_workload_identity_pool_provider.provider.name
     "GCP_SA_EMAIL"              = google_service_account.deployer.email
     "DATABASE_URL"              = local.database_url
-    "SUPABASE_URL"              = data.supabase_project.current.api_url
-    "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_project.current.service_role_key
-    "NEXT_PUBLIC_SUPABASE_URL"  = data.supabase_project.current.api_url
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_project.current.anon_key
+    "SUPABASE_URL"              = local.supabase_url
+    "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_apikeys.current.service_role_key
+    "NEXT_PUBLIC_SUPABASE_URL"  = local.supabase_url
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_apikeys.current.anon_key
     "FEEDBACK_GITHUB_TOKEN"     = var.feedback_github_token
   }
 

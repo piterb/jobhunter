@@ -10,6 +10,7 @@ locals {
   server_service_name = "${var.app_name}-server"
   client_service_name = "${var.app_name}-client"
   
-  # Derived DATABASE_URL for CI/CD usage (migrations and server)
+  # Derived Supabase URLs
+  supabase_url = "https://${var.supabase_project_ref}.supabase.co"
   database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:6543/postgres?pgbouncer=true"
 }

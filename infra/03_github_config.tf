@@ -13,6 +13,9 @@ resource "github_actions_environment_variable" "vars" {
     "APP_NAME"            = var.app_name
     "NEXT_PUBLIC_API_URL" = "${google_cloud_run_v2_service.server.uri}/api/v1"
     "FEEDBACK_ENABLED"    = var.feedback_enabled
+    "DB_SCHEMA"                    = local.db_schema
+    "RESOURCE_PREFIX"               = local.resource_prefix
+    "NEXT_PUBLIC_RESOURCE_PREFIX"   = local.resource_prefix
   }
 
   repository    = local.github_repo

@@ -38,10 +38,10 @@ export interface FeedbackData {
     dryRun?: boolean;
 }
 
-const appName = process.env.APP_NAME || 'jobhunter';
+const resourcePrefix = process.env.RESOURCE_PREFIX || process.env.APP_NAME || 'jobhunter';
 
 export class FeedbackService {
-    private static BUCKET_NAME = `${appName}-feedback-reports`;
+    private static BUCKET_NAME = `${resourcePrefix}_feedback_reports`;
 
     static async generateAndUploadReport(data: FeedbackData): Promise<string> {
         const htmlContent = this.generateHtml(data);

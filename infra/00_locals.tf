@@ -11,6 +11,8 @@ locals {
   client_service_name = "${var.app_name}-client"
   
   # Derived Supabase URLs
-  supabase_url = "https://${var.supabase_project_ref}.supabase.co"
-  database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:6543/postgres?pgbouncer=true"
+  resource_prefix = "${var.app_name}_${var.env_name}"
+  db_schema       = local.resource_prefix
+  supabase_url    = "https://${var.supabase_project_ref}.supabase.co"
+  database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:6543/postgres?pgbouncer=true&search_path=${local.db_schema}"
 }

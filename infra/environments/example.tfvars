@@ -17,3 +17,7 @@ supabase_project_ref  = "abcdefghijklmno" # From Supabase Dashboard
 # or passed via environment variables (TF_VAR_...)
 supabase_access_token = "sbp_your_access_token_here"
 db_password           = "your_database_password_here"
+
+# --- Optional Extras ---
+# feedback_github_token = "ghp_..."
+# feedback_enabled      = "true"

@@ -12,6 +12,7 @@ resource "github_actions_environment_variable" "vars" {
     "ARTIFACT_REPO"       = "${var.region}-docker.pkg.dev/${var.project_id}/${local.artifact_repo_name}"
     "APP_NAME"            = var.app_name
     "NEXT_PUBLIC_API_URL" = "${google_cloud_run_v2_service.server.uri}/api/v1"
+    "FEEDBACK_ENABLED"    = var.feedback_enabled
   }
 
   repository    = local.github_repo
@@ -30,6 +31,7 @@ resource "github_actions_environment_secret" "secrets" {
     "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_project.current.service_role_key
     "NEXT_PUBLIC_SUPABASE_URL"  = data.supabase_project.current.api_url
     "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_project.current.anon_key
+    "FEEDBACK_GITHUB_TOKEN"     = var.feedback_github_token
   }
 
   repository      = local.github_repo

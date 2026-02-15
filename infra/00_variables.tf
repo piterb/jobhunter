@@ -41,3 +41,16 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "feedback_github_token" {
+  description = "GitHub Token for feedback module"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "feedback_enabled" {
+  description = "Whether feedback module is enabled"
+  type        = string
+  default     = "true"
+}

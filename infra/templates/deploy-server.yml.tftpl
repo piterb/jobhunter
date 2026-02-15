@@ -34,6 +34,8 @@ jobs:
         run: npm run lint -w server
       - name: Type Check Server
         run: npm run type-check -w server
+      - name: Test Server
+        run: npm test -w server
 
   deploy:
     name: Deploy Server
@@ -56,6 +58,7 @@ jobs:
       - name: Run Migrations
         env:
           DATABASE_URL: $${{ secrets.DATABASE_URL }}
+          DBMATE_MIGRATIONS_DIR: db/migrations
           DBMATE_MIGRATIONS_TABLE: "$${{ vars.APP_NAME }}_schema_migrations"
         run: dbmate up
 
@@ -86,5 +89,9 @@ jobs:
             SUPABASE_URL=$${{ secrets.SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=$${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
             SUPABASE_ANON_KEY=$${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            FEEDBACK_GITHUB_TOKEN=$${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+            FEEDBACK_ENABLED=$${{ vars.FEEDBACK_ENABLED }}
+            GITHUB_OWNER=$${{ github.repository_owner }}
+            GITHUB_REPO=$${{ github.event.repository.name }}
             APP_NAME=$${{ vars.APP_NAME }}
             APP_ENV=${env_name}

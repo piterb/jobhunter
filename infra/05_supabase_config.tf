@@ -22,11 +22,12 @@ resource "supabase_settings" "project_config" {
       ]
     ))))
 
-    # Ploché kľúče pre Google Auth
-    external_google_enabled   = var.google_client_id != "" ? true : false
-    external_google_client_id = var.google_client_id
-    external_google_secret    = var.google_client_secret
-    external_google_skip_nonce_check = true
+    external_google = {
+      enabled          = var.google_client_id != "" ? true : false
+      client_id        = var.google_client_id
+      secret           = var.google_client_secret
+      skip_nonce_check = true
+    }
   })
 
   api = jsonencode({

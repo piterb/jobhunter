@@ -55,7 +55,14 @@ supabase/.temp
 .vercel
 
 # Bruno local environment files (may contain sensitive tokens)
-environments/
+api-collection/environments/
 
 # Bruno request history
 .bruno/
+
+# Terraform
+**/infra/.terraform/
+**/infra/*.tfstate
+**/infra/*.tfstate.backup
+**/infra/environments/*.tfvars
+!**/infra/environments/example.tfvars

@@ -1,20 +1,20 @@
-name: Server CI/CD (${env_name})
+name: Server CI/CD (tst2)
 
 on:
   push:
-    branches: [ "${github_branch}" ]
+    branches: [ "tst2" ]
     paths:
       - 'server/**'
       - 'shared/**'
       - 'db/**'
-      - '.github/workflows/deploy-server-${env_name}.yml'
+      - '.github/workflows/deploy-server-tst2.yml'
   workflow_dispatch:
 
 env:
-  PROJECT_ID: $${{ vars.GCP_PROJECT_ID }}
-  Region: $${{ vars.GCP_REGION }}
-  ArtifactRepo: $${{ vars.ARTIFACT_REPO }}
-  ServiceName: $${{ vars.APP_NAME }}-server
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  Region: ${{ vars.GCP_REGION }}
+  ArtifactRepo: ${{ vars.ARTIFACT_REPO }}
+  ServiceName: ${{ vars.APP_NAME }}-server
 
 jobs:
   ci:
@@ -42,7 +42,7 @@ jobs:
     needs: ci
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: ${env_name}
+    environment: tst2
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -57,63 +57,63 @@ jobs:
 
       - name: Ensure DB Schema exists
         env:
-          DATABASE_URL: $${{ secrets.DATABASE_URL }}
-          DB_SCHEMA: $${{ vars.DB_SCHEMA }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_SCHEMA: ${{ vars.DB_SCHEMA }}
         run: |
           # Create schema if it doesn't exist before running migrations
           psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS $DB_SCHEMA;"
 
       - name: Inject Resource Prefix into Migrations
         env:
-          PREFIX: $${{ vars.RESOURCE_PREFIX }}
+          PREFIX: ${{ vars.RESOURCE_PREFIX }}
         run: |
-          # Use a two-step replacement to prevent doubling (e.g., ${app_name}_tst2_tst2)
+          # Use a two-step replacement to prevent doubling (e.g., jobhunter_tst2_tst2)
           # Step 1: Replace all instances of the base name with a temporary placeholder
-          find db/migrations -type f -name "*.sql" -exec sed -i "s/${app_name}/JH_PREFIX_PLACEHOLDER/g" {} +
+          find db/migrations -type f -name "*.sql" -exec sed -i "s/jobhunter/JH_PREFIX_PLACEHOLDER/g" {} +
           
           # Step 2: Replace the placeholder with the actual environment-specific prefix
           find db/migrations -type f -name "*.sql" -exec sed -i "s/JH_PREFIX_PLACEHOLDER/$PREFIX/g" {} +
 
       - name: Run Migrations
         env:
-          DATABASE_URL: $${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DBMATE_MIGRATIONS_DIR: db/migrations
-          DBMATE_MIGRATIONS_TABLE: "$${{ vars.APP_NAME }}_schema_migrations"
+          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_schema_migrations"
         run: dbmate up
 
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: $${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: $${{ secrets.GCP_SA_EMAIL }}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
 
       - name: Build and Push Server
         run: |
           docker build \
             --file server/Dockerfile \
-            --tag $${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }} \
-            --tag $${{ vars.ARTIFACT_REPO }}/server:latest \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }} \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:latest \
             .
-          docker push $${{ vars.ARTIFACT_REPO }}/server --all-tags
+          docker push ${{ vars.ARTIFACT_REPO }}/server --all-tags
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: $${{ env.ServiceName }}
-          region: $${{ vars.GCP_REGION }}
-          image: $${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }}
+          service: ${{ env.ServiceName }}
+          region: ${{ vars.GCP_REGION }}
+          image: ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }}
           flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production
-            DATABASE_URL=$${{ secrets.DATABASE_URL }}
-            DB_SCHEMA=$${{ vars.DB_SCHEMA }}
-            RESOURCE_PREFIX=$${{ vars.RESOURCE_PREFIX }}
-            SUPABASE_URL=$${{ secrets.SUPABASE_URL }}
-            SUPABASE_SERVICE_ROLE_KEY=$${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            SUPABASE_ANON_KEY=$${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            FEEDBACK_GITHUB_TOKEN=$${{ secrets.FEEDBACK_GITHUB_TOKEN }}
-            FEEDBACK_ENABLED=$${{ vars.FEEDBACK_ENABLED }}
-            GITHUB_OWNER=$${{ github.repository_owner }}
-            GITHUB_REPO=$${{ github.event.repository.name }}
-            APP_NAME=$${{ vars.APP_NAME }}
-            APP_ENV=${env_name}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DB_SCHEMA=${{ vars.DB_SCHEMA }}
+            RESOURCE_PREFIX=${{ vars.RESOURCE_PREFIX }}
+            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            FEEDBACK_GITHUB_TOKEN=${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+            FEEDBACK_ENABLED=${{ vars.FEEDBACK_ENABLED }}
+            GITHUB_OWNER=${{ github.repository_owner }}
+            GITHUB_REPO=${{ github.event.repository.name }}
+            APP_NAME=${{ vars.APP_NAME }}
+            APP_ENV=tst2

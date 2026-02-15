@@ -1,8 +1,9 @@
 # 1. Server Service (Bootstrap with Hello World)
 resource "google_cloud_run_v2_service" "server" {
-  name     = local.server_service_name
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  depends_on = [google_project_service.services]
+  name       = local.server_service_name
+  location   = var.region
+  ingress    = "INGRESS_TRAFFIC_ALL"
 
   template {
     containers {
@@ -20,9 +21,10 @@ resource "google_cloud_run_v2_service" "server" {
 
 # 2. Client Service (Bootstrap with Hello World)
 resource "google_cloud_run_v2_service" "client" {
-  name     = local.client_service_name
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  depends_on = [google_project_service.services]
+  name       = local.client_service_name
+  location   = var.region
+  ingress    = "INGRESS_TRAFFIC_ALL"
 
   template {
     containers {

@@ -79,3 +79,9 @@ variable "extra_exposed_schemas" {
   type        = string
   default     = ""
 }
+
+variable "supabase_site_url" {
+  description = "The main Site URL for the Supabase project (Auth settings)"
+  type        = string
+  default     = ""
+}

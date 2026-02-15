@@ -11,8 +11,10 @@ auth_additional_redirect_urls = [
   "https://jobhunter-client-staging.a.run.app/**"
 ]
 
-# 2. Extra Exposed Schemas
-# List here schemas from other environments that should remain accessible via the Data API.
-# The 'public', 'storage', and the current environment's schema are added automatically.
 # Example: "jobhunter_tst,jobhunter_staging"
 extra_exposed_schemas = ""
+
+# 3. Main Site URL
+# The primary URL of your project (e.g. production or primary test)
+# This will be set as 'Site URL' in Supabase Auth settings.
+supabase_site_url = "https://your-main-app-url.com"

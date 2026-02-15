@@ -55,6 +55,25 @@ jobs:
           sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
           sudo chmod +x /usr/local/bin/dbmate
 
+      - name: Ensure DB Schema exists
+        env:
+          DATABASE_URL: $${{ secrets.DATABASE_URL }}
+          DB_SCHEMA: $${{ vars.DB_SCHEMA }}
+        run: |
+          # Create schema if it doesn't exist before running migrations
+          psql "$DATABASE_URL" -c "CREATE SCHEMA IF NOT EXISTS $DB_SCHEMA;"
+
+      - name: Inject Resource Prefix into Migrations
+        env:
+          PREFIX: $${{ vars.RESOURCE_PREFIX }}
+        run: |
+          # Use a two-step replacement to prevent doubling (e.g., ${app_name}_tst2_tst2)
+          # Step 1: Replace all instances of the base name with a temporary placeholder
+          find db/migrations -type f -name "*.sql" -exec sed -i "s/${app_name}/JH_PREFIX_PLACEHOLDER/g" {} +
+          
+          # Step 2: Replace the placeholder with the actual environment-specific prefix
+          find db/migrations -type f -name "*.sql" -exec sed -i "s/JH_PREFIX_PLACEHOLDER/$PREFIX/g" {} +
+
       - name: Run Migrations
         env:
           DATABASE_URL: $${{ secrets.DATABASE_URL }}
@@ -86,6 +105,9 @@ jobs:
           flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production
+            DATABASE_URL=$${{ secrets.DATABASE_URL }}
+            DB_SCHEMA=$${{ vars.DB_SCHEMA }}
+            RESOURCE_PREFIX=$${{ vars.RESOURCE_PREFIX }}
             SUPABASE_URL=$${{ secrets.SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=$${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
             SUPABASE_ANON_KEY=$${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

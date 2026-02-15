@@ -54,3 +54,34 @@ variable "feedback_enabled" {
   type        = string
   default     = "true"
 }
+
+variable "google_client_id" {
+  description = "Google OAuth Client ID"
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth Client Secret"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "auth_additional_redirect_urls" {
+  description = "Shared redirect URLs for multiple environments"
+  type        = list(string)
+  default     = []
+}
+
+variable "extra_exposed_schemas" {
+  description = "Additional schemas to expose in PostgREST API (comma separated)"
+  type        = string
+  default     = ""
+}
+
+variable "supabase_site_url" {
+  description = "The main Site URL for the Supabase project (Auth settings)"
+  type        = string
+  default     = ""
+}

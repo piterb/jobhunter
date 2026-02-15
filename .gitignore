@@ -64,5 +64,7 @@ api-collection/environments/
 **/infra/.terraform/
 **/infra/*.tfstate
 **/infra/*.tfstate.backup
+**/infra/*.auto.tfvars
 **/infra/environments/*.tfvars
 !**/infra/environments/example.tfvars
+!**/infra/environments/common.example.tfvars

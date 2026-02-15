@@ -43,9 +43,14 @@ output "generated_workflows" {
 # --- Supabase Outputs (Non-sensitive only) ---
 output "supabase_api_url" {
   description = "The Supabase API URL being used"
-  value       = data.supabase_project.current.api_url
+  value       = local.supabase_url
 }
 
 output "supabase_project_ref" {
   value = var.supabase_project_ref
+}
+
+output "supabase_google_callback_url" {
+  description = "The URL to add to your Google Cloud Console OAuth Authorized Redirect URIs"
+  value       = "https://${var.supabase_project_ref}.supabase.co/auth/v1/callback"
 }

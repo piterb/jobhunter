@@ -4,6 +4,30 @@ resource "github_repository_environment" "env" {
   repository  = local.github_repo
 }
 
+# 1.5. Create GitHub Actions Workflow File (e.g., deploy-server.yml)
+resource "github_repository_file" "deploy_server_workflow" {
+  repository          = local.github_repo
+  branch              = var.github_branch
+  file                = ".github/workflows/deploy-server-${var.env_name}.yml"
+  content = templatefile("${path.module}/templates/deploy-server.yml.tftpl", {
+    env_name      = var.env_name
+    github_branch = var.github_branch
+    app_name      = var.app_name
+  })
+  overwrite_on_create = true
+}
+
+resource "github_repository_file" "deploy_client_workflow" {
+  repository          = local.github_repo
+  branch              = var.github_branch
+  file                = ".github/workflows/deploy-client-${var.env_name}.yml"
+  content = templatefile("${path.module}/templates/deploy-client.yml.tftpl", {
+    env_name      = var.env_name
+    github_branch = var.github_branch
+  })
+  overwrite_on_create = true
+}
+
 # 2. Define GitHub Actions Variables
 resource "github_actions_environment_variable" "vars" {
   for_each = {
@@ -13,6 +37,9 @@ resource "github_actions_environment_variable" "vars" {
     "APP_NAME"            = var.app_name
     "NEXT_PUBLIC_API_URL" = "${google_cloud_run_v2_service.server.uri}/api/v1"
     "FEEDBACK_ENABLED"    = var.feedback_enabled
+    "DB_SCHEMA"                    = local.db_schema
+    "RESOURCE_PREFIX"               = local.resource_prefix
+    "NEXT_PUBLIC_RESOURCE_PREFIX"   = local.resource_prefix
   }
 
   repository    = local.github_repo
@@ -27,10 +54,10 @@ resource "github_actions_environment_secret" "secrets" {
     "GCP_WIF_PROVIDER"          = google_iam_workload_identity_pool_provider.provider.name
     "GCP_SA_EMAIL"              = google_service_account.deployer.email
     "DATABASE_URL"              = local.database_url
-    "SUPABASE_URL"              = data.supabase_project.current.api_url
-    "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_project.current.service_role_key
-    "NEXT_PUBLIC_SUPABASE_URL"  = data.supabase_project.current.api_url
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_project.current.anon_key
+    "SUPABASE_URL"              = local.supabase_url
+    "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_apikeys.current.service_role_key
+    "NEXT_PUBLIC_SUPABASE_URL"  = local.supabase_url
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_apikeys.current.anon_key
     "FEEDBACK_GITHUB_TOKEN"     = var.feedback_github_token
   }
 

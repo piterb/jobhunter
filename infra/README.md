@@ -6,16 +6,33 @@ This guide describes how to manage the project infrastructure using Terraform.
 
 Ensure you have the following tools installed and configured:
 
-1.  **Terraform**: `brew install terraform`
+1.  **Terraform**: 
+    ```bash
+    # Check if already installed:
+    terraform -v
+    
+    # If not installed, or to resolve tap conflicts:
+    brew uninstall terraform # if already present from homebrew/core
+    brew tap hashicorp/tap
+    brew install hashicorp/tap/terraform
+    ```
 2.  **Google Cloud SDK (gcloud)**: [Install Guide](https://cloud.google.com/sdk/docs/install)
 3.  **GitHub CLI (gh)**: `brew install gh`
 4.  **Git**: Should be installed and configured on your machine.
+5.  **Google Cloud Account**: An active GCP account with billing enabled.
+6.  **Supabase Account**: An active Supabase project.
 
 Verify installation: `terraform -v && gcloud --version && gh --version`
 
 ## ⚙️ Configuration (Preparation)
 
 Before the first run, you must prepare your environment:
+
+### 1. Manual Steps (One-time)
+*   **Create GCP Project**: Create a new project manually in the [GCP Console](https://console.cloud.google.com/). 
+    *   *Note: These scripts manage resources within an existing project, they do not create the project itself to avoid complex billing/organization permission issues.*
+*   **Enable Billing**: Ensure the project has a Billing Account attached.
+*   **Supabase Ref**: Have your Supabase "Project Ref" ready (found in Project Settings).
 
 ### 1. Authentication
 You must be logged into the CLI tools on your machine:

@@ -4,6 +4,7 @@ resource "local_file" "server_workflow" {
   content  = templatefile("${path.module}/templates/deploy-server.yml.tftpl", {
     env_name       = var.env_name
     github_branch  = var.github_branch
+    app_name       = var.app_name
   })
 }
 

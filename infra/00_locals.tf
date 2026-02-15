@@ -15,6 +15,6 @@ locals {
   resource_prefix      = "${var.app_name}_${var.env_name}"
   supabase_url         = "https://${var.supabase_project_ref}.supabase.co"
   
-  # For Migrations and PSQL (Standard port 5432 is more reliable in CI environments)
-  database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:5432/postgres"
+  # For Migrations and PSQL (Using New AWS Connection Pooler)
+  database_url = "postgresql://postgres.${var.supabase_project_ref}:${var.db_password}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
 }

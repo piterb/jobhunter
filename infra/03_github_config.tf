@@ -4,29 +4,7 @@ resource "github_repository_environment" "env" {
   repository  = local.github_repo
 }
 
-# 1.5. Create GitHub Actions Workflow File (e.g., deploy-server.yml)
-resource "github_repository_file" "deploy_server_workflow" {
-  repository          = local.github_repo
-  branch              = var.github_branch
-  file                = ".github/workflows/deploy-server-${var.env_name}.yml"
-  content = templatefile("${path.module}/templates/deploy-server.yml.tftpl", {
-    env_name      = var.env_name
-    github_branch = var.github_branch
-    app_name      = var.app_name
-  })
-  overwrite_on_create = true
-}
-
-resource "github_repository_file" "deploy_client_workflow" {
-  repository          = local.github_repo
-  branch              = var.github_branch
-  file                = ".github/workflows/deploy-client-${var.env_name}.yml"
-  content = templatefile("${path.module}/templates/deploy-client.yml.tftpl", {
-    env_name      = var.env_name
-    github_branch = var.github_branch
-  })
-  overwrite_on_create = true
-}
+# (Workflows are managed locally via local_file in 04_github_workflows.tf)
 
 # 2. Define GitHub Actions Variables
 resource "github_actions_environment_variable" "vars" {

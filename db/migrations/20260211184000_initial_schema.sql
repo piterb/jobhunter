@@ -191,19 +191,19 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES ('jobhunter_documents', 'jobhunter_documents', false, 5242880, '{application/pdf,image/*,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/markdown}')
 ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY "Users can upload their own documents" ON storage.objects
+CREATE POLICY "jobhunter: Users can upload their own documents" ON storage.objects
     FOR INSERT TO authenticated
     WITH CHECK (bucket_id = 'jobhunter_documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
 
-CREATE POLICY "Users can view their own documents" ON storage.objects
+CREATE POLICY "jobhunter: Users can view their own documents" ON storage.objects
     FOR SELECT TO authenticated
     USING (bucket_id = 'jobhunter_documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
 
-CREATE POLICY "Users can update their own documents" ON storage.objects
+CREATE POLICY "jobhunter: Users can update their own documents" ON storage.objects
     FOR UPDATE TO authenticated
     USING (bucket_id = 'jobhunter_documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
 
-CREATE POLICY "Users can delete their own documents" ON storage.objects
+CREATE POLICY "jobhunter: Users can delete their own documents" ON storage.objects
     FOR DELETE TO authenticated
     USING (bucket_id = 'jobhunter_documents' AND (split_part(name, '/', 1)) = auth.uid()::text);
 

@@ -8,7 +8,7 @@ const { mockSupabase } = vi.hoisted(() => {
         from: vi.fn().mockReturnThis(),
         upload: vi.fn().mockResolvedValue({ data: { path: 'test.html' }, error: null }),
         getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://supabase.com/test.html' } }),
-        listBuckets: vi.fn().mockResolvedValue({ data: [{ name: 'jobhunter-feedback-reports' }], error: null }),
+        listBuckets: vi.fn().mockResolvedValue({ data: [{ name: 'jobhunter_feedback_reports' }], error: null }),
         createBucket: vi.fn().mockResolvedValue({ data: null, error: null }),
     };
     return {
@@ -65,7 +65,7 @@ describe('Feedback API', () => {
         expect(response.body.reportUrl).toBe('https://supabase.com/test.html');
 
         // Check storage calls
-        expect(mockSupabase.storage.from).toHaveBeenCalledWith('jobhunter-feedback-reports');
+        expect(mockSupabase.storage.from).toHaveBeenCalledWith('jobhunter_feedback_reports');
         expect(mockSupabase.storage.upload).toHaveBeenCalled();
 
         // Check GitHub call

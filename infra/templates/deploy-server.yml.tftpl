@@ -82,10 +82,14 @@ jobs:
         run: dbmate up
 
       - name: Google Auth
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: $${{ secrets.GCP_WIF_PROVIDER }}
           service_account: $${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Docker Auth
+        run: gcloud auth configure-docker $${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
       - name: Build and Push Server
         run: |

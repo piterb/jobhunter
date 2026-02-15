@@ -54,3 +54,8 @@ output "supabase_google_callback_url" {
   description = "The URL to add to your Google Cloud Console OAuth Authorized Redirect URIs"
   value       = "https://${var.supabase_project_ref}.supabase.co/auth/v1/callback"
 }
+
+output "debug_google_id_exists" {
+  description = "DEBUG: Check if google_client_id is loaded"
+  value       = var.google_client_id != "" ? "YES (length: ${length(var.google_client_id)})" : "NO - IT IS EMPTY"
+}

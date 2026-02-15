@@ -21,3 +21,7 @@ db_password           = "your_database_password_here"
 # --- Optional Extras ---
 # feedback_github_token = "ghp_..."
 # feedback_enabled      = "true"
+
+# --- Google OAuth (Social Login) ---
+# google_client_id     = "your-google-client-id.apps.googleusercontent.com"
+# google_client_secret = "your-google-client-secret"

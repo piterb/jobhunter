@@ -41,11 +41,20 @@ You must be logged into the CLI tools on your machine:
 *   **Supabase**: Generate an **Access Token** in the [Supabase Dashboard](https://supabase.com/dashboard/account/tokens).
 
 ### 2. Variable Preparation
-Copy the example file and fill in your details:
-```bash
-cp environments/example.tfvars environments/tst.tfvars
-```
-Edit `tst.tfvars` and insert your Project ID, Supabase Ref, and passwords.
+You need to prepare three types of variable files:
+
+1.  **Shared Auth** (One-time setup):
+    Create `google_oauth.auto.tfvars` in the `infra/` directory (this file is auto-loaded and should be git-ignored):
+    ```hcl
+    google_client_id     = "..."
+    google_client_secret = "..."
+    ```
+
+2.  **Common Environment Settings** (For shared Supabase project):
+    Copy `environments/common.example.tfvars` to `environments/common.tfvars` and list URLs/Schemas from other environments you want to keep active.
+
+3.  **Specific Environment**:
+    Copy `environments/example.tfvars` to `environments/tst2.tfvars` and fill in project-specific IDs.
 
 ## 🛠 Quick Start (First Run)
 
@@ -58,12 +67,16 @@ Run all commands inside the `infra/` directory.
 
 2.  **Review Changes** (plan):
     ```bash
-    terraform plan -var-file="environments/tst.tfvars"
+    terraform plan \
+      -var-file="environments/common.tfvars" \
+      -var-file="environments/tst2.tfvars"
     ```
 
 3.  **Apply Changes** (execution):
     ```bash
-    terraform apply -var-file="environments/tst.tfvars"
+    terraform apply \
+      -var-file="environments/common.tfvars" \
+      -var-file="environments/tst2.tfvars"
     ```
     *(Type `yes` when prompted)*
 

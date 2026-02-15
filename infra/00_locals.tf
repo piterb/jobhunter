@@ -16,5 +16,5 @@ locals {
   supabase_url         = "https://${var.supabase_project_ref}.supabase.co"
   
   # For Migrations and PSQL (Using Exact URL provided by user)
-  database_url = "postgresql://postgres.${var.supabase_project_ref}:${var.db_password}@aws-0-eu-west-2.pooler.supabase.com:5432/postgres"
+  database_url = "postgresql://postgres.${var.supabase_project_ref}:${var.db_password}@aws-1-eu-west-2.pooler.supabase.com:6543/postgres"
 }

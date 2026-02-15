@@ -11,6 +11,7 @@ All technical specifications and design documents are located in the `docs/` fol
 - **[UI Design](docs/ui_design.md)** - Wireframes, Layouts, Mockups.
 - **[Authentication Setup](docs/auth_setup.md)** - Google OAuth & Supabase configuration.
 - **[Troubleshooting Guide](docs/troubleshooting.md)** - Common local environment issues (e.g., macOS NPM EPERM).
+- **[Infrastructure & Deployment (IaC)](infra/README.md)** - Managing Cloud resources via Terraform.
 
 ## 🏗️ Project Structure (Monorepo)
 - **`/client`**: Frontend application (Next.js App Router).
@@ -55,6 +56,7 @@ npm run supabase:status
 - **`/client`**: Frontend (Next.js App Router).
 - **`/server`**: Backend API (Express.js).
 - **`/shared`**: Shared TypeScript types and interfaces.
+- **`/infra`**: Infrastructure as Code (Terraform).
 - **`/supabase`**: Database configuration, migrations, and seed data.
 - **`/docs`**: Complete project documentation.
 
@@ -63,6 +65,16 @@ npm run supabase:status
 - `npm run dev` - Start both FE and BE simultaneously.
 - `npm run supabase:status` - View local access credentials and URLs.
 - `npm run supabase:stop` - Stop local Docker containers.
+
+## ☁️ Cloud Deployment (Production / Test)
+
+To deploy the application to Google Cloud, you must first provision the infrastructure using Terraform. This process automates GCP project setup, GitHub Environments, and Secrets.
+
+**Prerequisites for Cloud:**
+- **Terraform** & **Google Cloud SDK** installed.
+- Active **GCP Project** and **Supabase Project**.
+
+Detailed instructions can be found in the **[Infrastructure Guide (IaC)](infra/README.md)**.
 
 ## 🔄 Database Reset & Seeding
 

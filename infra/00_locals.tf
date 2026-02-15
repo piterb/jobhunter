@@ -15,6 +15,6 @@ locals {
   resource_prefix      = "${var.app_name}_${var.env_name}"
   supabase_url         = "https://${var.supabase_project_ref}.supabase.co"
   
-  # For Migrations and PSQL (must be without Prisma-specific params like ?pgbouncer=true)
-  database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:6543/postgres?search_path=${local.db_schema}"
+  # For Migrations and PSQL (must be completely clean without any ? query parameters)
+  database_url = "postgresql://postgres:${var.db_password}@db.${var.supabase_project_ref}.supabase.co:6543/postgres"
 }

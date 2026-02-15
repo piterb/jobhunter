@@ -79,7 +79,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DBMATE_MIGRATIONS_DIR: db/migrations
           DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_schema_migrations"
-        run: dbmate up
+        run: dbmate --schema ${{ vars.DB_SCHEMA }} up
 
       - name: Google Auth
         id: auth

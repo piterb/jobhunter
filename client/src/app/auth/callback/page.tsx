@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Check, AlertCircle } from 'lucide-react';
+import { authService } from '@/services/auth-service';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AuthCallback() {
     const router = useRouter();
+    const { setUser } = useAuth();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         const handleAuthCallback = async () => {
             try {
-                const { error } = await supabase.auth.getSession();
-                if (error) throw error;
+                const data = await authService.completeCallback();
+                setUser(data.user);
 
                 setStatus('success');
                 // Stay on success screen for 1.5s to show the nice UI
@@ -29,7 +31,7 @@ export default function AuthCallback() {
         };
 
         handleAuthCallback();
-    }, [router]);
+    }, [router, setUser]);
 
     if (status === 'error') {
         return (

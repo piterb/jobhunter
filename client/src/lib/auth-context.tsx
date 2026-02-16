@@ -8,7 +8,8 @@ type AuthContextType = {
     user: AuthUser | null;
     loading: boolean;
     signOut: () => Promise<void>;
-    signIn: () => Promise<void>; // New signIn for dev
+    signIn: () => Promise<void>;
+    setUser: (user: AuthUser | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,9 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signIn = async () => {
         try {
             setLoading(true);
-            const data = await authService.devLogin();
-            setUser(data.user);
-            router.push('/'); // Redirect to dashboard
+            const data = await authService.signIn();
+            if (data?.user) {
+                setUser(data.user);
+                router.push('/');
+            }
         } catch (error) {
             console.error('Sign in failed:', error);
             alert('Sign in failed. Ensure backend is running.');
@@ -52,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signOut,
         signIn,
+        setUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

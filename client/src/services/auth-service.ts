@@ -1,53 +1,83 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+import { createFrontendAuthAdapter } from '@/auth/factory';
+import { AuthProvider, AuthResponse, AuthUser, FrontendAuthAdapter } from '@/auth/types';
 
-export interface AuthUser {
-    id: string;
-    email: string;
+const TOKEN_STORAGE_KEY = 'auth_token';
+const USER_STORAGE_KEY = 'auth_user';
+
+let adapter: FrontendAuthAdapter | null = null;
+
+function isBrowser(): boolean {
+    return typeof window !== 'undefined';
 }
 
-export interface AuthResponse {
-    user: AuthUser;
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
+function persistAuthState(data: AuthResponse): void {
+    if (!isBrowser()) return;
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.access_token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+}
+
+function clearAuthState(): void {
+    if (!isBrowser()) return;
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+}
+
+function getAdapter(): FrontendAuthAdapter {
+    if (!adapter) {
+        adapter = createFrontendAuthAdapter();
+    }
+    return adapter;
 }
 
 export const authService = {
-    /**
-     * Development login bypass
-     */
-    async devLogin(): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/dev-login`);
-        if (!response.ok) {
-            throw new Error('Failed to perform dev login');
-        }
-        const data = await response.json();
-
-        // Store in localStorage for persistence
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('auth_token', data.access_token);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
-        }
-
-        return data;
+    getProvider(): AuthProvider {
+        return getAdapter().provider;
     },
 
-    /**
-     * Logout and clear local state
-     */
-    async logout(): Promise<void> {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
+    isProviderConfigured(): boolean {
+        return getAdapter().isConfigured();
+    },
+
+    isAuth0Configured,
+
+    async signIn(): Promise<AuthResponse | void> {
+        const response = await getAdapter().signIn();
+        if (response) {
+            persistAuthState(response);
         }
+        return response;
+    },
+
+    async completeCallback(): Promise<AuthResponse> {
+        const response = await getAdapter().completeCallback();
+        persistAuthState(response);
+        return response;
+    },
+
+    async completeAuth0Redirect(): Promise<AuthResponse> {
+        return this.completeCallback();
+    },
+
+    async devLogin(): Promise<AuthResponse> {
+        const response = await getAdapter().signIn();
+        if (!response) {
+            throw new Error('Current auth provider does not support direct dev-login response');
+        }
+        persistAuthState(response);
+        return response;
+    },
+
+    async logout(): Promise<void> {
+        clearAuthState();
+        await getAdapter().logout();
     },
 
     /**
      * Get stored token
      */
     getToken(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('auth_token');
+        if (isBrowser()) {
+            return localStorage.getItem(TOKEN_STORAGE_KEY);
         }
         return null;
     },
@@ -56,12 +86,12 @@ export const authService = {
      * Get stored user
      */
     getUser(): AuthUser | null {
-        if (typeof window !== 'undefined') {
-            const userStr = localStorage.getItem('auth_user');
+        if (isBrowser()) {
+            const userStr = localStorage.getItem(USER_STORAGE_KEY);
             if (userStr) {
                 try {
                     return JSON.parse(userStr);
-                } catch (e) {
+                } catch {
                     return null;
                 }
             }
@@ -69,3 +99,9 @@ export const authService = {
         return null;
     }
 };
+
+function isAuth0Configured(): boolean {
+    return getAdapter().provider === 'auth0' && getAdapter().isConfigured();
+}
+
+export type { AuthUser, AuthResponse };

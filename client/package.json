@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^2.15.0",
     "@supabase/supabase-js": "^2.95.3",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.13",

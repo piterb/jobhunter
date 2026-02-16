@@ -3,9 +3,12 @@
 import React from 'react';
 import { Crosshair, ShieldCheck, Zap } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { authService } from '@/services/auth-service';
 
 export default function LoginPage() {
     const { signIn } = useAuth();
+    const provider = authService.getProvider();
+    const isExternalProvider = provider !== 'dev';
 
     const handleDevLogin = async () => {
         await signIn();
@@ -32,7 +35,9 @@ export default function LoginPage() {
                     <div className="space-y-6">
                         <div className="text-center">
                             <h2 className="text-lg font-semibold text-white">Welcome back</h2>
-                            <p className="text-sm text-slate-400">Sign in to manage your applications</p>
+                            <p className="text-sm text-slate-400">
+                                {isExternalProvider ? 'Sign in to manage your applications' : 'Sign in to manage your applications'}
+                            </p>
                         </div>
 
                         <div className="space-y-3">
@@ -41,7 +46,7 @@ export default function LoginPage() {
                                 className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 font-semibold py-3 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98]"
                             >
                                 <Crosshair className="w-5 h-5" />
-                                Sign in as Developer
+                                {isExternalProvider ? 'Continue to Sign In' : 'Sign in as Developer'}
                             </button>
                         </div>
 
@@ -50,7 +55,9 @@ export default function LoginPage() {
                                 <div className="w-full border-t border-slate-800"></div>
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-slate-900/50 px-2 text-slate-500">More methods coming soon</span>
+                                <span className="bg-slate-900/50 px-2 text-slate-500">
+                                    {isExternalProvider ? `Provider: ${provider}` : 'More methods coming soon'}
+                                </span>
                             </div>
                         </div>
 

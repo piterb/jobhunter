@@ -125,8 +125,9 @@ async function main() {
         console.log(chalk.green('✅ Database seeded!\n'));
 
         console.log(chalk.bold.green('✨ SETUP COMPLETE! ✨\n'));
-        console.log(chalk.white('You can now start the application:'));
-        console.log(chalk.cyan('  npm run dev\n'));
+        console.log(chalk.white('Start the application in two terminals:'));
+        console.log(chalk.cyan('  npm run dev -w server'));
+        console.log(chalk.cyan('  npm run dev -w client\n'));
 
     } catch (err) {
         console.error(chalk.red('\n💥 Fatal setup error:'), err);

@@ -20,7 +20,7 @@ Ensure you have the following tools installed and configured:
 3.  **GitHub CLI (gh)**: `brew install gh`
 4.  **Git**: Should be installed and configured on your machine.
 5.  **Google Cloud Account**: An active GCP account with billing enabled.
-6.  **Supabase Account**: An active Supabase project.
+6.  **Auth0 Tenant** (for production auth) and **Neon Project** (PostgreSQL).
 
 Verify installation: `terraform -v && gcloud --version && gh --version`
 
@@ -32,28 +32,20 @@ Before the first run, you must prepare your environment:
 *   **Create GCP Project**: Create a new project manually in the [GCP Console](https://console.cloud.google.com/). 
     *   *Note: These scripts manage resources within an existing project, they do not create the project itself to avoid complex billing/organization permission issues.*
 *   **Enable Billing**: Ensure the project has a Billing Account attached.
-*   **Supabase Ref**: Have your Supabase "Project Ref" ready (found in Project Settings).
+*   **Neon DB URL**: Have the per-environment `DATABASE_URL` ready.
 
 ### 1. Authentication
 You must be logged into the CLI tools on your machine:
 *   **Google Cloud**: `gcloud auth application-default login`
 *   **GitHub**: `gh auth login`
-*   **Supabase**: Generate an **Access Token** in the [Supabase Dashboard](https://supabase.com/dashboard/account/tokens).
 
 ### 2. Variable Preparation
-You need to prepare three types of variable files:
+You need to prepare two variable files:
 
-1.  **Shared Auth** (One-time setup):
-    Create `google_oauth.auto.tfvars` in the `infra/` directory (this file is auto-loaded and should be git-ignored):
-    ```hcl
-    google_client_id     = "..."
-    google_client_secret = "..."
-    ```
+1.  **Common Environment Settings**:
+    Copy `environments/common.example.tfvars` to `environments/common.tfvars` (it can stay empty).
 
-2.  **Common Environment Settings** (For shared Supabase project):
-    Copy `environments/common.example.tfvars` to `environments/common.tfvars` and list URLs/Schemas from other environments you want to keep active.
-
-3.  **Specific Environment**:
+2.  **Specific Environment**:
     Copy `environments/example.tfvars` to `environments/tst2.tfvars` and fill in project-specific IDs.
 
 ## 🛠 Quick Start (First Run)
@@ -126,7 +118,7 @@ Here are commands that will be helpful for daily work and debugging:
 ### 4. Variables from Terminal (Security)
 If you don't want to keep passwords in the `.tfvars` file, you can pass them directly to the command:
 ```bash
-terraform apply -var="db_password=SuperSecretPassword123" -var-file="environments/tst.tfvars"
+terraform apply -var="database_url=postgresql://..." -var-file="environments/tst.tfvars"
 ```
 *(Note: Terraform prioritizes `-var` over values in the file)*
 

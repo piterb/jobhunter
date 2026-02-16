@@ -40,22 +40,19 @@ output "generated_workflows" {
   ]
 }
 
-# --- Supabase Outputs (Non-sensitive only) ---
-output "supabase_api_url" {
-  description = "The Supabase API URL being used"
-  value       = local.supabase_url
+output "resource_prefix" {
+  description = "Prefix used for runtime resources (e.g. bucket names)"
+  value       = local.resource_prefix
 }
 
-output "supabase_project_ref" {
-  value = var.supabase_project_ref
+output "documents_bucket_name" {
+  value = google_storage_bucket.documents.name
 }
 
-output "supabase_google_callback_url" {
-  description = "The URL to add to your Google Cloud Console OAuth Authorized Redirect URIs"
-  value       = "https://${var.supabase_project_ref}.supabase.co/auth/v1/callback"
+output "avatars_bucket_name" {
+  value = google_storage_bucket.avatars.name
 }
 
-output "debug_google_id_exists" {
-  description = "DEBUG: Check if google_client_id is loaded"
-  value       = var.google_client_id != "" ? "YES (length: ${length(var.google_client_id)})" : "NO - IT IS EMPTY"
+output "feedback_bucket_name" {
+  value = google_storage_bucket.feedback_reports.name
 }

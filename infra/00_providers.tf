@@ -8,10 +8,6 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.0"
     }
-    supabase = {
-      source  = "supabase/supabase"
-      version = "~> 1.0"
-    }
   }
 }
 
@@ -22,8 +18,4 @@ provider "google" {
 
 provider "github" {
   owner = local.github_owner
-}
-
-provider "supabase" {
-  access_token = var.supabase_access_token
 }

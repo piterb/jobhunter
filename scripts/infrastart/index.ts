@@ -7,7 +7,7 @@ import { loadState, saveState, EnvironmentConfig } from './config.js';
 import { IS_DRY_RUN } from './utils.js';
 import { setupGcpWif } from './gcp.js';
 import { setupGithubEnv } from './github.js';
-import { setupSupabaseSecrets } from './supabase.js';
+import { setupAppSecrets } from './app-secrets.js';
 
 async function main() {
     console.log(boxen(chalk.bold.cyan(' 🚀  INFRASTART MANAGER \n v3.0.0 (Infra Only) '), { padding: 1, borderStyle: 'round', borderColor: 'cyan' }));
@@ -36,7 +36,7 @@ async function main() {
                 { name: '🚀 Provision Infrastructure (GCP + GitHub Secrets)', value: 'full' },
                 { name: '☁️  Setup GCP Infrastructure Only', value: 'gcp-only' },
                 { name: '🐙  Setup GitHub Environment Only (Secrets)', value: 'github-only' },
-                { name: '🔥  Setup Supabase Secrets Only', value: 'supabase-only' },
+                { name: '🔥  Setup App Secrets Only (Neon/Auth0/Google)', value: 'secrets-only' },
                 { name: '🚪  Exit', value: 'exit' }
             ]
         }
@@ -45,7 +45,7 @@ async function main() {
     if (action === 'exit') process.exit(0);
 
     try {
-        if (action === 'full' || action === 'gcp-only' || action === 'github-only' || action === 'supabase-only') {
+        if (action === 'full' || action === 'gcp-only' || action === 'github-only' || action === 'secrets-only') {
             await setupEnvironmentFlow(state, action, hasGh);
         }
 
@@ -103,11 +103,11 @@ async function setupEnvironmentFlow(state: any, action: string, hasGh: boolean) 
         else console.log(chalk.yellow(`\n⚠ Skipping GitHub setup (No 'gh').`));
     }
 
-    if (action === 'full' || action === 'github-only' || action === 'supabase-only') {
+    if (action === 'full' || action === 'github-only' || action === 'secrets-only') {
         if (hasGh) {
-            const { doSupabase } = await inquirer.prompt([{ type: 'confirm', name: 'doSupabase', message: 'Configure Supabase Secrets now?', default: true }]);
-            if (doSupabase) {
-                await setupSupabaseSecrets(envConfig, githubRepo);
+            const { doSecrets } = await inquirer.prompt([{ type: 'confirm', name: 'doSecrets', message: 'Configure app secrets now (Neon/Auth0/Google)?', default: true }]);
+            if (doSecrets) {
+                await setupAppSecrets(envConfig, githubRepo);
             }
         }
     }
@@ -132,8 +132,8 @@ function finalReport(env: EnvironmentConfig, hasGh: boolean) {
         console.log(`WIF: ${env.wifProviderPath}`);
         console.log(`SA: ${env.serviceAccountName}@${env.projectId}.iam.gserviceaccount.com`);
     }
-    console.log(chalk.bold.underline('\n🔑 REQUIRED MANUAL STEP: Google OAuth Setup'));
-    console.log(chalk.gray(`This is needed for "Sign in with Google" to work.`));
+    console.log(chalk.bold.underline('\n🔑 REQUIRED MANUAL STEP: Auth0 + Google OAuth Setup'));
+    console.log(chalk.gray(`This is needed for production authentication.`));
 
     console.log(chalk.cyan(`\n1. OAuth Consent Screen`));
     console.log(`   URL: https://console.cloud.google.com/apis/credentials/consent?project=${env.projectId}`);
@@ -143,31 +143,18 @@ function finalReport(env: EnvironmentConfig, hasGh: boolean) {
     console.log(`   - Scopes: Add ${chalk.green('.../auth/userinfo.email')}, ${chalk.green('.../auth/userinfo.profile')}, ${chalk.green('openid')}`);
     console.log(`   - Test Users: Add ${chalk.white('your email')} (important for testing!)`);
 
-    console.log(chalk.cyan(`\n2. Create OAuth Client ID`));
+    console.log(chalk.cyan(`\n2. Create OAuth Client ID (Google)`));
     console.log(`   URL: https://console.cloud.google.com/apis/credentials/oauthclient?project=${env.projectId}`);
     console.log(`   - Application Type: ${chalk.bold('Web application')}`);
-    console.log(`   - Name: ${chalk.white('Supabase Client')}`);
+    console.log(`   - Name: ${chalk.white('JobHunter Auth0 Client')}`);
     console.log(`   - Authorized Redirect URIs:`);
     console.log(`     - ${chalk.yellow('http://localhost:3000/auth/callback')}`);
-    console.log(`     - ${chalk.yellow('https://<YOUR_SUPABASE_PROJECT>.supabase.co/auth/v1/callback')}`);
+    console.log(`     - ${chalk.yellow('https://<YOUR_AUTH0_DOMAIN>/login/callback')}`);
 
-    console.log(chalk.cyan(`\n3. Configure Supabase Auth`));
-    console.log(`   - Go to Supabase Dashboard -> Authentication -> Providers -> Google`);
-    console.log(`   - Paste ${chalk.bold('Client ID')} & ${chalk.bold('Client Secret')} from GCP.`);
-
-    console.log(chalk.cyan(`\n4. Configure Supabase Redirects (AFTER DEPLOY)`));
-    console.log(`   - Go to Supabase Dashboard -> Authentication -> URL Configuration.`);
-    console.log(`   - Add your Cloud Run Client URL to ${chalk.bold('Redirect URLs')}.`);
-    console.log(`     Example: ${chalk.gray('https://jobhunter-client-xyz.a.run.app')}`);
-    if (env.serverUrl) {
-        console.log(`     (Server URL is known: ${chalk.green(env.serverUrl)} - but Client URL will be different!)`);
-    }
-
-    console.log(chalk.cyan(`\n5. Expose Database Schema`));
-    console.log(`   - Go to Supabase Dashboard -> Project Settings -> API.`);
-    console.log(`   - In ${chalk.bold('Data API')} section, find ${chalk.bold('Exposed schemas')}.`);
-    console.log(`   - Add ${chalk.green(env.appName || 'jobhunter')} to the list.`);
-    console.log(`   - Click ${chalk.bold('Save')}.`);
+    console.log(chalk.cyan(`\n3. Configure Auth0`));
+    console.log(`   - In Auth0, enable Google connection and paste ${chalk.bold('Client ID')} + ${chalk.bold('Client Secret')}.`);
+    console.log(`   - Set Allowed Callback URLs to include your client URL + /auth/callback.`);
+    console.log(`   - Configure API Audience (default ${chalk.green('jobhunter-api')}).`);
 }
 
 main();

@@ -15,8 +15,7 @@ resource "github_actions_environment_variable" "vars" {
     "APP_NAME"            = var.app_name
     "NEXT_PUBLIC_API_URL" = "${google_cloud_run_v2_service.server.uri}/api/v1"
     "FEEDBACK_ENABLED"    = var.feedback_enabled
-    "DB_SCHEMA"                    = local.db_schema
-    "RESOURCE_PREFIX"               = local.resource_prefix
+    "RESOURCE_PREFIX"     = local.resource_prefix
   }
 
   repository    = local.github_repo
@@ -28,14 +27,14 @@ resource "github_actions_environment_variable" "vars" {
 # 3. Define GitHub Actions Secrets
 resource "github_actions_environment_secret" "secrets" {
   for_each = {
-    "GCP_WIF_PROVIDER"          = google_iam_workload_identity_pool_provider.provider.name
-    "GCP_SA_EMAIL"              = google_service_account.deployer.email
-    "DATABASE_URL"              = local.database_url
-    "SUPABASE_URL"              = local.supabase_url
-    "SUPABASE_SERVICE_ROLE_KEY" = data.supabase_apikeys.current.service_role_key
-    "NEXT_PUBLIC_SUPABASE_URL"  = local.supabase_url
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY" = data.supabase_apikeys.current.anon_key
-    "FEEDBACK_GITHUB_TOKEN"     = var.feedback_github_token
+    "GCP_WIF_PROVIDER"      = google_iam_workload_identity_pool_provider.provider.name
+    "GCP_SA_EMAIL"          = google_service_account.deployer.email
+    "DATABASE_URL"          = var.database_url
+    "FEEDBACK_GITHUB_TOKEN" = var.feedback_github_token
+    "AUTH0_ISSUER_BASE_URL" = var.auth0_issuer_base_url
+    "AUTH0_AUDIENCE"        = var.auth0_audience
+    "GOOGLE_CLIENT_ID"      = var.google_client_id
+    "GOOGLE_CLIENT_SECRET"  = var.google_client_secret
   }
 
   repository      = local.github_repo

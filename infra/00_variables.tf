@@ -25,19 +25,8 @@ variable "app_name" {
   default     = "jobhunter"
 }
 
-variable "supabase_project_ref" {
-  description = "Supabase Project Reference ID"
-  type        = string
-}
-
-variable "supabase_access_token" {
-  description = "Supabase Access Token"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_password" {
-  description = "Heslo k Supabase databáze"
+variable "database_url" {
+  description = "Neon PostgreSQL connection URL"
   type        = string
   sensitive   = true
 }
@@ -68,20 +57,27 @@ variable "google_client_secret" {
   default     = ""
 }
 
-variable "auth_additional_redirect_urls" {
-  description = "Shared redirect URLs for multiple environments"
-  type        = list(string)
-  default     = []
-}
-
-variable "extra_exposed_schemas" {
-  description = "Additional schemas to expose in PostgREST API (comma separated)"
+variable "auth0_issuer_base_url" {
+  description = "Auth0 issuer base URL (e.g. https://tenant.eu.auth0.com)"
   type        = string
+  sensitive   = true
   default     = ""
 }
 
-variable "supabase_site_url" {
-  description = "The main Site URL for the Supabase project (Auth settings)"
+variable "auth0_audience" {
+  description = "Auth0 API audience"
+  type        = string
+  default     = "jobhunter-api"
+}
+
+variable "gcs_location" {
+  description = "Bucket location for GCS storage"
+  type        = string
+  default     = "EU"
+}
+
+variable "resource_prefix_override" {
+  description = "Optional override for resource prefix (bucket names, runtime prefix)"
   type        = string
   default     = ""
 }

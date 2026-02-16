@@ -6,7 +6,8 @@ resource "google_project_service" "services" {
     "iam.googleapis.com",
     "cloudbuild.googleapis.com",
     "secretmanager.googleapis.com",
-    "iamcredentials.googleapis.com"
+    "iamcredentials.googleapis.com",
+    "storage.googleapis.com"
   ])
   service            = each.key
   disable_on_destroy = false
@@ -72,14 +73,14 @@ resource "google_iam_workload_identity_pool_provider" "provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-provider-${var.env_name}"
   display_name                       = "GitHub Provider (${var.env_name})"
-  
+
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
     "attribute.repository" = "assertion.repository"
   }
 
   attribute_condition = "assertion.repository == '${local.github_owner}/${local.github_repo}'"
-  
+
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }

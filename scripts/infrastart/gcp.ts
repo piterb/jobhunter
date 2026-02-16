@@ -153,16 +153,8 @@ export async function setupGcpWif(env: EnvironmentConfig, githubRepo: string) {
 
     env.wifProviderPath = `projects/${pNum}/locations/global/workloadIdentityPools/${env.workloadIdPool}/providers/${env.workloadIdProvider}`;
 
-    spinner.start('Initializing Secrets...');
-    const secrets = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
-    for (const s of secrets) {
-        try { await runCmd('gcloud', ['secrets', 'describe', s]); }
-        catch {
-            await runCmd('gcloud', ['secrets', 'create', s, '--replication-policy=automatic']);
-            if (!IS_DRY_RUN) execa('gcloud', ['secrets', 'versions', 'add', s, '--data-file=-',], { input: 'CHANGE_ME' });
-        }
-    }
-    spinner.succeed('Secrets ready');
+    spinner.start('Skipping Secret Manager bootstrap (GitHub env secrets are used)');
+    spinner.succeed('Secret Manager bootstrap skipped');
 
     await provisionServerService(env);
 }

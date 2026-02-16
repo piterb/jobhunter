@@ -17,7 +17,6 @@ resource "github_actions_environment_variable" "vars" {
     "FEEDBACK_ENABLED"    = var.feedback_enabled
     "DB_SCHEMA"                    = local.db_schema
     "RESOURCE_PREFIX"               = local.resource_prefix
-    "NEXT_PUBLIC_RESOURCE_PREFIX"   = local.resource_prefix
   }
 
   repository    = local.github_repo

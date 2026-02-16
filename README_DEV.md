@@ -18,10 +18,20 @@ npm run setup
 
 This script will:
 1.  **Start Docker containers**: Postgres (DB) and Fake-GCS (Storage).
-2.  **Configuration Wizard**: Prompt you for local settings (DB URL, OpenAI Key, etc.) and generate `.env.local` and `local.env`.
+2.  **Configuration Wizard**: Prompt you for local settings (DB URL, GCS endpoint) and generate `.env.local` and `local.env`.
 3.  **Install Dependencies**: Run `npm install` across the monorepo.
 4.  **Database Migration**: Run the initial schema setup.
 5.  **Seed Data**: Create a default developer profile and sample job applications.
+
+## Manual Env Setup (Optional)
+
+If you do not want to run the wizard, copy and fill these templates manually:
+
+- `server/.env.example` -> `server/.env.local`
+- `client/.env.example` -> `client/.env.local`
+
+For local startup these two are enough.
+If you hit macOS dotfile permission issues, run `npm run setup` and it will generate fallback `server/local.env` automatically.
 
 ---
 

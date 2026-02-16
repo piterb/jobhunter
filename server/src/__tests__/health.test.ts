@@ -1,11 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 
-// Mock Supabase to avoid loading config or connecting
-vi.mock('../config/supabase', () => ({
-    createSupabaseUserClient: vi.fn(),
-    supabaseAdmin: {},
-    supabase: {}
+// Mock DB to avoid loading config or connecting
+vi.mock('../config/db', () => ({
+    default: vi.fn(),
 }));
 
 // Mock Auth Middleware just in case, though health check is public

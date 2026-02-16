@@ -1,40 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import { mockDb, MockQueryBuilder } from './utils/mockSupabase';
+import { mockStore, resetMockStore } from './utils/db';
 
-// -------------------------------------------------------------------------
-// MOCK DEPENDENCIES
-// -------------------------------------------------------------------------
-
-// Mock Supabase
-vi.mock('../config/supabase', () => ({
-    createSupabaseUserClient: vi.fn(() => ({
-        from: (table: string) => new MockQueryBuilder(table),
-    })),
-    supabaseAdmin: {
-        from: (table: string) => new MockQueryBuilder(table),
-    },
-    supabase: {
-        from: (table: string) => new MockQueryBuilder(table),
-    }
-}));
-
-// Mock Auth
 const MOCK_USER_ID = 'test-user-123';
+
+vi.mock('../config/db', async () => {
+    const mod = await import('./utils/db.js');
+    return { default: mod.default };
+});
+
 vi.mock('../middleware/auth', () => ({
-    authMiddleware: (req: any, res: any, next: any) => {
+    authMiddleware: (req: any, _res: any, next: any) => {
         req.user = { id: MOCK_USER_ID, email: 'test@example.com' };
         next();
     }
 }));
 
-// Import App
 import app from '../app';
 
 describe('AI Usage Logs API', () => {
-
     beforeEach(() => {
-        mockDb['ai_usage_logs'] = [];
+        resetMockStore();
     });
 
     const mockLog = {
@@ -50,7 +36,11 @@ describe('AI Usage Logs API', () => {
 
     describe('GET /ai-logs', () => {
         it('should list logs for the user with pagination', async () => {
-            mockDb['ai_usage_logs'].push({ ...mockLog, id: '1' }, { ...mockLog, id: '2' }, { ...mockLog, id: '3' });
+            mockStore.ai_usage_logs.push(
+                { ...mockLog, id: '1' },
+                { ...mockLog, id: '2' },
+                { ...mockLog, id: '3' }
+            );
 
             const response = await request(app).get('/api/v1/ai-logs?limit=2&page=1');
 
@@ -76,15 +66,10 @@ describe('AI Usage Logs API', () => {
                 .post('/api/v1/ai-logs')
                 .send(newLog);
 
-            if (response.status !== 201) console.log(response.body);
-
             expect(response.status).toBe(201);
             expect(response.body.id).toBeDefined();
             expect(response.body.feature).toBe('Cover_Letter_Generation');
-
-            // Check DB
-            expect(mockDb['ai_usage_logs']).toHaveLength(1);
+            expect(mockStore.ai_usage_logs).toHaveLength(1);
         });
     });
-
 });

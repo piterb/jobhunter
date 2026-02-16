@@ -1,45 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-// IMPORTANT: mockSupabase must be imported before app, but we need vi.mock to set up the mock factory
-// So we use the factory inside vi.mock
-
-// 1. Mock Supabase Logic Inline or Imported?
-// To ensure reference consistency, let's use the exported mockDb
-import { mockDb, MockQueryBuilder } from './utils/mockSupabase';
-
-// 2. Mock Modules
-vi.mock('../config/supabase', () => ({
-    createSupabaseUserClient: vi.fn(() => ({
-        from: (table: string) => new MockQueryBuilder(table),
-    })),
-    supabaseAdmin: {
-        from: (table: string) => new MockQueryBuilder(table),
-    },
-    supabase: {
-        from: (table: string) => new MockQueryBuilder(table),
-    }
-}));
+import { mockStore, resetMockStore } from './utils/db';
 
 const MOCK_USER_ID = 'test-user-123';
+
+vi.mock('../config/db', async () => {
+    const mod = await import('./utils/db.js');
+    return { default: mod.default };
+});
+
 vi.mock('../middleware/auth', () => ({
-    authMiddleware: (req: any, res: any, next: any) => {
+    authMiddleware: (req: any, _res: any, next: any) => {
         req.user = { id: MOCK_USER_ID, email: 'test@example.com' };
         next();
     }
 }));
 
-// 3. Import App
 import app from '../app';
 
 describe('Settings API', () => {
-
     beforeEach(() => {
-        // Reset DB
-        mockDb.profiles = []; // Clear array
+        resetMockStore();
     });
 
     const mockProfile = {
         id: MOCK_USER_ID,
+        user_id: MOCK_USER_ID,
         full_name: 'Test User',
         theme: 'dark',
         language: 'en',
@@ -50,8 +36,7 @@ describe('Settings API', () => {
 
     describe('GET /settings', () => {
         it('should return user settings from profile', async () => {
-            // Setup DB
-            mockDb.profiles.push({ ...mockProfile }); // Push a copy
+            mockStore.profiles.push({ ...mockProfile });
 
             const response = await request(app).get('/api/v1/settings');
 
@@ -62,15 +47,14 @@ describe('Settings API', () => {
 
         it('should handle missing profile', async () => {
             const response = await request(app).get('/api/v1/settings');
-            // Expect 500 because controller returns error on PGRST116
-            expect(response.status).toBe(500);
-            expect(response.body.error).toContain('Not found');
+            expect(response.status).toBe(404);
+            expect(response.body.error).toContain('Settings not found');
         });
     });
 
     describe('PUT /settings', () => {
         it('should update user settings', async () => {
-            mockDb.profiles.push({ ...mockProfile });
+            mockStore.profiles.push({ ...mockProfile });
 
             const updates = { theme: 'light', ghosting_threshold_days: 7 };
             const response = await request(app)
@@ -80,15 +64,13 @@ describe('Settings API', () => {
             expect(response.status).toBe(200);
             expect(response.body.theme).toBe('light');
             expect(response.body.ghosting_threshold_days).toBe(7);
-
-            // DB Check
-            expect(mockDb.profiles[0].theme).toBe('light');
+            expect(mockStore.profiles[0].theme).toBe('light');
         });
     });
 
     describe('GET /settings/integrations', () => {
         it('should return integration status', async () => {
-            mockDb.profiles.push({ ...mockProfile });
+            mockStore.profiles.push({ ...mockProfile });
 
             const response = await request(app).get('/api/v1/settings/integrations');
             expect(response.status).toBe(200);
@@ -97,7 +79,7 @@ describe('Settings API', () => {
         });
 
         it('should show disabled if no key present', async () => {
-            mockDb.profiles.push({ ...mockProfile, openai_api_key: null });
+            mockStore.profiles.push({ ...mockProfile, openai_api_key: null });
 
             const response = await request(app).get('/api/v1/settings/integrations');
             expect(response.status).toBe(200);
@@ -107,7 +89,7 @@ describe('Settings API', () => {
 
     describe('PUT /settings/integrations', () => {
         it('should update integration settings (api key)', async () => {
-            mockDb.profiles.push({ ...mockProfile, openai_api_key: null });
+            mockStore.profiles.push({ ...mockProfile, openai_api_key: null });
 
             const payload = {
                 provider: 'openai',
@@ -120,11 +102,8 @@ describe('Settings API', () => {
                 .send(payload);
 
             expect(response.status).toBe(200);
-
-            // Check DB
-            expect(mockDb.profiles[0].openai_api_key).toBe('sk-new-key');
-            expect(mockDb.profiles[0].default_ai_model).toBe('gpt-4o-mini');
+            expect(mockStore.profiles[0].openai_api_key).toBe('sk-new-key');
+            expect(mockStore.profiles[0].default_ai_model).toBe('gpt-4o-mini');
         });
     });
-
 });

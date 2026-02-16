@@ -2,32 +2,36 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import supertest from 'supertest';
 import axios from 'axios';
 
-// 1. Setup Hoisted Mocks
-const { mockSupabase } = vi.hoisted(() => {
-    const mockStorage = {
-        from: vi.fn().mockReturnThis(),
-        upload: vi.fn().mockResolvedValue({ data: { path: 'test.html' }, error: null }),
-        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://supabase.com/test.html' } }),
-        listBuckets: vi.fn().mockResolvedValue({ data: [{ name: 'jobhunter_feedback_reports' }], error: null }),
-        createBucket: vi.fn().mockResolvedValue({ data: null, error: null }),
-    };
+const { mockSave, mockBucket } = vi.hoisted(() => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const makePublic = vi.fn().mockResolvedValue(undefined);
+    const file = vi.fn(() => ({ save, makePublic }));
+    const bucket = vi.fn(() => ({ file }));
     return {
-        mockSupabase: {
-            storage: mockStorage
-        }
+        mockSave: save,
+        mockBucket: bucket,
     };
 });
 
-vi.mock('../config/supabase', () => ({
-    supabase: mockSupabase,
-    supabaseAdmin: mockSupabase,
-    createSupabaseUserClient: vi.fn(() => mockSupabase)
+vi.mock('../config/db', async () => {
+    const mod = await import('./utils/db.js');
+    return { default: mod.default };
+});
+
+vi.mock('../config/storage', () => ({
+    storage: {
+        bucket: mockBucket,
+    },
+    BUCKETS: {
+        FEEDBACK: 'jobhunter-feedback-reports',
+        DOCUMENTS: 'jobhunter-documents',
+        AVATARS: 'jobhunter-avatars',
+    }
 }));
 
 vi.mock('axios');
 const mockedAxios = axios as any;
 
-// 2. Import App (AFTER mocks)
 import app from '../app';
 
 describe('Feedback API', () => {
@@ -37,6 +41,8 @@ describe('Feedback API', () => {
         process.env.FEEDBACK_GITHUB_TOKEN = 'test-token';
         process.env.GITHUB_OWNER = 'test-owner';
         process.env.GITHUB_REPO = 'test-repo';
+        process.env.NODE_ENV = 'test';
+        process.env.GCS_ENDPOINT = 'http://localhost:4443';
     });
 
     const validFeedback = {
@@ -62,13 +68,10 @@ describe('Feedback API', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
-        expect(response.body.reportUrl).toBe('https://supabase.com/test.html');
+        expect(response.body.reportUrl).toContain('https://storage.googleapis.com/jobhunter-feedback-reports/');
+        expect(mockBucket).toHaveBeenCalledWith('jobhunter-feedback-reports');
+        expect(mockSave).toHaveBeenCalled();
 
-        // Check storage calls
-        expect(mockSupabase.storage.from).toHaveBeenCalledWith('jobhunter_feedback_reports');
-        expect(mockSupabase.storage.upload).toHaveBeenCalled();
-
-        // Check GitHub call
         expect(mockedAxios.post).toHaveBeenCalledWith(
             expect.stringContaining('api.github.com/repos/test-owner/test-repo/issues'),
             expect.objectContaining({
@@ -85,10 +88,8 @@ describe('Feedback API', () => {
             .send({ ...validFeedback, dryRun: true });
 
         expect(response.status).toBe(201);
-        expect(response.body.reportUrl).toContain('dummy-storage');
-
-        // Storage and GitHub should NOT be called
-        expect(mockSupabase.storage.upload).not.toHaveBeenCalled();
+        expect(response.body.reportUrl).toContain('https://storage.googleapis.com/jobhunter-feedback-reports/');
+        expect(mockSave).not.toHaveBeenCalled();
         expect(mockedAxios.post).not.toHaveBeenCalled();
     });
 

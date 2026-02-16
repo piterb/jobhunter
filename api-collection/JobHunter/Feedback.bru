@@ -39,6 +39,9 @@ tests {
 
   test("should return reportUrl", function() {
     expect(res.body.reportUrl).to.be.a("string");
-    expect(res.body.reportUrl).to.include("dummy-storage");
+    expect(
+      res.body.reportUrl.includes("feedback-reports") ||
+      res.body.reportUrl.includes("storage.googleapis.com")
+    ).to.be.true;
   });
 }

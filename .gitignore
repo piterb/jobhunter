@@ -68,3 +68,12 @@ api-collection/environments/
 **/infra/environments/*.tfvars
 !**/infra/environments/example.tfvars
 !**/infra/environments/common.example.tfvars
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Local Stack Data
+storage-data/
+pgdata/

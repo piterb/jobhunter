@@ -4,7 +4,7 @@ import { validate } from '../middleware/validate';
 import { AnalyzeJobRequestSchema, AnalyzeActivityRequestSchema, AnalyzeJobRequest, AnalyzeActivityRequest } from 'shared';
 import OpenAI from 'openai';
 import { logAIUsage } from '../utils/logger';
-import { supabase } from '../config/supabase';
+import sql from '../config/db';
 
 const router = Router();
 
@@ -26,24 +26,23 @@ router.post('/job', validate(AnalyzeJobRequestSchema), async (req: AuthRequest<{
         return res.status(400).json({ error: 'URL or text is required' });
     }
 
-    // Fetch user profile for API key
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('openai_api_key')
-        .eq('id', userId)
-        .single();
-
-    const openai = getOpenAIClient(profile?.openai_api_key);
-    if (!openai) {
-        return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
-    }
-
     try {
+        // Fetch user profile for API key
+        const [profile] = await sql`
+            SELECT openai_api_key FROM profiles 
+            WHERE id = ${userId}
+        `;
+
+        const openai = getOpenAIClient(profile?.openai_api_key);
+        if (!openai) {
+            return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
+        }
+
         const prompt = `
-      Analyze the following job posting (from URL or text) and extract information in JSON format.
-      Fields: title, company, skills (array), salary_min (number), salary_max (number), location, description (markdown).
-      Content: ${text || url}
-    `;
+            Analyze the following job posting (from URL or text) and extract information in JSON format.
+            Fields: title, company, skills (array), salary_min (number), salary_max (number), location, description (markdown).
+            Content: ${text || url}
+        `;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
@@ -93,25 +92,24 @@ router.post('/activity', validate(AnalyzeActivityRequestSchema), async (req: Aut
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    // Fetch user profile for API key
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('openai_api_key')
-        .eq('id', userId)
-        .single();
-
-    const openai = getOpenAIClient(profile?.openai_api_key);
-    if (!openai) {
-        return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
-    }
-
     try {
+        // Fetch user profile for API key
+        const [profile] = await sql`
+            SELECT openai_api_key FROM profiles 
+            WHERE id = ${userId}
+        `;
+
+        const openai = getOpenAIClient(profile?.openai_api_key);
+        if (!openai) {
+            return res.status(400).json({ error: 'OpenAI API key not found in your profile (BYOK).' });
+        }
+
         const prompt = `
-      Analyze this text (email or note) related to a job application. 
-      Identify: type (note, email, call, meeting), category (interview, offer, rejection, question, info), summary, and any mentioned date.
-      Return as JSON.
-      Text: ${text}
-    `;
+            Analyze this text (email or note) related to a job application. 
+            Identify: type (note, email, call, meeting), category (interview, offer, rejection, question, info), summary, and any mentioned date.
+            Return as JSON.
+            Text: ${text}
+        `;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",

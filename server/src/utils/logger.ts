@@ -1,4 +1,4 @@
-import { supabaseAdminJobhunter } from '../config/supabase';
+import sql from '../config/db';
 
 export interface AILogData {
     user_id: string;
@@ -16,13 +16,9 @@ export interface AILogData {
 
 export const logAIUsage = async (log: AILogData) => {
     try {
-        const { error } = await supabaseAdminJobhunter
-            .from('ai_usage_logs')
-            .insert([log]);
-
-        if (error) {
-            console.error('Failed to log AI usage:', error);
-        }
+        await sql`
+            INSERT INTO ai_usage_logs ${sql(log as any)}
+        `;
     } catch (err) {
         console.error('Error logging AI usage:', err);
     }

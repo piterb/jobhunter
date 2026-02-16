@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Key, Shield, Loader2, CheckCircle2, AlertCircle, Cpu, Sparkles, ChevronDown } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { authService } from "@/services/auth-service";
 
 const MODELS = [
     { id: "gpt-4o-mini", name: "GPT-4o Mini", desc: "Fast & Cheap", icon: <Cpu size={14} /> },
@@ -13,6 +13,7 @@ const MODELS = [
 
 export default function ApiKeysPage() {
     const { user } = useAuth();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
     const [apiKey, setApiKey] = useState("");
     const [defaultModel, setDefaultModel] = useState("gpt-4o-mini");
     const [isLoading, setIsLoading] = useState(true);
@@ -24,20 +25,31 @@ export default function ApiKeysPage() {
     useEffect(() => {
         const fetchProfile = async () => {
             if (!user) return;
+            const token = authService.getToken();
+            if (!token) return;
 
             try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('openai_api_key, default_ai_model, updated_at')
-                    .eq('id', user.id)
-                    .single();
+                const res = await fetch(`${API_URL}/settings/integrations`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
 
-                if (error) throw error;
+                if (!res.ok) throw new Error('Failed to fetch settings');
+                const data = await res.json();
 
-                if (data) {
-                    setApiKey(data.openai_api_key || "");
-                    setDefaultModel(data.default_ai_model || "gpt-4o-mini");
-                    setLastUpdated(data.updated_at);
+                if (data && data.openai) {
+                    setApiKey(data.openai.api_key || ""); // Adjusting to match backend return if needed, but integration route returns different structure
+                }
+
+                // Let's use the generic profile route instead for simplicity if integrations is too complex
+                const profileRes = await fetch(`${API_URL}/profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const profileData = await profileRes.json();
+
+                if (profileData) {
+                    setApiKey(profileData.openai_api_key || "");
+                    setDefaultModel(profileData.default_ai_model || "gpt-4o-mini");
+                    setLastUpdated(profileData.updated_at);
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -47,25 +59,30 @@ export default function ApiKeysPage() {
         };
 
         fetchProfile();
-    }, [user]);
+    }, [user, API_URL]);
 
     const handleSave = async () => {
         if (!user) return;
+        const token = authService.getToken();
+        if (!token) return;
 
         setIsSaving(true);
         setSaveStatus('idle');
 
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
+            const res = await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
                     openai_api_key: apiKey,
                     default_ai_model: defaultModel,
-                    updated_at: new Date().toISOString()
                 })
-                .eq('id', user.id);
+            });
 
-            if (error) throw error;
+            if (!res.ok) throw new Error('Failed to save settings');
 
             setSaveStatus('success');
             setLastUpdated(new Date().toISOString());

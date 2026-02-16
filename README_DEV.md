@@ -18,7 +18,7 @@ npm run setup
 
 This script will:
 1.  **Start Docker containers**: Postgres (DB) and Fake-GCS (Storage).
-2.  **Configuration Wizard**: Prompt you for local settings (DB URL, GCS endpoint) and generate `.env.local` and `local.env`.
+2.  **Configuration Wizard**: Reads `server/.env.example` and `client/.env.example`, prompts values, then generates `server/.env.local` and `client/.env.local`.
 3.  **Install Dependencies**: Run `npm install` across the monorepo.
 4.  **Database Migration**: Run the initial schema setup.
 5.  **Seed Data**: Create a default developer profile and sample job applications.
@@ -31,7 +31,6 @@ If you do not want to run the wizard, copy and fill these templates manually:
 - `client/.env.example` -> `client/.env.local`
 
 For local startup these two are enough.
-If you hit macOS dotfile permission issues, run `npm run setup` and it will generate fallback `server/local.env` automatically.
 
 ---
 
@@ -98,9 +97,7 @@ In local development, we use a **Mock Authentication Bypass**:
 ## � Troubleshooting (Mac Specific)
 
 ### Permission Errors (`EPERM`)
-MacOS sometimes blocks Node.js from reading files starting with a dot (like `.env.local`). 
-- **Solution**: The backend uses `local.env` as a fallback. The `npm run setup` command automatically creates both.
-- If the server fails to load DB URL, ensure `server/local.env` exists.
+If you hit permission issues during local setup, make sure Docker and your project directory are writable for your user.
 
 ### Temporary File Errors (`tsx`)
 If you see errors related to `tsx` or `ts-node-dev` not finding temporary files:

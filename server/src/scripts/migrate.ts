@@ -4,6 +4,25 @@ import path from 'path';
 
 const MIGRATIONS_DIR = path.join(process.cwd(), '..', 'db', 'migrations');
 
+function extractUpMigration(sqlFileContent: string): string {
+    const upMarker = '-- migrate:up';
+    const downMarker = '-- migrate:down';
+
+    const upIdx = sqlFileContent.indexOf(upMarker);
+    if (upIdx === -1) {
+        return sqlFileContent;
+    }
+
+    const afterUp = sqlFileContent.slice(upIdx + upMarker.length);
+    const downIdxInAfterUp = afterUp.indexOf(downMarker);
+
+    if (downIdxInAfterUp === -1) {
+        return afterUp.trim();
+    }
+
+    return afterUp.slice(0, downIdxInAfterUp).trim();
+}
+
 async function migrate() {
     console.log('🔄 Running migrations...');
 
@@ -35,10 +54,15 @@ async function migrate() {
 
             console.log(`🚀 Applying version ${version} (${file})...`);
             const content = await fs.readFile(path.join(MIGRATIONS_DIR, file), 'utf8');
+            const upSql = extractUpMigration(content);
+
+            if (!upSql.trim()) {
+                throw new Error(`Migration ${file} has empty migrate:up section.`);
+            }
 
             // Run migration in a transaction
             await sql.begin(async (tx) => {
-                await tx.unsafe(content);
+                await tx.unsafe(upSql);
                 await tx.unsafe('INSERT INTO jobhunter_schema_migrations (version) VALUES ($1)', [version]);
             });
 

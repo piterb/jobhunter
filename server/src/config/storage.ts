@@ -8,7 +8,6 @@ const envPath2 = path.join(process.cwd(), '..', '.env.local');
 
 dotenv.config({ path: envPath1 });
 dotenv.config({ path: envPath2 });
-dotenv.config({ path: path.join(process.cwd(), 'local.env') });
 dotenv.config();
 
 const isLocal = process.env.NODE_ENV === 'development' || !process.env.GCP_PROJECT_ID;

@@ -68,12 +68,18 @@ export class FeedbackService {
 
             // In development, we might need to make it public if bucket isn't auto-public
             if (isLocal) {
-                await file.makePublic();
+                try {
+                    await file.makePublic();
+                } catch (err) {
+                    // fake-gcs (filesystem backend) does not fully support object generation/ACL flows.
+                    // The direct emulator URL still works for local debugging, so do not fail the request.
+                    console.warn('[FeedbackService] makePublic failed in local emulator, continuing:', err);
+                }
             }
 
             // Construct public URL
             const publicUrl = isLocal
-                ? `${gcsEndpoint}/${this.BUCKET_NAME}/${fileName}`
+                ? `${gcsEndpoint}/download/storage/v1/b/${this.BUCKET_NAME}/o/${encodeURIComponent(fileName)}?alt=media`
                 : `https://storage.googleapis.com/${this.BUCKET_NAME}/${fileName}`;
 
             // Optional: Create GitHub Issue
@@ -102,6 +108,10 @@ export class FeedbackService {
             return;
         }
 
+        const reportLink = isValidUrl(reportUrl)
+            ? withQueryParam(reportUrl, 'download', 'feedback_report.html')
+            : reportUrl;
+
         const body = `
 ### 📝 Feedback Details
 **Subject:** ${data.subject}
@@ -112,7 +122,7 @@ export class FeedbackService {
 ---
 
 ### 🔍 Analysis
-**[📥 Download & View Interactive Report](${reportUrl}?download=feedback_report.html)**
+**[📥 Download & View Interactive Report](${reportLink})**
 
 ---
 
@@ -371,4 +381,19 @@ ${data.description}
 </html>
         `;
     }
+}
+
+function isValidUrl(value: string): boolean {
+    try {
+        new URL(value);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function withQueryParam(url: string, key: string, value: string): string {
+    const parsed = new URL(url);
+    parsed.searchParams.set(key, value);
+    return parsed.toString();
 }

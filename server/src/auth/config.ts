@@ -1,4 +1,5 @@
 import { AuthRuntimeConfig, AuthProviderName } from './types';
+import { AuthError } from './errors';
 
 const TRUE_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
@@ -31,8 +32,10 @@ export function loadAuthRuntimeConfig(): AuthRuntimeConfig {
 
     const appClaimsDefault = nodeEnv === 'production';
     const enforceAppClaims = parseBoolean(process.env.AUTH_ENFORCE_APP_CLAIMS, appClaimsDefault);
+    const requireClientAllowlistDefault = appEnv !== 'local';
+    const requireClientAllowlist = parseBoolean(process.env.AUTH_REQUIRE_CLIENT_ALLOWLIST, requireClientAllowlistDefault);
 
-    return {
+    const config: AuthRuntimeConfig = {
         provider,
         devBypass,
         nodeEnv,
@@ -47,10 +50,36 @@ export function loadAuthRuntimeConfig(): AuthRuntimeConfig {
         },
         policy: {
             enforceAppClaims,
+            requireClientAllowlist,
             expectedAppId: appName,
             expectedAppEnv: appEnv,
             allowedClientIds: parseCsv(process.env.OIDC_CLIENT_ALLOWLIST),
             requiredScopes: parseCsv(process.env.AUTH_REQUIRED_SCOPES)
         }
     };
+    validateAuthRuntimeConfig(config);
+    return config;
+}
+
+export function validateAuthRuntimeConfig(config: AuthRuntimeConfig): void {
+    if (!config.appName.trim()) {
+        throw new AuthError(500, 'auth_misconfigured', 'APP_NAME must be set for auth policy enforcement');
+    }
+    if (!config.appEnv.trim()) {
+        throw new AuthError(500, 'auth_misconfigured', 'APP_ENV must be set for auth policy enforcement');
+    }
+
+    if (config.devBypass) {
+        return;
+    }
+
+    if (!config.oidc.issuer.trim()) {
+        throw new AuthError(500, 'auth_misconfigured', 'OIDC_ISSUER (or AUTH0_ISSUER_BASE_URL) is required when mock identity is disabled');
+    }
+    if (config.oidc.audience.length === 0) {
+        throw new AuthError(500, 'auth_misconfigured', 'OIDC_AUDIENCE (or AUTH0_AUDIENCE) is required when mock identity is disabled');
+    }
+    if (config.policy.requireClientAllowlist && config.policy.allowedClientIds.length === 0) {
+        throw new AuthError(500, 'auth_misconfigured', 'OIDC_CLIENT_ALLOWLIST is required for isolated non-local deployments');
+    }
 }

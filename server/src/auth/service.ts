@@ -69,6 +69,13 @@ class AuthService {
         return this.cachedAdapter;
     }
 
+    initialize(): void {
+        const config = this.getConfig();
+        if (!config.devBypass) {
+            this.getAdapter(config);
+        }
+    }
+
     async authenticateRequest(authHeader?: string): Promise<AuthContext> {
         const config = this.getConfig();
         const token = parseBearerToken(authHeader);

@@ -26,6 +26,7 @@ export interface OidcAdapterConfig {
 
 export interface AuthPolicyConfig {
     enforceAppClaims: boolean;
+    requireClientAllowlist: boolean;
     expectedAppId: string;
     expectedAppEnv: string;
     allowedClientIds: string[];

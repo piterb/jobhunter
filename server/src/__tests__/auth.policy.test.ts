@@ -18,6 +18,7 @@ const baseContext: AuthContext = {
 
 const basePolicy: AuthPolicyConfig = {
     enforceAppClaims: true,
+    requireClientAllowlist: true,
     expectedAppId: 'jobhunter',
     expectedAppEnv: 'tst',
     allowedClientIds: ['jobhunter-web'],

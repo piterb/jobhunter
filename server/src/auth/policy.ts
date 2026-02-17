@@ -7,6 +7,10 @@ function hasAllScopes(currentScopes: string[], requiredScopes: string[]): boolea
 }
 
 export function enforceAuthPolicy(context: AuthContext, policy: AuthPolicyConfig): void {
+    if (policy.requireClientAllowlist && policy.allowedClientIds.length === 0) {
+        throw new AuthError(500, 'auth_misconfigured', 'Client allowlist is required but not configured');
+    }
+
     if (policy.allowedClientIds.length > 0) {
         if (!context.clientId || !policy.allowedClientIds.includes(context.clientId)) {
             throw new AuthError(403, 'forbidden_client', 'Token client is not allowed for this deployment');

@@ -14,32 +14,33 @@ app_name      = "jobhunter"    # Optional, defaults to jobhunter
 # or passed via environment variables (TF_VAR_...)
 neon_api_key                  = "napi_xxx"             # project-scoped key is supported and recommended
 neon_project_id               = "empty-brook-12345678" # project is created manually in Neon
-neon_database_name            = "jobhunter"
-neon_role_name                = "jobhunter"
-neon_branch_name              = "" # optional; default is <app_name>-<env_name>
 auth0_domain                  = "your-tenant.eu.auth0.com"
 auth0_terraform_client_id     = "your-auth0-m2m-client-id"
 auth0_terraform_client_secret = "your-auth0-m2m-client-secret"
 
-# --- Runtime auth variables (snake_case mirror of server/.env.example + client/.env.example) ---
-# If oidc_issuer or oidc_audience are empty, Terraform derives them from created Auth0 artifacts.
-auth_provider                    = "auth0"
-auth_local_dev_use_mock_identity = false
-oidc_issuer                      = ""
-oidc_audience                    = ""
-oidc_client_allowlist            = "" # optional override; default = provisioned Auth0 SPA client_id
-oidc_allowed_algorithms          = "RS256"
-auth_enforce_app_claims          = false
-auth_app_id_claim                = "app_id"
-auth_app_env_claim               = "app_env"
-auth_require_client_allowlist    = true
-auth_required_scopes             = ""
-next_public_auth0_scope          = "openid profile email"
+# --- Usually keep defaults (Terraform/app derives these automatically) ---
+# You do NOT need to set these unless you intentionally override behavior.
+# neon_database_name = "jobhunter"
+# neon_role_name = "jobhunter"
+# neon_branch_name = "" # default = <app_name>-<env_name>
+#
+# auth_provider = "auth0"
+# auth_local_dev_use_mock_identity = false
+# oidc_issuer = "" # default derived from auth0_domain
+# oidc_audience = "" # default derived from created Auth0 API identifier
+# oidc_client_allowlist = "" # default = created Auth0 SPA client_id
+# oidc_allowed_algorithms = "RS256"
+# auth_enforce_app_claims = false
+# auth_app_id_claim = "app_id"
+# auth_app_env_claim = "app_env"
+# auth_require_client_allowlist = true
+# auth_required_scopes = ""
+# next_public_auth0_scope = "openid profile email"
 
 # Optional: create/update Auth0 Google social connection and wire it to generated SPA app.
-auth0_google_connection_enabled = true
-google_client_id                = "your-google-client-id.apps.googleusercontent.com"
-google_client_secret            = "your-google-client-secret"
+# auth0_google_connection_enabled = true
+# google_client_id = "your-google-client-id.apps.googleusercontent.com"
+# google_client_secret = "your-google-client-secret"
 
 # --- Optional Extras ---
 # feedback_github_token = "ghp_..."

@@ -58,8 +58,11 @@ resource "auth0_connection" "google" {
       "email"
     ]
   }
+}
 
-  enabled_clients = [
-    auth0_client.frontend.client_id
-  ]
+resource "auth0_connection_client" "google_frontend" {
+  count = var.auth0_google_connection_enabled && var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
+
+  connection_id = auth0_connection.google[0].id
+  client_id     = auth0_client.frontend.client_id
 }

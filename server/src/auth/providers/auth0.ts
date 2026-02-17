@@ -49,6 +49,7 @@ export class Auth0Adapter implements AuthProviderAdapter {
             return {
                 provider: this.provider,
                 userId,
+                subject: userId,
                 email: getStringClaim(payload, 'email'),
                 issuer: getStringClaim(payload, 'iss') || this.config.issuer,
                 audience: normalizeAudience(payload.aud),

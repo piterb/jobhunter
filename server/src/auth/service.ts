@@ -20,6 +20,7 @@ function createDevContext(config: AuthRuntimeConfig): AuthContext {
     return {
         provider: config.provider,
         userId: 'd7b6f3b0-1234-4a5b-8c9d-1234567890ab',
+        subject: 'd7b6f3b0-1234-4a5b-8c9d-1234567890ab',
         email: 'dev@jobhunter.local',
         issuer: 'local-dev-bypass',
         audience: ['local-dev-bypass'],

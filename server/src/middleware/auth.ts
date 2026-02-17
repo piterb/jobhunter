@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { authService } from '../auth/service';
 import { AuthContext } from '../auth/types';
 import { AuthError } from '../auth/errors';
+import { resolveProfileIdentity } from '../auth/identity';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AuthRequest<P = any, ResBody = any, ReqBody = any, ReqQuery = any> extends Request<P, ResBody, ReqBody, ReqQuery> {
@@ -17,18 +18,24 @@ export interface AuthRequest<P = any, ResBody = any, ReqBody = any, ReqQuery = a
 export const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const authContext = await authService.authenticateRequest(req.headers.authorization);
+        const identity = await resolveProfileIdentity(authContext);
+        const enrichedContext: AuthContext = {
+            ...authContext,
+            internalUserId: identity.id
+        };
         req.user = {
-            id: authContext.userId,
-            email: authContext.email,
+            id: identity.id,
+            email: identity.email || authContext.email,
             app_metadata: {
                 role: 'authenticated',
                 app_id: authContext.appId,
                 app_env: authContext.appEnv,
                 client_id: authContext.clientId,
                 provider: authContext.provider,
-                roles: authContext.roles
+                roles: authContext.roles,
+                auth_subject: authContext.subject
             },
-            auth: authContext
+            auth: enrichedContext
         };
         return next();
     } catch (err) {

@@ -3,6 +3,8 @@ export type AuthProviderName = 'auth0' | 'keycloak';
 export interface AuthContext {
     provider: AuthProviderName;
     userId: string;
+    subject: string;
+    internalUserId?: string;
     email?: string;
     issuer: string;
     audience: string[];

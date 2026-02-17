@@ -5,6 +5,7 @@ import { AuthContext, AuthPolicyConfig } from '../auth/types';
 const baseContext: AuthContext = {
     provider: 'auth0',
     userId: 'user-1',
+    subject: 'google-oauth2|user-1',
     issuer: 'https://issuer.example',
     audience: ['jobhunter-api'],
     clientId: 'jobhunter-web',

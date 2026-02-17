@@ -14,6 +14,7 @@ const seed = async () => {
     try {
         // 1. Create Dev Profile if not exists
         console.log('Creating/Updating dev profile...');
+        let targetUserId = MOCK_USER.id;
 
         // Generate random avatar via DiceBear
         let avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=dev-${Date.now()}`;
@@ -47,25 +48,53 @@ const seed = async () => {
             console.warn('Failed to upload seed avatar, using direct URL:', err);
         }
 
-        await sql`
-            INSERT INTO profiles (id, email, full_name, avatar_url, professional_headline, ghosting_threshold_days)
-            VALUES (${MOCK_USER.id}, ${MOCK_USER.email}, 'Test Developer', ${avatarUrl}, 'Senior Software Engineer', 14)
-            ON CONFLICT (id) DO UPDATE SET
-                full_name = EXCLUDED.full_name,
-                avatar_url = EXCLUDED.avatar_url,
-                professional_headline = EXCLUDED.professional_headline,
-                updated_at = NOW()
+        const [existingBySubject] = await sql<{ id: string }[]>`
+            SELECT id
+            FROM profiles
+            WHERE auth_subject = ${MOCK_USER.id}
+            LIMIT 1
         `;
+
+        const [existingByEmail] = await sql<{ id: string }[]>`
+            SELECT id
+            FROM profiles
+            WHERE lower(email) = lower(${MOCK_USER.email})
+            LIMIT 1
+        `;
+
+        targetUserId = existingBySubject?.id || existingByEmail?.id || MOCK_USER.id;
+
+        const [updatedProfile] = await sql<{ id: string }[]>`
+            UPDATE profiles
+            SET
+                email = ${MOCK_USER.email},
+                auth_subject = ${MOCK_USER.id},
+                full_name = 'Test Developer',
+                avatar_url = ${avatarUrl},
+                professional_headline = 'Senior Software Engineer',
+                ghosting_threshold_days = 14,
+                updated_at = NOW()
+            WHERE id = ${targetUserId}
+            RETURNING id
+        `;
+
+        if (!updatedProfile) {
+            await sql`
+                INSERT INTO profiles (id, email, auth_subject, full_name, avatar_url, professional_headline, ghosting_threshold_days)
+                VALUES (${MOCK_USER.id}, ${MOCK_USER.email}, ${MOCK_USER.id}, 'Test Developer', ${avatarUrl}, 'Senior Software Engineer', 14)
+            `;
+            targetUserId = MOCK_USER.id;
+        }
 
         // 2. Insert Sample Jobs
         console.log('Inserting sample jobs...');
 
         // Clear existing jobs for this user
-        await sql`DELETE FROM jobs WHERE user_id = ${MOCK_USER.id}`;
+        await sql`DELETE FROM jobs WHERE user_id = ${targetUserId}`;
 
         const jobs = [
             {
-                user_id: MOCK_USER.id,
+                user_id: targetUserId,
                 title: 'Senior React Developer',
                 company: 'Tech Innovators Inc.',
                 status: 'Interview',
@@ -79,7 +108,7 @@ const seed = async () => {
                 last_activity: new Date(Date.now() - 86400000).toISOString()
             },
             {
-                user_id: MOCK_USER.id,
+                user_id: targetUserId,
                 title: 'Python Backend Engineer',
                 company: 'DataStream Corp',
                 status: 'Applied',

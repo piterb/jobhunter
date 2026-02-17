@@ -36,10 +36,14 @@ For local startup these two are enough.
 
 ## 🔑 Authentication (Local Development)
 
-In local development, we use a **Mock Authentication Bypass**:
-1.  Go to `http://localhost:3000/login`.
-2.  Click **"Sign in as Developer"**.
-3.  You will be logged in as `dev@jobhunter.local` with full access.
+Use env files as the single source of truth:
+
+1. `server/.env.example` (copy to `server/.env.local`)
+2. `client/.env.example` (copy to `client/.env.local`)
+
+Both files include inline auth mode guidance (`dev` vs `auth0`) and comments describing where each value comes from in Auth0/Google UI.
+
+After any `.env` change, restart both server and client dev processes.
 
 ---
 
@@ -51,6 +55,7 @@ In local development, we use a **Mock Authentication Bypass**:
 | :--- | :--- |
 | `docker-compose up -d` | Start infrastructure in background |
 | `docker-compose down` | Stop and remove infrastructure containers |
+| `docker-compose down -v --remove-orphans` | Full wipe: remove containers, volumes, and orphaned services |
 | `docker-compose restart` | Restart infrastructure (useful for config changes) |
 | `docker-compose logs -f` | Follow all infrastructure logs |
 | `docker logs jobhunter-fake-gcs` | View storage emulator logs |

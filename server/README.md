@@ -1,20 +1,15 @@
 # JobHunter Server
 
-Backend API pre JobHunter aplikáciu.
+Backend API for JobHunter.
 
-## Predpoklady
+## Prerequisites
 
-Pred spustením servera alebo testov musí bežať **Supabase**:
+Before running the server or tests, the local PostgreSQL/GCS docker-compose stack must be up.
 
-```bash
-# V root priečinku projektu
-npx supabase start
-```
-
-## Spustenie servera
+## Run
 
 ```bash
-# Development mode s hot reload
+# Development mode (hot reload)
 npm run dev
 
 # Production build
@@ -22,73 +17,40 @@ npm run build
 npm start
 ```
 
-## Testovanie
-
-### Spustenie testov
+## Testing
 
 ```bash
-# Watch mode (automaticky sa znovu spúšťajú pri zmenách)
+# Watch mode
 npm test
 
-# Jednorázové spustenie
+# Single run
 npm run test:run
 ```
 
-### Spustenie z root priečinka
+From monorepo root:
 
 ```bash
-# Z root priečinka projektu
 npm test -w server
 npm run test:run -w server
 ```
 
-### Čo sa testuje
+## Environment Files
 
-- **Health API** - Overuje, že API beží
-- **Jobs API** - CRUD operácie pre práce (Create, Read, Update, Delete)
+- `.env` for development fallback
+- `.env.test` for Vitest
 
-Testy používajú:
-- **Vitest** - Test runner
-- **Supertest** - HTTP testovanie
-- **Lokálnu Supabase databázu** - Integračné testy proti reálnej DB
+## Auth (Provider-Agnostic)
 
-### Štruktúra testov
+The middleware uses an internal `AuthContext` plus provider adapters.
+For all auth variables and local mode toggles, use `server/.env.example` as the single source of truth.
+The file contains inline comments for each auth variable, including where to find values in Auth0 UI.
 
-```
-server/src/__tests__/
-├── setup.ts           # Načítanie ENV premenných pre testy
-├── health.test.ts     # Testy pre health endpoint
-└── jobs.test.ts       # Testy pre jobs API
-```
+## Local DB Reset
 
-## Premenné prostredia
-
-Server používa tieto ENV súbory:
-- `.env` - Pre development
-- `.env.test` - Pre testy (automaticky načítané Vitestom)
-
-### Auth (provider-agnostic)
-
-Auth middleware používa interný `AuthContext` kontrakt a provider adapter:
-
-- `AUTH_PROVIDER=auth0|keycloak`
-- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=true|false` (v developmente default `true`)
-- `OIDC_ISSUER` + `OIDC_AUDIENCE` (alebo fallback `AUTH0_ISSUER_BASE_URL` + `AUTH0_AUDIENCE`)
-- `OIDC_CLIENT_ALLOWLIST` (voliteľné, CSV)
-- `AUTH_ENFORCE_APP_CLAIMS=true|false`
-- `AUTH_APP_ID_CLAIM` (default `app_id`)
-- `AUTH_APP_ENV_CLAIM` (default `app_env`)
-
-Prepnutie na iného OIDC providera je navrhnuté ako zmena `AUTH_PROVIDER` + OIDC configu, bez zásahu do route/business vrstvy.
-
-## Databáza
-
-Server sa pripája k lokálnej Supabase inštancii:
-- **URL**: `http://127.0.0.1:54321`
-- **Schema**: `jobhunter`
-
-Pre reset databázy:
 ```bash
-# V root priečinku
-npx supabase db reset
+# From repo root
+docker-compose down -v --remove-orphans
+docker-compose up -d
+npm run migrate
+npm run seed
 ```

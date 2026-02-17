@@ -9,13 +9,33 @@ resource "github_repository_environment" "env" {
 # 2. Define GitHub Actions Variables
 resource "github_actions_environment_variable" "vars" {
   for_each = {
-    "GCP_PROJECT_ID"      = var.project_id
-    "GCP_REGION"          = var.region
-    "ARTIFACT_REPO"       = "${var.region}-docker.pkg.dev/${var.project_id}/${local.artifact_repo_name}"
-    "APP_NAME"            = var.app_name
-    "NEXT_PUBLIC_API_URL" = "${google_cloud_run_v2_service.server.uri}/api/v1"
-    "FEEDBACK_ENABLED"    = var.feedback_enabled
-    "RESOURCE_PREFIX"     = local.resource_prefix
+    "GCP_PROJECT_ID"                   = var.project_id
+    "GCP_REGION"                       = var.region
+    "NEON_PROJECT_ID"                  = var.neon_project_id
+    "ARTIFACT_REPO"                    = "${var.region}-docker.pkg.dev/${var.project_id}/${local.artifact_repo_name}"
+    "APP_NAME"                         = var.app_name
+    "NEXT_PUBLIC_API_URL"              = "${google_cloud_run_v2_service.server.uri}/api/v1"
+    "FEEDBACK_ENABLED"                 = var.feedback_enabled
+    "NEXT_PUBLIC_FEEDBACK_ENABLED"     = var.feedback_enabled
+    "RESOURCE_PREFIX"                  = local.resource_prefix
+    "AUTH_PROVIDER"                    = var.auth_provider
+    "AUTH_LOCAL_DEV_USE_MOCK_IDENTITY" = tostring(var.auth_local_dev_use_mock_identity)
+    "OIDC_ISSUER"                      = local.oidc_issuer_url
+    "OIDC_AUDIENCE"                    = auth0_resource_server.api.identifier
+    "OIDC_CLIENT_ALLOWLIST"            = local.oidc_client_allowlist
+    "OIDC_ALLOWED_ALGORITHMS"          = var.oidc_allowed_algorithms
+    "AUTH_ENFORCE_APP_CLAIMS"          = tostring(var.auth_enforce_app_claims)
+    "AUTH_APP_ID_CLAIM"                = var.auth_app_id_claim
+    "AUTH_APP_ENV_CLAIM"               = var.auth_app_env_claim
+    "AUTH_REQUIRE_CLIENT_ALLOWLIST"    = tostring(var.auth_require_client_allowlist)
+    "AUTH_REQUIRED_SCOPES"             = var.auth_required_scopes
+    "NEXT_PUBLIC_AUTH_PROVIDER"        = "auth0"
+    "NEXT_PUBLIC_AUTH0_DOMAIN"         = local.auth0_domain_clean
+    "NEXT_PUBLIC_AUTH0_CLIENT_ID"      = auth0_client.frontend.client_id
+    "NEXT_PUBLIC_AUTH0_AUDIENCE"       = auth0_resource_server.api.identifier
+    "NEXT_PUBLIC_AUTH0_SCOPE"          = var.next_public_auth0_scope
+    "NEXT_PUBLIC_AUTH0_REDIRECT_URI"   = local.client_redirect_uri
+    "NEXT_PUBLIC_AUTH0_LOGOUT_URL"     = local.client_logout_uri
   }
 
   repository    = local.github_repo
@@ -29,12 +49,8 @@ resource "github_actions_environment_secret" "secrets" {
   for_each = {
     "GCP_WIF_PROVIDER"      = google_iam_workload_identity_pool_provider.provider.name
     "GCP_SA_EMAIL"          = google_service_account.deployer.email
-    "DATABASE_URL"          = var.database_url
+    "DATABASE_URL"          = local.neon_database_url
     "FEEDBACK_GITHUB_TOKEN" = var.feedback_github_token
-    "AUTH0_ISSUER_BASE_URL" = var.auth0_issuer_base_url
-    "AUTH0_AUDIENCE"        = var.auth0_audience
-    "GOOGLE_CLIENT_ID"      = var.google_client_id
-    "GOOGLE_CLIENT_SECRET"  = var.google_client_secret
   }
 
   repository      = local.github_repo

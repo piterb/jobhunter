@@ -56,3 +56,84 @@ output "avatars_bucket_name" {
 output "feedback_bucket_name" {
   value = google_storage_bucket.feedback_reports.name
 }
+
+output "auth0_domain" {
+  description = "Auth0 tenant domain used by Terraform provider"
+  value       = local.auth0_domain_clean
+}
+
+output "oidc_issuer" {
+  description = "OIDC issuer URL for backend runtime"
+  value       = local.oidc_issuer_url
+}
+
+output "oidc_audience" {
+  description = "OIDC audience for backend/client runtime"
+  value       = auth0_resource_server.api.identifier
+}
+
+output "oidc_client_allowlist" {
+  description = "Resolved OIDC client allowlist used by backend policy"
+  value       = local.oidc_client_allowlist
+}
+
+output "auth0_frontend_client_id" {
+  description = "Auth0 SPA client ID provisioned for this environment"
+  value       = auth0_client.frontend.client_id
+}
+
+output "auth0_frontend_client_name" {
+  description = "Auth0 SPA app name"
+  value       = auth0_client.frontend.name
+}
+
+output "auth0_api_name" {
+  description = "Auth0 API (resource server) name"
+  value       = auth0_resource_server.api.name
+}
+
+output "client_auth_callback_url" {
+  description = "Frontend callback URL configured in Auth0 SPA app"
+  value       = local.client_redirect_uri
+}
+
+output "client_auth_logout_url" {
+  description = "Frontend logout URL configured in Auth0 SPA app"
+  value       = local.client_logout_uri
+}
+
+output "auth0_google_connection_callback_url" {
+  description = "Redirect URI to register in Google OAuth client for Auth0 connection"
+  value       = "https://${local.auth0_domain_clean}/login/callback"
+}
+
+output "neon_project_id" {
+  description = "Neon project id configured for this environment"
+  value       = var.neon_project_id
+}
+
+output "neon_branch_id" {
+  description = "Neon branch created by Terraform"
+  value       = neon_branch.app.id
+}
+
+output "neon_role_name" {
+  description = "Neon role created by Terraform"
+  value       = neon_role.app.name
+}
+
+output "neon_database_name" {
+  description = "Neon database created by Terraform"
+  value       = neon_database.app.name
+}
+
+output "neon_endpoint_host" {
+  description = "Neon read-write endpoint host created by Terraform"
+  value       = neon_endpoint.app_rw.host
+}
+
+output "neon_database_url" {
+  description = "Neon connection URI derived from Terraform-managed Neon resources"
+  value       = local.neon_database_url
+  sensitive   = true
+}

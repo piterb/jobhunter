@@ -14,7 +14,7 @@ env:
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   Region: ${{ vars.GCP_REGION }}
   ArtifactRepo: ${{ vars.ARTIFACT_REPO }}
-  ServiceName: ${{ vars.APP_NAME }}-server
+  ServiceName: ${{ vars.SERVER_SERVICE_NAME }}
 
 jobs:
   ci:
@@ -59,7 +59,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DBMATE_MIGRATIONS_DIR: db/migrations
-          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_schema_migrations"
+          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_tst2_schema_migrations"
         run: dbmate up
 
       - name: Google Auth

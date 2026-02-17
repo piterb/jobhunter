@@ -34,9 +34,17 @@ neon_project_id = "empty-brook-12345678" # Neon Console -> Project Settings -> P
 neon_api_key    = "napi_xxx"             # project-scoped key recommended
 
 # Optional overrides (usually keep defaults)
-# neon_database_name = "jobhunter"
-# neon_role_name = "jobhunter"
-# neon_branch_name = "" # default = <app_name>-<env_name>
+# Isolation model: same Neon branch, dedicated DB + role per app/env.
+# Defaults:
+#   neon_database_name = <app_name>_<env_name>
+#   neon_role_name = <app_name>_<env_name>_app
+# neon_database_name = ""
+# neon_role_name = ""
+#
+# Neon branch hosting app DB resources:
+# - leave commented/empty => use existing "main" branch
+# - set value (e.g. "dev") => Terraform uses that branch and creates it if missing
+# neon_db_branch_name = "main"
 
 # =============================================================================
 # Auth0 (provider access + tenant)

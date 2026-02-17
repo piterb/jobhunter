@@ -75,19 +75,19 @@ variable "neon_project_id" {
 }
 
 variable "neon_database_name" {
-  description = "Database name to create in Neon"
+  description = "Database name to create in Neon. Empty => auto-derived from <app_name>-<env_name>"
   type        = string
-  default     = "jobhunter"
+  default     = ""
 }
 
 variable "neon_role_name" {
-  description = "Role/user name to create in Neon"
+  description = "Role/user name to create in Neon. Empty => auto-derived from <app_name>-<env_name>"
   type        = string
-  default     = "jobhunter"
+  default     = ""
 }
 
-variable "neon_branch_name" {
-  description = "Neon branch name. If empty, defaults to <app_name>-<env_name>"
+variable "neon_db_branch_name" {
+  description = "Neon branch name. Empty => use existing 'main' branch. Non-empty => use that branch and auto-create it if missing."
   type        = string
   default     = ""
 }

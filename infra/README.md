@@ -85,11 +85,20 @@ You need to prepare two variable files:
     Copy `environments/example.tfvars` to `environments/tst2.tfvars` and fill in project-specific IDs.
     The template is split by systems/providers (`GCP`, `GitHub`, `Neon`, `Auth0`, runtime policy).
     Fill required keys first: `app_name`, `env_name`, `gcp_project_id`, `github_owner`, `github_repo`, `github_branch`, `neon_project_id`, `neon_api_key`, `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret`.
-    If `neon_branch_name` is empty, Terraform uses `<app_name>-<env_name>` to avoid collisions with existing `main` branch.
+    Neon model in shared project: one shared branch and isolated resources per app/env (`database + role + endpoint`).
+    `neon_db_branch_name` behavior:
+    - empty/commented => use existing `main`
+    - set value => use that branch and auto-create it if missing
     Most advanced auth/OIDC overrides are intentionally commented out in the template; keep defaults unless you have a specific reason to change them.
     Terraform provisions Auth0 API + SPA artifacts and exports the resulting runtime values to GitHub environment variables automatically.
     Terraform provisions Neon resources inside the existing project (branch/database/role/endpoint) and writes derived connection URI into the `DATABASE_URL` GitHub secret automatically.
     Auth0 SPA callback/logout URLs for your Cloud Run client are configured automatically by Terraform on the Auth0 side.
+    Migration table naming is environment-scoped: `<app_name>_<env_name>_schema_migrations`.
+
+### 3. Neon Isolation Notes
+*   Primary isolation is `database + role` per `<app_name, env_name>` in the selected Neon branch.
+*   Terraform provider creates role-owned DB and dedicated endpoint credentials per stack.
+*   Provider does not expose explicit SQL `GRANT/REVOKE CONNECT` resources across databases. For hard isolation guarantees beyond role/database ownership, use dedicated Neon project per app/env (recommended for production).
 
 ### 4. Preflight Checklist (Before `terraform plan/apply`)
 Confirm all items:
@@ -98,6 +107,8 @@ Confirm all items:
 *   `github_owner`, `github_repo`, and `github_branch` are correct for target repository/workflow.
 *   `neon_project_id` exists in Neon (created manually).
 *   `neon_api_key` is project-scoped for that Neon project.
+*   If `neon_db_branch_name` is empty/commented, Neon project has existing `main` branch.
+*   If `neon_db_branch_name` is set, Terraform will use that branch and auto-create it when missing.
 *   `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret` are valid.
 *   `google_client_id` and `google_client_secret` are set (if `auth0_google_connection_enabled=true`).
 *   `gh auth status` and `gcloud auth application-default print-access-token` both work locally.

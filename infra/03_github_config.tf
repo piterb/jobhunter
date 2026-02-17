@@ -9,10 +9,10 @@ resource "github_repository_environment" "env" {
 # 2. Define GitHub Actions Variables
 resource "github_actions_environment_variable" "vars" {
   for_each = {
-    "GCP_PROJECT_ID"                   = var.project_id
+    "GCP_PROJECT_ID"                   = var.gcp_project_id
     "GCP_REGION"                       = var.region
     "NEON_PROJECT_ID"                  = var.neon_project_id
-    "ARTIFACT_REPO"                    = "${var.region}-docker.pkg.dev/${var.project_id}/${local.artifact_repo_name}"
+    "ARTIFACT_REPO"                    = "${var.region}-docker.pkg.dev/${var.gcp_project_id}/${local.artifact_repo_name}"
     "APP_NAME"                         = var.app_name
     "NEXT_PUBLIC_API_URL"              = "${google_cloud_run_v2_service.server.uri}/api/v1"
     "FEEDBACK_ENABLED"                 = var.feedback_enabled

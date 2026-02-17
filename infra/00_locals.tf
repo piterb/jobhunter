@@ -1,14 +1,23 @@
 locals {
-  github_owner = data.external.git_info.result.owner
-  github_repo  = data.external.git_info.result.repo
+  github_owner = var.github_owner
+  github_repo  = var.github_repo
 
-  service_account_id    = "deployer-${var.env_name}"
-  service_account_email = "${local.service_account_id}@${var.project_id}.iam.gserviceaccount.com"
+  app_env_name = "${var.app_name}-${var.env_name}"
+  app_env_slug = replace(lower(local.app_env_name), "/[^a-z0-9-]/", "-")
+  id_suffix    = substr(sha1(local.app_env_slug), 0, 6)
 
-  artifact_repo_name = "repo-${var.env_name}"
+  # GCP service account id is limited to 30 chars.
+  service_account_id    = "dpl-${substr(local.app_env_slug, 0, 19)}-${local.id_suffix}"
+  service_account_email = "${local.service_account_id}@${var.gcp_project_id}.iam.gserviceaccount.com"
 
-  server_service_name = "${var.app_name}-server"
-  client_service_name = "${var.app_name}-client"
+  # Workload Identity identifiers have tighter length constraints than display names.
+  wif_pool_id     = "ghp-${substr(local.app_env_slug, 0, 20)}-${local.id_suffix}"
+  wif_provider_id = "ghpr-${substr(local.app_env_slug, 0, 19)}-${local.id_suffix}"
+
+  artifact_repo_name = "repo-${local.app_env_slug}"
+
+  server_service_name = "${local.app_env_slug}-server"
+  client_service_name = "${local.app_env_slug}-client"
 
   resource_prefix = var.resource_prefix_override != "" ? var.resource_prefix_override : "${var.app_name}-${var.env_name}"
 

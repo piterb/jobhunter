@@ -19,7 +19,7 @@ resource "google_artifact_registry_repository" "repo" {
   location      = var.region
   repository_id = local.artifact_repo_name
   format        = "DOCKER"
-  description   = "Docker repository for ${var.env_name} environment"
+  description   = "Docker repository for ${local.app_env_name}"
 
   # Cleanup policy: Keep only latest 3 images
   cleanup_policies {
@@ -44,7 +44,7 @@ resource "google_artifact_registry_repository" "repo" {
 resource "google_service_account" "deployer" {
   depends_on   = [google_project_service.services]
   account_id   = local.service_account_id
-  display_name = "GitHub Deployer (${var.env_name})"
+  display_name = "GitHub Deployer (${local.app_env_name})"
 }
 
 # 4. Assign IAM Roles to Service Account
@@ -57,7 +57,7 @@ resource "google_project_iam_member" "roles" {
     "roles/secretmanager.admin",
     "roles/iam.serviceAccountTokenCreator"
   ])
-  project = var.project_id
+  project = var.gcp_project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.deployer.email}"
 }
@@ -65,14 +65,14 @@ resource "google_project_iam_member" "roles" {
 # 5. Workload Identity Federation (Secure connection for GitHub)
 resource "google_iam_workload_identity_pool" "pool" {
   depends_on                = [google_project_service.services]
-  workload_identity_pool_id = "github-pool-${var.env_name}"
-  display_name              = "GitHub Pool (${var.env_name})"
+  workload_identity_pool_id = local.wif_pool_id
+  display_name              = "GitHub Pool (${local.app_env_name})"
 }
 
 resource "google_iam_workload_identity_pool_provider" "provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-provider-${var.env_name}"
-  display_name                       = "GitHub Provider (${var.env_name})"
+  workload_identity_pool_provider_id = local.wif_provider_id
+  display_name                       = "GitHub Provider (${local.app_env_name})"
 
   attribute_mapping = {
     "google.subject"       = "assertion.sub"

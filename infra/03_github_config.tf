@@ -12,7 +12,7 @@ resource "github_actions_environment_variable" "vars" {
     "GCP_PROJECT_ID"                   = var.gcp_project_id
     "GCP_REGION"                       = var.region
     "NEON_PROJECT_ID"                  = var.neon_project_id
-    "NEON_DB_BRANCH_NAME"              = local.neon_db_branch_name
+    "NEON_DB_BRANCH_NAME"              = local.neon_create_branch ? local.neon_effective_branch_name : local.neon_selected_existing_branch_name
     "ARTIFACT_REPO"                    = "${var.region}-docker.pkg.dev/${var.gcp_project_id}/${local.artifact_repo_name}"
     "APP_NAME"                         = var.app_name
     "SERVER_SERVICE_NAME"              = local.server_service_name

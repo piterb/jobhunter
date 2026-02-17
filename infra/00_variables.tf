@@ -96,6 +96,17 @@ variable "neon_db_branch_name" {
 # Auth0 + OIDC runtime policy
 # -----------------------------------------------------------------------------
 
+variable "auth0_mode" {
+  description = "Auth0 management mode: 'provision' (create API/SPA per stack) or 'reuse' (use existing shared Auth0 API/SPA)"
+  type        = string
+  default     = "provision"
+
+  validation {
+    condition     = contains(["provision", "reuse"], var.auth0_mode)
+    error_message = "auth0_mode must be either 'provision' or 'reuse'."
+  }
+}
+
 variable "auth0_domain" {
   description = "Auth0 tenant domain (with or without https://)"
   type        = string
@@ -125,8 +136,20 @@ variable "auth0_api_name_override" {
   default     = ""
 }
 
+variable "auth0_existing_client_id" {
+  description = "Existing/shared Auth0 SPA client_id (required in auth0_mode='reuse' when oidc_client_allowlist is empty)"
+  type        = string
+  default     = ""
+}
+
+variable "auth0_existing_audience" {
+  description = "Existing/shared Auth0 API audience identifier (required in auth0_mode='reuse' when oidc_audience is empty)"
+  type        = string
+  default     = ""
+}
+
 variable "auth0_google_connection_enabled" {
-  description = "Create/update Auth0 Google social connection"
+  description = "Create/update Auth0 Google social connection (applies only in auth0_mode='provision'; ignored in 'reuse')"
   type        = bool
   default     = true
 }

@@ -69,7 +69,7 @@ output "oidc_issuer" {
 
 output "oidc_audience" {
   description = "OIDC audience for backend/client runtime"
-  value       = auth0_resource_server.api.identifier
+  value       = local.auth0_api_identifier_resolved
 }
 
 output "oidc_client_allowlist" {
@@ -78,18 +78,18 @@ output "oidc_client_allowlist" {
 }
 
 output "auth0_frontend_client_id" {
-  description = "Auth0 SPA client ID provisioned for this environment"
-  value       = auth0_client.frontend.client_id
+  description = "Resolved Auth0 SPA client ID used by this environment"
+  value       = local.auth0_frontend_client_id_resolved
 }
 
 output "auth0_frontend_client_name" {
-  description = "Auth0 SPA app name"
-  value       = auth0_client.frontend.name
+  description = "Auth0 SPA app name (provision mode only)"
+  value       = local.auth0_is_provision ? auth0_client.frontend[0].name : null
 }
 
 output "auth0_api_name" {
-  description = "Auth0 API (resource server) name"
-  value       = auth0_resource_server.api.name
+  description = "Auth0 API (resource server) name (provision mode only)"
+  value       = local.auth0_is_provision ? auth0_resource_server.api[0].name : null
 }
 
 output "client_auth_callback_url" {

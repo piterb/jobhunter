@@ -1,11 +1,29 @@
+resource "terraform_data" "auth0_mode_guardrails" {
+  lifecycle {
+    precondition {
+      condition     = var.auth0_mode != "reuse" || var.oidc_audience != "" || var.auth0_existing_audience != ""
+      error_message = "auth0_mode='reuse' requires auth0_existing_audience (or explicit oidc_audience)."
+    }
+
+    precondition {
+      condition     = var.auth0_mode != "reuse" || var.oidc_client_allowlist != "" || var.auth0_existing_client_id != ""
+      error_message = "auth0_mode='reuse' requires auth0_existing_client_id (or explicit oidc_client_allowlist)."
+    }
+  }
+}
+
 resource "auth0_resource_server" "api" {
+  count = local.auth0_is_provision ? 1 : 0
+
   name       = local.auth0_api_name
-  identifier = local.auth0_api_identifier
+  identifier = var.oidc_audience != "" ? var.oidc_audience : local.auth0_api_identifier_default
 
   signing_alg = "RS256"
 }
 
 resource "auth0_client" "frontend" {
+  count = local.auth0_is_provision ? 1 : 0
+
   name            = local.auth0_spa_name
   description     = "Frontend SPA for ${var.app_name} (${var.env_name})"
   app_type        = "spa"
@@ -43,7 +61,7 @@ resource "auth0_client" "frontend" {
 }
 
 resource "auth0_connection" "google" {
-  count = var.auth0_google_connection_enabled && var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
+  count = local.auth0_is_provision && var.auth0_google_connection_enabled && var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
 
   name                 = "google-oauth2"
   strategy             = "google-oauth2"
@@ -61,8 +79,8 @@ resource "auth0_connection" "google" {
 }
 
 resource "auth0_connection_client" "google_frontend" {
-  count = var.auth0_google_connection_enabled && var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
+  count = local.auth0_is_provision && var.auth0_google_connection_enabled && var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
 
   connection_id = auth0_connection.google[0].id
-  client_id     = auth0_client.frontend.client_id
+  client_id     = auth0_client.frontend[0].client_id
 }

@@ -20,7 +20,7 @@ Ensure you have the following tools, accounts, and access prepared:
 3.  **GitHub CLI (gh)**: `brew install gh`
 4.  **Git**: Should be installed and configured on your machine.
 5.  **Google Cloud Account**: An active GCP account with billing enabled.
-6.  **Auth0 Tenant**: You must have permissions to create/update applications, APIs, and connections.
+6.  **Auth0 Tenant**: You must have permissions to manage Auth0 resources. For shared mode you can reuse existing API/SPA.
 7.  **Neon Project**: Created manually (Terraform does not create the Neon project itself).
 8.  **Neon project-scoped API key**: For that specific project.
 
@@ -85,12 +85,17 @@ You need to prepare two variable files:
     Copy `environments/example.tfvars` to `environments/tst2.tfvars` and fill in project-specific IDs.
     The template is split by systems/providers (`GCP`, `GitHub`, `Neon`, `Auth0`, runtime policy).
     Fill required keys first: `app_name`, `env_name`, `gcp_project_id`, `github_owner`, `github_repo`, `github_branch`, `neon_project_id`, `neon_api_key`, `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret`.
+    Choose `auth0_mode`:
+    - `provision` (default): Terraform creates stack-specific Auth0 API + SPA.
+    - `reuse`: Terraform reuses existing shared Auth0 API + SPA (recommended on Auth0 Free for multi-app/env).
+    In `reuse` mode set `auth0_existing_audience` and `auth0_existing_client_id` (or directly override `oidc_audience` and `oidc_client_allowlist`).
     Neon model in shared project: one shared branch and isolated resources per app/env (`database + role + endpoint`).
     `neon_db_branch_name` behavior:
     - empty/commented => use existing Neon default (primary) branch
     - set value => use that branch and auto-create it if missing
     Most advanced auth/OIDC overrides are intentionally commented out in the template; keep defaults unless you have a specific reason to change them.
-    Terraform provisions Auth0 API + SPA artifacts and exports the resulting runtime values to GitHub environment variables automatically.
+    Terraform exports runtime Auth0 values to GitHub environment variables automatically in both modes.
+    In `provision` mode it also creates Auth0 API + SPA artifacts.
     Terraform provisions Neon resources inside the existing project (branch/database/role/endpoint) and writes derived connection URI into the `DATABASE_URL` GitHub secret automatically.
     Auth0 SPA callback/logout URLs for your Cloud Run client are configured automatically by Terraform on the Auth0 side.
     Migration table naming is environment-scoped: `<app_name>_<env_name>_schema_migrations`.
@@ -110,7 +115,8 @@ Confirm all items:
 *   If `neon_db_branch_name` is empty/commented, Neon project has an existing default (primary) branch.
 *   If `neon_db_branch_name` is set, Terraform will use that branch and auto-create it when missing.
 *   `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret` are valid.
-*   `google_client_id` and `google_client_secret` are set (if `auth0_google_connection_enabled=true`).
+*   If `auth0_mode=reuse`: `auth0_existing_audience` and `auth0_existing_client_id` (or `oidc_*` overrides) are set.
+*   `google_client_id` and `google_client_secret` are set only when provisioning Auth0 Google connection (`auth0_mode=provision` and `auth0_google_connection_enabled=true`).
 *   `gh auth status` and `gcloud auth application-default print-access-token` both work locally.
 
 ## 🛠 Quick Start (First Run)

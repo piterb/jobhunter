@@ -24,13 +24,22 @@ locals {
   auth0_domain_clean = trimsuffix(trimprefix(var.auth0_domain, "https://"), "/")
   auth0_domain       = local.auth0_domain_clean
   oidc_issuer_url    = var.oidc_issuer != "" ? var.oidc_issuer : "https://${local.auth0_domain_clean}/"
+  auth0_is_provision = var.auth0_mode == "provision"
 
-  auth0_api_name        = var.auth0_api_name_override != "" ? var.auth0_api_name_override : "${var.app_name}-${var.env_name}-api"
-  auth0_spa_name        = var.auth0_spa_name_override != "" ? var.auth0_spa_name_override : "${var.app_name}-${var.env_name}-client"
-  auth0_api_identifier  = var.oidc_audience != "" ? var.oidc_audience : "https://api.${var.app_name}.${var.env_name}"
-  client_redirect_uri   = "${google_cloud_run_v2_service.client.uri}/auth/callback"
-  client_logout_uri     = "${google_cloud_run_v2_service.client.uri}/login"
-  default_client_allow  = auth0_client.frontend.client_id
+  auth0_api_name               = var.auth0_api_name_override != "" ? var.auth0_api_name_override : "${var.app_name}-${var.env_name}-api"
+  auth0_spa_name               = var.auth0_spa_name_override != "" ? var.auth0_spa_name_override : "${var.app_name}-${var.env_name}-client"
+  auth0_api_identifier_default = "https://api.${var.app_name}.${var.env_name}"
+  auth0_api_identifier_resolved = (
+    var.oidc_audience != "" ? var.oidc_audience : (
+      local.auth0_is_provision ? try(auth0_resource_server.api[0].identifier, "") : var.auth0_existing_audience
+    )
+  )
+  client_redirect_uri = "${google_cloud_run_v2_service.client.uri}/auth/callback"
+  client_logout_uri   = "${google_cloud_run_v2_service.client.uri}/login"
+  auth0_frontend_client_id_resolved = (
+    local.auth0_is_provision ? try(auth0_client.frontend[0].client_id, "") : var.auth0_existing_client_id
+  )
+  default_client_allow  = local.auth0_frontend_client_id_resolved
   oidc_client_allowlist = var.oidc_client_allowlist != "" ? var.oidc_client_allowlist : local.default_client_allow
   neon_db_base_name     = replace(local.app_env_slug, "-", "_")
   neon_role_name        = var.neon_role_name != "" ? var.neon_role_name : "${local.neon_db_base_name}_app"

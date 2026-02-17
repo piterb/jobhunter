@@ -42,7 +42,7 @@ neon_api_key    = "napi_xxx"             # project-scoped key recommended
 # neon_role_name = ""
 #
 # Neon branch hosting app DB resources:
-# - leave commented/empty => use existing "main" branch
+# - leave commented/empty => use existing Neon default (primary) branch
 # - set value (e.g. "dev") => Terraform uses that branch and creates it if missing
 # neon_db_branch_name = "main"
 

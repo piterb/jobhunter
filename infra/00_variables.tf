@@ -87,7 +87,7 @@ variable "neon_role_name" {
 }
 
 variable "neon_db_branch_name" {
-  description = "Neon branch name. Empty => use existing 'main' branch. Non-empty => use that branch and auto-create it if missing."
+  description = "Neon branch name. Empty => use existing Neon default (primary) branch. Non-empty => use that branch and auto-create it if missing."
   type        = string
   default     = ""
 }

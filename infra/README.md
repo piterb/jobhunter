@@ -87,7 +87,7 @@ You need to prepare two variable files:
     Fill required keys first: `app_name`, `env_name`, `gcp_project_id`, `github_owner`, `github_repo`, `github_branch`, `neon_project_id`, `neon_api_key`, `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret`.
     Neon model in shared project: one shared branch and isolated resources per app/env (`database + role + endpoint`).
     `neon_db_branch_name` behavior:
-    - empty/commented => use existing `main`
+    - empty/commented => use existing Neon default (primary) branch
     - set value => use that branch and auto-create it if missing
     Most advanced auth/OIDC overrides are intentionally commented out in the template; keep defaults unless you have a specific reason to change them.
     Terraform provisions Auth0 API + SPA artifacts and exports the resulting runtime values to GitHub environment variables automatically.
@@ -107,7 +107,7 @@ Confirm all items:
 *   `github_owner`, `github_repo`, and `github_branch` are correct for target repository/workflow.
 *   `neon_project_id` exists in Neon (created manually).
 *   `neon_api_key` is project-scoped for that Neon project.
-*   If `neon_db_branch_name` is empty/commented, Neon project has existing `main` branch.
+*   If `neon_db_branch_name` is empty/commented, Neon project has an existing default (primary) branch.
 *   If `neon_db_branch_name` is set, Terraform will use that branch and auto-create it when missing.
 *   `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret` are valid.
 *   `google_client_id` and `google_client_secret` are set (if `auth0_google_connection_enabled=true`).

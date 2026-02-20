@@ -9,7 +9,7 @@ router.get('/dev-login', async (req: Request, res: Response) => {
         return res.status(403).json({ error: 'Dev login is only allowed in development mode' });
     }
 
-    // In the new world (Postgres + Auth0), we skip real auth logic for local dev
+    // In local development, we skip real IdP auth logic
     // and just return a token that our middleware handles.
 
     const devUserId = 'd7b6f3b0-1234-4a5b-8c9d-1234567890ab';

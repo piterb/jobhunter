@@ -41,7 +41,7 @@ Use env files as the single source of truth:
 1. `server/.env.example` (copy to `server/.env.local`)
 2. `client/.env.example` (copy to `client/.env.local`)
 
-Both files include inline auth mode guidance (`dev` vs `auth0`) and comments describing where each value comes from in Auth0/Google UI.
+Both files include inline auth mode guidance (`dev` vs `keycloak`) and comments describing where each value comes from in Keycloak UI.
 
 After any `.env` change, restart both server and client dev processes.
 

@@ -1,0 +1,23 @@
+{
+  "users": [
+    {
+      "username": "jobhunter.tester",
+      "email": "jobhunter.tester@local.test",
+      "enabled": true,
+      "firstName": "JobHunter",
+      "lastName": "Tester",
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Jobhunter123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "app_user"
+      ]
+    }
+  ]
+}

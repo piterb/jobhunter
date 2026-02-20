@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Auth0Adapter } from '../auth/providers/auth0';
+import { KeycloakAdapter } from '../auth/providers/keycloak';
 import { enforceAuthPolicy } from '../auth/policy';
 import { AuthPolicyConfig } from '../auth/types';
 
@@ -52,7 +52,7 @@ describe('OIDC adapter integration (JWKS + JWT verify)', () => {
         originalFetch = global.fetch;
         global.fetch = vi.fn(async (input: RequestInfo | URL) => {
             const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-            if (url === `${ISSUER.replace(/\/$/, '')}/.well-known/jwks.json`) {
+            if (url === `${ISSUER.replace(/\/$/, '')}/protocol/openid-connect/certs`) {
                 return new Response(JSON.stringify({ keys: [jwk] }), {
                     status: 200,
                     headers: { 'content-type': 'application/json' }
@@ -68,7 +68,7 @@ describe('OIDC adapter integration (JWKS + JWT verify)', () => {
     });
 
     it('accepts a valid token with matching iss/aud/signature', async () => {
-        const adapter = new Auth0Adapter({
+        const adapter = new KeycloakAdapter({
             issuer: ISSUER,
             audience: [AUDIENCE],
             appIdClaim: 'app_id',
@@ -86,7 +86,7 @@ describe('OIDC adapter integration (JWKS + JWT verify)', () => {
     });
 
     it('rejects a token with wrong audience', async () => {
-        const adapter = new Auth0Adapter({
+        const adapter = new KeycloakAdapter({
             issuer: ISSUER,
             audience: [AUDIENCE],
             appIdClaim: 'app_id',
@@ -102,7 +102,7 @@ describe('OIDC adapter integration (JWKS + JWT verify)', () => {
     });
 
     it('rejects a token with wrong issuer', async () => {
-        const adapter = new Auth0Adapter({
+        const adapter = new KeycloakAdapter({
             issuer: ISSUER,
             audience: [AUDIENCE],
             appIdClaim: 'app_id',
@@ -118,7 +118,7 @@ describe('OIDC adapter integration (JWKS + JWT verify)', () => {
     });
 
     it('enforces azp/client allowlist and returns forbidden_client', async () => {
-        const adapter = new Auth0Adapter({
+        const adapter = new KeycloakAdapter({
             issuer: ISSUER,
             audience: [AUDIENCE],
             appIdClaim: 'app_id',

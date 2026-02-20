@@ -43,7 +43,7 @@ npm run test:run -w server
 
 The middleware uses an internal `AuthContext` plus provider adapters.
 For all auth variables and local mode toggles, use `server/.env.example` as the single source of truth.
-The file contains inline comments for each auth variable, including where to find values in Auth0 UI.
+The file contains inline comments for each auth variable, including where to find values in Keycloak UI.
 
 ## Local DB Reset
 

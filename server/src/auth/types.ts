@@ -1,4 +1,4 @@
-export type AuthProviderName = 'auth0' | 'keycloak';
+export type AuthProviderName = 'keycloak';
 
 export interface AuthContext {
     provider: AuthProviderName;

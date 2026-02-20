@@ -3,7 +3,7 @@ import { enforceAuthPolicy } from '../auth/policy';
 import { AuthContext, AuthPolicyConfig } from '../auth/types';
 
 const baseContext: AuthContext = {
-    provider: 'auth0',
+    provider: 'keycloak',
     userId: 'user-1',
     subject: 'google-oauth2|user-1',
     issuer: 'https://issuer.example',

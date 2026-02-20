@@ -1,7 +1,6 @@
 import { loadAuthRuntimeConfig } from './config';
 import { AuthError } from './errors';
 import { enforceAuthPolicy } from './policy';
-import { Auth0Adapter } from './providers/auth0';
 import { KeycloakAdapter } from './providers/keycloak';
 import { AuthContext, AuthProviderAdapter, AuthRuntimeConfig } from './types';
 
@@ -39,9 +38,6 @@ function createDevContext(config: AuthRuntimeConfig): AuthContext {
 }
 
 function createProviderAdapter(config: AuthRuntimeConfig): AuthProviderAdapter {
-    if (config.provider === 'auth0') {
-        return new Auth0Adapter(config.oidc);
-    }
     if (config.provider === 'keycloak') {
         return new KeycloakAdapter(config.oidc);
     }

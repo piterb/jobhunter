@@ -18,7 +18,7 @@ function parseCsv(value: string | undefined): string[] {
 
 export function loadAuthRuntimeConfig(): AuthRuntimeConfig {
     const nodeEnv = process.env.NODE_ENV || 'development';
-    const provider = (process.env.AUTH_PROVIDER || 'auth0').trim().toLowerCase() as AuthProviderName;
+    const provider = (process.env.AUTH_PROVIDER || 'keycloak').trim().toLowerCase() as AuthProviderName;
     const appName = process.env.APP_NAME || 'jobhunter';
     const appEnv = process.env.APP_ENV || (nodeEnv === 'production' ? 'prod' : 'local');
     const devBypassDefault = nodeEnv === 'development';
@@ -27,8 +27,8 @@ export function loadAuthRuntimeConfig(): AuthRuntimeConfig {
         devBypassDefault
     );
 
-    const issuer = (process.env.OIDC_ISSUER || process.env.AUTH0_ISSUER_BASE_URL || '').trim();
-    const audience = parseCsv(process.env.OIDC_AUDIENCE || process.env.AUTH0_AUDIENCE || '');
+    const issuer = (process.env.OIDC_ISSUER || '').trim();
+    const audience = parseCsv(process.env.OIDC_AUDIENCE || '');
 
     const appClaimsDefault = nodeEnv === 'production';
     const enforceAppClaims = parseBoolean(process.env.AUTH_ENFORCE_APP_CLAIMS, appClaimsDefault);
@@ -74,10 +74,10 @@ export function validateAuthRuntimeConfig(config: AuthRuntimeConfig): void {
     }
 
     if (!config.oidc.issuer.trim()) {
-        throw new AuthError(500, 'auth_misconfigured', 'OIDC_ISSUER (or AUTH0_ISSUER_BASE_URL) is required when mock identity is disabled');
+        throw new AuthError(500, 'auth_misconfigured', 'OIDC_ISSUER is required when mock identity is disabled');
     }
     if (config.oidc.audience.length === 0) {
-        throw new AuthError(500, 'auth_misconfigured', 'OIDC_AUDIENCE (or AUTH0_AUDIENCE) is required when mock identity is disabled');
+        throw new AuthError(500, 'auth_misconfigured', 'OIDC_AUDIENCE is required when mock identity is disabled');
     }
     if (config.policy.requireClientAllowlist && config.policy.allowedClientIds.length === 0) {
         throw new AuthError(500, 'auth_misconfigured', 'OIDC_CLIENT_ALLOWLIST is required for isolated non-local deployments');

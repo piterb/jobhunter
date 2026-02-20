@@ -1,4 +1,4 @@
-export type AuthProvider = 'auth0' | 'dev';
+export type AuthProvider = 'keycloak' | 'dev';
 
 export interface AuthUser {
     id: string;

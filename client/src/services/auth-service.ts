@@ -38,8 +38,6 @@ export const authService = {
         return getAdapter().isConfigured();
     },
 
-    isAuth0Configured,
-
     async signIn(): Promise<AuthResponse | void> {
         const response = await getAdapter().signIn();
         if (response) {
@@ -52,10 +50,6 @@ export const authService = {
         const response = await getAdapter().completeCallback();
         persistAuthState(response);
         return response;
-    },
-
-    async completeAuth0Redirect(): Promise<AuthResponse> {
-        return this.completeCallback();
     },
 
     async devLogin(): Promise<AuthResponse> {
@@ -99,9 +93,5 @@ export const authService = {
         return null;
     }
 };
-
-function isAuth0Configured(): boolean {
-    return getAdapter().provider === 'auth0' && getAdapter().isConfigured();
-}
 
 export type { AuthUser, AuthResponse };

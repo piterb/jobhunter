@@ -30,11 +30,11 @@ function createMockResponse(): MockResponse {
 
 function createBaseContext(): AuthContext {
     return {
-        provider: 'auth0',
-        userId: 'auth0-user-id',
+        provider: 'keycloak',
+        userId: 'keycloak-user-id',
         subject: 'google-oauth2|123',
         email: 'tester@example.com',
-        issuer: 'https://tenant.example.auth0.com/',
+        issuer: 'https://id.example.com/realms/jobhunter-local',
         audience: ['https://api.jobhunter.local'],
         clientId: 'client-a',
         appId: 'jobhunter',

@@ -82,7 +82,7 @@ export default function AuthCallback() {
                     <div className="absolute inset-0 w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
                 <div className="text-center">
-                    <h2 className="text-xl font-semibold text-white mb-2">Authenticating with Google</h2>
+                    <h2 className="text-xl font-semibold text-white mb-2">Authenticating with Keycloak</h2>
                     <p className="text-slate-400 text-sm animate-pulse">Establishing secure connection...</p>
                 </div>
             </div>

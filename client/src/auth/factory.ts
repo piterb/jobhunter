@@ -1,15 +1,19 @@
-import { Auth0AuthAdapter } from './adapters/auth0-auth-adapter';
 import { DevAuthAdapter } from './adapters/dev-auth-adapter';
+import { KeycloakAuthAdapter } from './adapters/keycloak-auth-adapter';
 import { AuthProvider, FrontendAuthAdapter } from './types';
 
 function detectProvider(): AuthProvider {
     const explicit = (process.env.NEXT_PUBLIC_AUTH_PROVIDER || '').trim().toLowerCase();
-    if (explicit === 'auth0' || explicit === 'dev') {
+    if (explicit === 'keycloak' || explicit === 'dev') {
         return explicit;
     }
 
-    if (process.env.NEXT_PUBLIC_AUTH0_DOMAIN && process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID) {
-        return 'auth0';
+    if (
+        process.env.NEXT_PUBLIC_KEYCLOAK_URL &&
+        process.env.NEXT_PUBLIC_KEYCLOAK_REALM &&
+        process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
+    ) {
+        return 'keycloak';
     }
 
     return 'dev';
@@ -17,8 +21,8 @@ function detectProvider(): AuthProvider {
 
 export function createFrontendAuthAdapter(): FrontendAuthAdapter {
     const provider = detectProvider();
-    if (provider === 'auth0') {
-        return new Auth0AuthAdapter();
+    if (provider === 'keycloak') {
+        return new KeycloakAuthAdapter();
     }
     return new DevAuthAdapter();
 }

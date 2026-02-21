@@ -45,6 +45,10 @@ The middleware uses an internal `AuthContext` plus provider adapters.
 For all auth variables and local mode toggles, use `server/.env.example` as the single source of truth.
 The file contains inline comments for each auth variable, including where to find values in Keycloak UI.
 
+Local auth mode toggle:
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=true` enables mock identity mode for local tools (for example Bruno dev-token flow).
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=false` enforces real Keycloak JWT verification.
+
 ## Local DB Reset
 
 ```bash

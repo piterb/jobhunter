@@ -45,6 +45,10 @@ Both files include inline auth mode guidance (`dev` vs `keycloak`) and comments 
 
 After any `.env` change, restart both server and client dev processes.
 
+Important local toggle (`server/.env.local`):
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=true` for Bruno dev-token flow (`/api/v1/auth/dev-login`) and fixed local identity (`dev@jobhunter.local`).
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=false` for real Keycloak JWT validation.
+
 ---
 
 ## �️ Operational Commands

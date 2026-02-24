@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
+import { authService } from "@/services/auth-service";
 import { jobService } from "@/services/job-service";
 import { AddJobModal } from "../dashboard/add-job-modal";
 import { ApiKeyMissingModal } from "../dashboard/api-key-missing-modal";
@@ -16,6 +16,7 @@ import { Job } from "@/types/job";
 
 export function Header() {
     const { user, signOut } = useAuth();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
     const pathname = usePathname();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
@@ -36,14 +37,15 @@ export function Header() {
 
     const fetchProfileData = useCallback(async () => {
         if (!user) return;
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('default_ai_model, avatar_url, full_name')
-                .eq('id', user.id)
-                .single();
+        const token = authService.getToken();
+        if (!token) return;
 
-            if (error) throw error;
+        try {
+            const res = await fetch(`${API_URL}/profile`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to fetch profile');
+            const data = await res.json();
 
             if (data) {
                 if (data.default_ai_model) setModel(data.default_ai_model);
@@ -55,7 +57,7 @@ export function Header() {
         } catch (err) {
             console.error("Failed to fetch profile data:", err);
         }
-    }, [user]);
+    }, [user, API_URL]);
 
     useEffect(() => {
         fetchProfileData();
@@ -74,8 +76,7 @@ export function Header() {
 
         setIsIngesting(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token || "";
+            const token = authService.getToken() || "";
 
             console.log(`Starting ingest for ${url} using ${model}`);
             const data = await jobService.ingestJob(url, token);

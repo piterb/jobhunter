@@ -1,46 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import { mockDb, MockQueryBuilder } from './utils/mockSupabase';
+import { mockStore, resetMockStore } from './utils/db';
 
-// -------------------------------------------------------------------------
-// MOCK DEPENDENCIES
-// -------------------------------------------------------------------------
-
-// Mock Supabase
-vi.mock('../config/supabase', () => ({
-    createSupabaseUserClient: vi.fn(() => ({
-        from: (table: string) => new MockQueryBuilder(table),
-    })),
-    supabaseAdmin: {
-        from: (table: string) => new MockQueryBuilder(table),
-    },
-    supabase: {
-        from: (table: string) => new MockQueryBuilder(table),
-    }
-}));
-
-// Mock Auth
 const MOCK_USER_ID = 'test-user-123';
+
+vi.mock('../config/db', async () => {
+    const mod = await import('./utils/db.js');
+    return { default: mod.default };
+});
+
 vi.mock('../middleware/auth', () => ({
-    authMiddleware: (req: any, res: any, next: any) => {
+    authMiddleware: (req: any, _res: any, next: any) => {
         req.user = { id: MOCK_USER_ID, email: 'test@example.com' };
         next();
     }
 }));
 
-// Mock Axios
 vi.mock('axios', () => ({
     default: {
         get: vi.fn(() => Promise.resolve({ data: '<html>Data</html>' }))
     }
 }));
 
-// Mock logger
 vi.mock('../utils/logger', () => ({
     logAIUsage: vi.fn(),
 }));
 
-// Mock services (top-level)
 vi.mock('../services/scraper', () => {
     return {
         ScraperService: vi.fn().mockImplementation(function () {
@@ -71,33 +56,29 @@ vi.mock('../services/openai', () => {
 import app from '../app';
 
 describe('Job Ingest API', () => {
-
     beforeEach(() => {
-        mockDb['profiles'] = [];
-        mockDb['jobs'] = [];
+        resetMockStore();
     });
 
     const mockProfile = {
         id: MOCK_USER_ID,
+        user_id: MOCK_USER_ID,
         openai_api_key: 'sk-test-key-123',
     };
 
     describe('POST /ingest', () => {
-
         it('should require a URL', async () => {
             const response = await request(app).post('/api/v1/ingest').send({});
             expect(response.status).toBe(400);
         });
 
         it('should successfully ingest a job from URL', async () => {
-            mockDb['profiles'].push(mockProfile);
+            mockStore.profiles.push(mockProfile);
 
             const response = await request(app)
                 .post('/api/v1/ingest')
                 .set('Authorization', 'Bearer mock-token')
                 .send({ url: 'https://example.com/careers/job1' });
-
-            if (response.status !== 200) console.log('Ingest Error:', response.body);
 
             expect(response.status).toBe(200);
             expect(response.body.title).toBe('Senior Developer');
@@ -105,7 +86,6 @@ describe('Job Ingest API', () => {
         });
 
         it('should return 400 if user has no API Key', async () => {
-            // No profile in DB
             const response = await request(app)
                 .post('/api/v1/ingest')
                 .set('Authorization', 'Bearer mock-token')
@@ -115,5 +95,4 @@ describe('Job Ingest API', () => {
             expect(response.body.error).toContain('OpenAI API key');
         });
     });
-
 });

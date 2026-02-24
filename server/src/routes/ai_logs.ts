@@ -1,20 +1,15 @@
 import { Router, Response } from 'express';
-import { createSupabaseUserClient } from '../config/supabase';
+import sql from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { CreateAIUsageLogSchema, CreateAIUsageLogRequest, GetAILogsQuerySchema, PaginatedAILogs } from 'shared';
 
 const router = Router();
 
-const getClient = (req: AuthRequest) => {
-    const token = req.headers.authorization?.split(' ')[1] || '';
-    return createSupabaseUserClient(token);
-};
-
 // GET /ai-logs - Get AI usage logs for the current user
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     // Validate query parameters
     const queryResult = GetAILogsQuerySchema.safeParse(req.query);
@@ -27,82 +22,81 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     // Default pagination values
     const pageNum = page || 1;
     const limitNum = limit || 10;
-    const from = (pageNum - 1) * limitNum;
-    const to = from + limitNum - 1;
+    const offset = (pageNum - 1) * limitNum;
 
-    let query = supabase
-        .from('ai_usage_logs')
-        .select('*', { count: 'exact' })
-        .eq('user_id', userId);
+    try {
+        const featureFilter = feature ? sql`AND feature = ${feature}` : sql``;
+        const statusFilter = status ? sql`AND status = ${status}` : sql``;
 
-    if (feature) {
-        query = query.eq('feature', feature);
+        // 1. Get total count
+        const [countResult] = await sql`
+            SELECT count(*) 
+            FROM ai_usage_logs 
+            WHERE user_id = ${userId}
+            ${featureFilter}
+            ${statusFilter}
+        `;
+        const totalCount = parseInt(countResult.count);
+
+        // 2. Get paginated data
+        const data = await sql`
+            SELECT * 
+            FROM ai_usage_logs 
+            WHERE user_id = ${userId}
+            ${featureFilter}
+            ${statusFilter}
+            ORDER BY created_at DESC
+            LIMIT ${limitNum} 
+            OFFSET ${offset}
+        `;
+
+        // 3. Calculate stats
+        const [stats] = await sql`
+            SELECT 
+                SUM(COALESCE(tokens_input, 0) + COALESCE(tokens_output, 0)) as total_tokens,
+                AVG(latency_ms) as avg_latency
+            FROM ai_usage_logs 
+            WHERE user_id = ${userId}
+        `;
+
+        const response: PaginatedAILogs = {
+            data: data as any[],
+            count: totalCount,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: totalCount ? Math.ceil(totalCount / limitNum) : 0,
+            totalTokens: parseInt(stats.total_tokens || '0'),
+            avgLatency: Math.round(parseFloat(stats.avg_latency || '0'))
+        };
+
+        return res.json(response);
+    } catch (error) {
+        console.error('Error fetching AI logs:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
-
-    if (status) {
-        query = query.eq('status', status);
-    }
-
-    // Ensure sorting is applied last to avoid being overridden by filters
-    query = query.order('created_at', { ascending: false });
-
-    const { data, count, error } = await query.range(from, to);
-
-    if (error) {
-        return res.status(500).json({ error: error.message });
-    }
-
-    // Calculate global stats for this user
-    const { data: statsData, error: statsError } = await supabase
-        .from('ai_usage_logs')
-        .select('tokens_input, tokens_output, latency_ms')
-        .eq('user_id', userId);
-
-    let totalTokens = 0;
-    let totalLatency = 0;
-    let avgLatency = 0;
-
-    if (!statsError && statsData) {
-        statsData.forEach(log => {
-            totalTokens += (log.tokens_input || 0) + (log.tokens_output || 0);
-            totalLatency += log.latency_ms || 0;
-        });
-        avgLatency = statsData.length > 0 ? Math.round(totalLatency / statsData.length) : 0;
-    }
-
-    const response: PaginatedAILogs = {
-        data: data || [],
-        count: count || 0,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: count ? Math.ceil(count / limitNum) : 0,
-        totalTokens,
-        avgLatency
-    };
-
-    return res.json(response);
 });
 
-// POST /ai-logs - Create a new AI usage log (usually called by other backend services, but exposed for FE if needed)
+// POST /ai-logs - Create a new AI usage log
 router.post('/', validate(CreateAIUsageLogSchema), async (req: AuthRequest<{}, {}, CreateAIUsageLogRequest>, res: Response) => {
     const userId = req.user?.id;
-    const logData = {
-        ...req.body,
-        user_id: userId,
-    };
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { data, error } = await supabase
-        .from('ai_usage_logs')
-        .insert([logData])
-        .select()
-        .single();
+    try {
+        const logData = {
+            ...req.body,
+            user_id: userId,
+        };
 
-    if (error) {
-        return res.status(500).json({ error: error.message });
+        const [log] = await sql`
+            INSERT INTO ai_usage_logs ${sql(logData)}
+            RETURNING *
+        `;
+
+        return res.status(201).json(log);
+    } catch (error) {
+        console.error('Error creating AI log:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
-
-    return res.status(201).json(data);
 });
 
 export default router;

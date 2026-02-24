@@ -1,0 +1,18 @@
+# Copy this file to terraform.tfvars and adjust values.
+# Do not commit real secrets.
+#
+# base-provided defaults:
+# - keycloak_url, keycloak_client_id, keycloak_client_secret come from GitHub secrets (workflow env)
+# - realm_name and environment defaults are inherited from identity/terraform/base/variables.tf
+
+jobhunter_tst_webapp_spa_spa_redirect_uris = [
+  "http://localhost:3000/auth/callback"
+]
+
+jobhunter_tst_webapp_spa_spa_web_origins = [
+  "http://localhost:3000"
+]
+
+jobhunter_tst_webapp_spa_api_audience = "jobhunter-tst-webapp-spa-api"
+
+jobhunter_tst_webapp_spa_enable_direct_access_grants = false

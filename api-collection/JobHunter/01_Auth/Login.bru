@@ -1,45 +1,38 @@
 meta {
-  name: Login (Get Token)
+  name: Login (Dev Token)
   type: http
   seq: 2
 }
 
-post {
-  url: {{supabaseUrl}}/auth/v1/token?grant_type=password
-  body: json
+get {
+  url: {{baseUrl}}/auth/dev-login
+  body: none
   auth: none
 }
 
-headers {
-  apikey: {{supabaseAnonKey}}
-  Content-Type: application/json
-}
-
-body:json {
-  {
-    "email": "dev@example.com",
-    "password": "dev123456"
-  }
-}
-
 tests {
-  /*
   test("should return 200 OK", function() {
     expect(res.status).to.equal(200);
   });
-  
-  test("should return access_token", function() {
-    expect(res.body.access_token).to.be.a('string');
+
+  test("should return access token", function() {
+    expect(res.body.access_token).to.be.a("string");
   });
-  */
-  
-  // Example: automatically updating env token (if Bruno supported it via JS like Postman)
-  // For now, user copies it manually.
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.access_token) {
+    bru.setVar("authToken", res.body.access_token);
+    console.log("Login successful. authToken updated.");
+  }
 }
 
 docs {
-  # Authenticate with Supabase
-  
-  Directly calls Supabase Auth API to get a user session.
-  Copy the `access_token` from the response and paste it into your Environment `authToken` variable.
+  # Login (Development)
+
+  Supabase login bol odstránený. Pre lokálny development používame endpoint:
+  `GET /api/v1/auth/dev-login`
+
+  Endpoint funguje iba keď server beží s `NODE_ENV=development`.
+  Vrátený `access_token` sa automaticky uloží do Bruno premennej `authToken`.
 }

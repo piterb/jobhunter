@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
 import {
     User,
     Mail,
@@ -24,7 +23,7 @@ import {
     X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CONFIG } from "@/lib/config";
+import { authService } from "@/services/auth-service";
 
 interface Profile {
     id: string;
@@ -48,47 +47,52 @@ interface Document {
 
 export default function ProfilePage() {
     const { user } = useAuth();
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
     const [profile, setProfile] = useState<Profile | null>(null);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [uploading, setUploading] = useState(false); // New state for file upload
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [previewAvatar, setPreviewAvatar] = useState<{ url: string, blob: Blob, seed: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
     const fetchProfile = useCallback(async () => {
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user?.id)
-                .single();
+        if (!user) return;
+        const token = authService.getToken();
+        if (!token) return;
 
-            if (error) throw error;
+        try {
+            const res = await fetch(`${API_URL}/profile`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to fetch profile");
+            const data = await res.json();
             setProfile(data);
         } catch (err) {
             console.error("Error fetching profile:", err);
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user, API_URL]);
 
     const fetchDocuments = useCallback(async () => {
-        try {
-            const { data, error } = await supabase
-                .from('documents')
-                .select('*')
-                .eq('user_id', user?.id)
-                .order('created_at', { ascending: false });
+        if (!user) return;
+        const token = authService.getToken();
+        if (!token) return;
 
-            if (error) throw error;
+        try {
+            const res = await fetch(`${API_URL}/profile/documents`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to fetch documents");
+            const data = await res.json();
             setDocuments(data || []);
         } catch (err) {
             console.error("Error fetching documents:", err);
         }
-    }, [user?.id]);
+    }, [user, API_URL]);
 
     useEffect(() => {
         if (user) {
@@ -100,22 +104,27 @@ export default function ProfilePage() {
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !profile) return;
+        const token = authService.getToken();
+        if (!token) return;
 
         setSaving(true);
         setMessage(null);
 
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
+            const res = await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
                     full_name: profile.full_name,
                     professional_headline: profile.professional_headline,
                     ghosting_threshold_days: profile.ghosting_threshold_days,
-                    updated_at: new Date().toISOString()
                 })
-                .eq('id', user.id);
+            });
 
-            if (error) throw error;
+            if (!res.ok) throw new Error("Failed to update profile");
 
             window.dispatchEvent(new Event('profile-updated'));
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
@@ -129,24 +138,19 @@ export default function ProfilePage() {
         }
     };
 
-    const handleDeleteDocument = async (id: string, storagePath: string) => {
+    const handleDeleteDocument = async (id: string) => {
         if (!confirm("Are you sure you want to delete this document?")) return;
+        const token = authService.getToken();
+        if (!token) return;
 
         try {
-            // 1. Delete from Storage
-            const { error: storageError } = await supabase.storage
-                .from(CONFIG.buckets.documents)
-                .remove([storagePath]);
+            const res = await fetch(`${API_URL}/profile/documents/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-            if (storageError) console.warn("Storage deletion error (continuing):", storageError);
+            if (!res.ok) throw new Error("Failed to delete document");
 
-            // 2. Delete from DB
-            const { error } = await supabase
-                .from('documents')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
             setDocuments(docs => docs.filter(d => d.id !== id));
             setMessage({ type: 'success', text: 'Document deleted successfully.' });
         } catch (err: unknown) {
@@ -156,15 +160,18 @@ export default function ProfilePage() {
         }
     };
 
-    const handleDownloadDocument = async (storagePath: string, fileName: string) => {
+    const handleDownloadDocument = async (id: string, fileName: string) => {
+        const token = authService.getToken();
+        if (!token) return;
+
         try {
-            const { data, error } = await supabase.storage
-                .from(CONFIG.buckets.documents)
-                .download(storagePath);
+            const res = await fetch(`${API_URL}/profile/documents/${id}/download`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to download file");
 
-            if (error) throw error;
-
-            const url = window.URL.createObjectURL(data);
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', fileName);
@@ -182,6 +189,8 @@ export default function ProfilePage() {
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
+        const token = authService.getToken();
+        if (!token) return;
 
         // Validation
         const allowedExtensions = ['pdf', 'md', 'txt', 'jpg', 'jpeg', 'png', 'docx'];
@@ -196,8 +205,8 @@ export default function ProfilePage() {
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: 'File size must be less than 5MB.' });
+        if (file.size > 10 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'File size must be less than 10MB.' });
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
@@ -206,33 +215,20 @@ export default function ProfilePage() {
             setUploading(true);
             setMessage(null);
 
-            // 1. Upload to Storage
-            // Sanitize filename to avoid issues
-            const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
-            const filePath = `${user?.id}/${fileName}`;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('doc_type', 'Resume');
+            formData.append('is_primary', 'false');
 
-            const { error: uploadError } = await supabase.storage
-                .from(CONFIG.buckets.documents)
-                .upload(filePath, file);
+            const res = await fetch(`${API_URL}/profile/documents`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
 
-            if (uploadError) throw uploadError;
+            if (!res.ok) throw new Error("Upload failed");
+            const docData = await res.json();
 
-            // 2. Insert into DB
-            const { data: docData, error: dbError } = await supabase
-                .from('documents')
-                .insert({
-                    user_id: user?.id,
-                    name: file.name,
-                    storage_path: filePath,
-                    doc_type: 'Resume', // Defaulting to Resume
-                    is_primary: false
-                })
-                .select()
-                .single();
-
-            if (dbError) throw dbError;
-
-            // 3. Update local state
             setDocuments(prev => [docData, ...prev]);
             setMessage({ type: 'success', text: 'Document uploaded successfully!' });
         } catch (err: unknown) {
@@ -250,17 +246,14 @@ export default function ProfilePage() {
             setSaving(true);
             setMessage(null);
 
-            // Using DiceBear for random avatars
             const styles = ['avataaars', 'bottts', 'pixel-art', 'lorelei', 'notionists'];
             const randomStyle = styles[Math.floor(Math.random() * styles.length)];
             const seed = Math.random().toString(36).substring(7);
             const avatarUrl = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${seed}`;
 
-            // Fetch the avatar from DiceBear
             const response = await fetch(avatarUrl);
             const blob = await response.blob();
 
-            // Set preview instead of uploading immediately
             if (previewAvatar) URL.revokeObjectURL(previewAvatar.url);
             setPreviewAvatar({
                 url: URL.createObjectURL(blob),
@@ -278,44 +271,33 @@ export default function ProfilePage() {
 
     const handleSaveGeneratedAvatar = async () => {
         if (!previewAvatar || !user) return;
+        const token = authService.getToken();
+        if (!token) return;
 
         try {
             setSaving(true);
             setMessage(null);
 
-            // 1. Upload to Storage (avatars bucket)
-            const fileExt = previewAvatar.blob.type.split('/')[1] || 'png';
+            const fileExt = previewAvatar.blob.type.split('/')[1]?.split('+')[0] || 'svg';
             const fileName = `avatar_${Date.now()}.${fileExt}`;
-            const filePath = `${user?.id}/${fileName}`;
             const file = new File([previewAvatar.blob], fileName, { type: previewAvatar.blob.type });
 
-            const { error: uploadError } = await supabase.storage
-                .from(CONFIG.buckets.avatars)
-                .upload(filePath, file, { upsert: true });
+            const formData = new FormData();
+            formData.append('file', file);
 
-            if (uploadError) throw uploadError;
+            const res = await fetch(`${API_URL}/profile/avatar`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
 
-            // 2. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from(CONFIG.buckets.avatars)
-                .getPublicUrl(filePath);
+            if (!res.ok) throw new Error("Failed to save avatar");
+            const data = await res.json();
 
-            // 3. Update Profile
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    avatar_url: publicUrl,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user?.id);
-
-            if (updateError) throw updateError;
-
-            setProfile(p => p ? { ...p, avatar_url: publicUrl } : null);
+            setProfile(p => p ? { ...p, avatar_url: data.avatar_url } : null);
             window.dispatchEvent(new Event('profile-updated'));
             setMessage({ type: 'success', text: 'Avatar saved successfully!' });
 
-            // Cleanup preview
             URL.revokeObjectURL(previewAvatar.url);
             setPreviewAvatar(null);
         } catch (err: unknown) {
@@ -338,8 +320,7 @@ export default function ProfilePage() {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
 
-        // Validation
-        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
         const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
 
         if (!allowedExtensions.includes(fileExt)) {
@@ -350,12 +331,11 @@ export default function ProfilePage() {
             return;
         }
 
-        if (file.size > 1 * 1024 * 1024) {
-            setMessage({ type: 'error', text: 'Avatar size must be less than 1MB.' });
+        if (file.size > 2 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'Avatar size must be less than 2MB.' });
             return;
         }
 
-        // Set preview instead of uploading immediately
         if (previewAvatar) URL.revokeObjectURL(previewAvatar.url);
         setPreviewAvatar({
             url: URL.createObjectURL(file),
@@ -363,7 +343,6 @@ export default function ProfilePage() {
             seed: Date.now().toString()
         });
 
-        // Clear input so the same file can be selected again
         if (avatarInputRef.current) avatarInputRef.current.value = '';
     };
 
@@ -671,14 +650,14 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover/file:opacity-100 transition-opacity">
                                             <button
-                                                onClick={() => handleDownloadDocument(doc.storage_path, doc.name)}
+                                                onClick={() => handleDownloadDocument(doc.id, doc.name)}
                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                                                 title="Download"
                                             >
                                                 <Download size={16} />
                                             </button>
                                             <button
-                                                onClick={() => handleDeleteDocument(doc.id, doc.storage_path)}
+                                                onClick={() => handleDeleteDocument(doc.id)}
                                                 className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                                                 title="Delete"
                                             >

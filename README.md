@@ -1,107 +1,143 @@
-# 🎯 JobHunter
+# 🛠️ JobHunter Development Setup
 
-An intelligent job application tracking system with AI-powered parsing and automated history tracking.
+This guide will help you set up the JobHunter development environment on your local machine.
 
-## 📚 Documentation for Agents & Developers
-All technical specifications and design documents are located in the `docs/` folder. Please read them before starting any work.
+## Prerequisites
 
-- **[Technical Specification](docs/spec.md)** - Architecture, Data Model, API Logic.
-- **[Infrastructure & Setup](docs/diagrams/infrastructure.md)** - Manual vs. Automated (IaC) processes.
-- **[Design System](docs/design_system.md)** - UI Colors, Typography, Component definitions.
-- **[UI Design](docs/ui_design.md)** - Wireframes, Layouts, Mockups.
-- **[Authentication Setup](docs/auth_setup.md)** - Google OAuth & Supabase configuration.
-- **[Troubleshooting Guide](docs/troubleshooting.md)** - Common local environment issues (e.g., macOS NPM EPERM).
+- **Node.js**: v18 or later
+- **Docker**: Docker Desktop (required for database and storage emulation)
+- **NPM**: standard package manager
 
-## 🏗️ Project Structure (Monorepo)
-- **`/client`**: Frontend application (Next.js App Router).
-- **`/server`**: Backend API & Logic (Express.js).
-- **`/shared`**: Shared TypeScript types/interfaces.
+## 🚀 One-Step Setup
 
-## 🚀 Local Development (Quick Start)
+The project includes a comprehensive setup script that handles infrastructure, environment variables, migrations, and seeding.
 
-The fastest way to get the project running locally:
-
-### 1. Prerequisites
-Ensure you have the following installed:
-- **Node.js** (v18+)
-- **Docker Desktop** (required for local Supabase)
-- **Supabase CLI** (`brew install supabase/tap/supabase` on macOS)
-
-### 2. Automated Setup
-This command installs dependencies, starts local Supabase (Docker), and generates `.env` files.
 ```bash
 npm run setup
 ```
 
-### 3. AI Configuration
-In `server/.env`, fill in your `OPENAI_API_KEY`. If not provided, the app will run, but AI features will be disabled.
+This script will:
+1.  **Start Docker containers**: Postgres (DB) and Fake-GCS (Storage).
+2.  **Configuration Wizard**: Reads `server/.env.example` and `client/.env.example`, prompts values, then generates `server/.env.local` and `client/.env.local`.
+3.  **Install Dependencies**: Run `npm install` across the monorepo.
+4.  **Database Migration**: Run the initial schema setup.
+5.  **Seed Data**: Create a default developer profile and sample job applications.
 
-### 4. Run the Application
+## Manual Env Setup (Optional)
+
+If you do not want to run the wizard, copy and fill these templates manually:
+
+- `server/.env.example` -> `server/.env.local`
+- `client/.env.example` -> `client/.env.local`
+
+For local startup these two are enough.
+
+---
+
+## 🔑 Authentication (Local Development)
+
+Use env files as the single source of truth:
+
+1. `server/.env.example` (copy to `server/.env.local`)
+2. `client/.env.example` (copy to `client/.env.local`)
+
+Both files include inline auth mode guidance (`dev` vs `keycloak`) and comments describing where each value comes from in Keycloak UI.
+
+After any `.env` change, restart both server and client dev processes.
+
+Important local toggle (`server/.env.local`):
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=true` for Bruno dev-token flow (`/api/v1/auth/dev-login`) and fixed local identity (`dev@jobhunter.local`).
+- `AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=false` for real Keycloak JWT validation.
+
+---
+
+## �️ Operational Commands
+
+### Infrastructure (Docker)
+
+| Command | Description |
+| :--- | :--- |
+| `docker-compose up -d` | Start infrastructure in background |
+| `docker-compose down` | Stop and remove infrastructure containers |
+| `docker-compose down -v --remove-orphans` | Full wipe: remove containers, volumes, and orphaned services |
+| `docker-compose restart` | Restart infrastructure (useful for config changes) |
+| `docker-compose logs -f` | Follow all infrastructure logs |
+| `docker logs jobhunter-fake-gcs` | View storage emulator logs |
+| `docker logs jobhunter-db` | View Postgres database logs |
+
+### Data Management
+
+| Command | Description |
+| :--- | :--- |
+| `npm run migrate` | Apply new SQL migrations from `db/migrations` |
+| `npm run seed` | Clear and re-populate DB with sample data |
+| `rm -rf storage-data/*` | Physically wipe all uploaded files/avatars |
+
+### Application
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev -w server` | Start backend API (watch mode) |
+| `npm run dev -w client` | Start frontend app (watch mode) |
+| `npm run setup` | Run the full setup flow (Docker + Env + Migrations + Seed) |
+
+---
+
+## 📂 Project Structure
+
+- `client/`: Next.js frontend application.
+- `server/`: Express.js backend API.
+- `shared/`: Shared TypeScript types and Zod schemas.
+- `db/migrations/`: SQL migration files.
+- `storage-data/`: Local physical storage for uploads (GCS Emulator).
+
+---
+
+## 📦 Local Services
+
+| Service | Local URL | Description |
+| :--- | :--- | :--- |
+| **Frontend** | `http://localhost:3000` | Main application UI |
+| **Backend API** | `http://localhost:3001` | Express API server |
+| **Postgres** | `localhost:5432` | Database (User: `jobhunter`, Pass: `jobhunter`) |
+| **GCS Emulator** | `http://localhost:4443` | File storage (Avatars, Documents) |
+
+---
+
+## ✅ Testing
+
+### Unit Tests (Server)
+
 ```bash
-npm run dev
-```
-- **Frontend Application:** [http://localhost:3000](http://localhost:3000)
-- **Backend Server:** [http://localhost:3001](http://localhost:3001)
-- **Supabase Studio (Database UI):** [http://localhost:54323](http://localhost:54323)
-- **Mailpit (Email Inbox):** [http://localhost:54324](http://localhost:54324)
-
-#### 🔑 Credentials & Database Access
-To view all local credentials (API Keys, Postgres Connection String, etc.), run:
-```bash
-npm run supabase:status
-```
-
-## 🏗️ Project Structure (Monorepo)
-- **`/client`**: Frontend (Next.js App Router).
-- **`/server`**: Backend API (Express.js).
-- **`/shared`**: Shared TypeScript types and interfaces.
-- **`/supabase`**: Database configuration, migrations, and seed data.
-- **`/docs`**: Complete project documentation.
-
-## 🛠️ Useful Commands
-- `npm run setup` - Initial environment setup.
-- `npm run dev` - Start both FE and BE simultaneously.
-- `npm run supabase:status` - View local access credentials and URLs.
-- `npm run supabase:stop` - Stop local Docker containers.
-
-## 🔄 Database Reset & Seeding
-
-If you need to reset your database to a clean state or populate it with demo data:
-
-1. **Reset Database**: 
-   ```bash
-   supabase db reset
-   ```
-   *This wipes all data and reapplies all migrations.*
-
-2. **Login**: 
-   Open [http://localhost:3000](http://localhost:3000) and sign in via Google to create your auth record.
-
-3. **Seed Data**: 
-   ```bash
-   npm run db:seed
-   ```
-   *This populates your profile with sample jobs, activities, and logs.*
-
-## 🧪 API Testing
-
-### Automated Tests (Vitest)
-```bash
-# Run all backend tests
+# From project root
 npm run test:run -w server
 
-# Watch mode (auto-rerun on changes)
+# Watch mode
 npm test -w server
 ```
 
-See [server/README.md](server/README.md) for more details.
+### API Tests (Bruno)
 
-### Manual Testing (Bruno)
-We use [Bruno](https://www.usebruno.com/) for manual API testing. The collection is in `api-collection/`.
+1. Open the `api-collection` folder in Bruno.
+2. Make sure backend is running (`npm run dev -w server`).
+3. Run `JobHunter / 01_Auth / Login (Dev Token)` to set `authToken`.
+4. Run any protected request (Jobs, Profile, Settings, etc.).
+5. For feedback endpoint, run `JobHunter / Feedback`.
 
-1. Download Bruno from [usebruno.com](https://www.usebruno.com/downloads)
-2. Open the `api-collection` folder in Bruno
-3. Follow instructions in [api-collection/README.md](api-collection/README.md)
+Collection docs: `api-collection/README.md`
 
-**Why Bruno?** Unlike Postman, Bruno stores collections as files in your git repo, making it easy to share with your team.
+---
 
+## � Troubleshooting (Mac Specific)
+
+### Permission Errors (`EPERM`)
+If you hit permission issues during local setup, make sure Docker and your project directory are writable for your user.
+
+### Temporary File Errors (`tsx`)
+If you see errors related to `tsx` or `ts-node-dev` not finding temporary files:
+- The scripts are configured to use a local `./.tmp` folder. Ensure this folder is writable.
+
+### Image/Avatar not loading
+If avatars upload successfully but show as broken icons:
+- Ensure `localhost:4443` is allowed in your browser (check if you can open the image URL directly).
+- Ensure Docker was restarted after adding the `-cors "*"` flag to `docker-compose.yml`.

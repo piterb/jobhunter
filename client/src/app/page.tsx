@@ -10,162 +10,6 @@ import { jobService } from "@/services/job-service";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AddJobModal } from "@/components/dashboard/add-job-modal";
 
-// Realistic Mock data (fallback) matches aligned Job type
-const MOCK_JOBS: Job[] = [
-  {
-    id: "1",
-    user_id: "mock-user",
-    title: "Senior Frontend Engineer",
-    company: "Vercel",
-    status: "Interview",
-    location: "Remote, USA",
-    salary_min: 140000,
-    salary_max: 190000,
-    url: "https://vercel.com/jobs",
-    employment_type: "Full-time",
-    skills_tools: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
-    experience_level: "Senior (5+ years)",
-    contact_person: "Guillermo Rauch",
-    contact_email: "guillermo@vercel.com",
-    contact_linkedin: "https://linkedin.com/in/rauchg",
-    contact_phone: null,
-    date_posted: "2024-02-09",
-    notes: "Join the team that builds the world's most popular web framework. We are looking for engineers who care about performance and DX.",
-    applied_at: "2024-02-10T10:00:00Z",
-    last_activity: "2024-02-11T12:00:00Z",
-    created_at: "2024-02-10T10:00:00Z",
-    updated_at: "2024-02-11T12:00:00Z",
-    activities: [
-      {
-        id: "a1",
-        job_id: "1",
-        user_id: "mock-user",
-        event_type: "Note",
-        category: "General",
-        content: "Technical Interview: Deep dive into React internals and Next.js App Router.",
-        occurred_at: "2024-02-11T14:00:00Z",
-        created_at: "2024-02-11T14:00:00Z",
-        checksum: null,
-        metadata: {},
-        raw_content: null
-      },
-      {
-        id: "a2",
-        job_id: "1",
-        user_id: "mock-user",
-        event_type: "Call",
-        category: "General",
-        content: "Recruiter Screen: Discussed compensation and cultural fit.",
-        occurred_at: "2024-02-10T11:00:00Z",
-        created_at: "2024-02-10T11:00:00Z",
-        checksum: null,
-        metadata: {},
-        raw_content: null
-      }
-    ]
-  },
-  {
-    id: "2",
-    user_id: "mock-user",
-    title: "Product Manager",
-    company: "Linear",
-    status: "Applied",
-    location: "San Francisco, CA",
-    salary_min: 130000,
-    salary_max: 180000,
-    url: "https://linear.app/careers",
-    employment_type: "Full-time",
-    skills_tools: ["Product Management", "Linear", "Figma", "SQL"],
-    experience_level: "Mid-Senior",
-    contact_person: "Linkin Park",
-    contact_email: "recruiting@linear.app",
-    contact_linkedin: null,
-    contact_phone: null,
-    date_posted: "2024-02-08",
-    notes: "Building the next generation of issue tracking.",
-    applied_at: "2024-02-09T09:00:00Z",
-    last_activity: "2024-02-09T09:00:00Z",
-    created_at: "2024-02-09T09:00:00Z",
-    updated_at: "2024-02-09T09:00:00Z",
-    activities: []
-  },
-  {
-    id: "3",
-    user_id: "mock-user",
-    title: "Data Scientist",
-    company: "OpenAI",
-    status: "Offer",
-    location: "San Francisco, CA",
-    salary_min: 200000,
-    salary_max: 350000,
-    url: "https://openai.com/careers",
-    employment_type: "Full-time",
-    skills_tools: ["Python", "PyTorch", "LLMs", "TensorFlow"],
-    experience_level: "PhD preferred",
-    contact_person: "Sam Altman",
-    contact_email: "sam@openai.com",
-    contact_linkedin: null,
-    contact_phone: null,
-    date_posted: "2023-12-15",
-    notes: "Working on AGI.",
-    applied_at: "2024-01-15T10:00:00Z",
-    last_activity: "2024-02-12T10:00:00Z",
-    created_at: "2024-01-15T10:00:00Z",
-    updated_at: "2024-02-12T10:00:00Z",
-    activities: []
-  },
-  {
-    id: "4",
-    user_id: "mock-user",
-    title: "UX Designer",
-    company: "Shopify",
-    status: "Rejected",
-    location: "Remote, Canada",
-    salary_min: 90000,
-    salary_max: 130000,
-    url: "https://shopify.com/careers",
-    employment_type: "Contract",
-    skills_tools: ["Figma", "Prototyping", "User Research"],
-    experience_level: "Mid-level",
-    contact_person: null,
-    contact_email: null,
-    contact_linkedin: null,
-    contact_phone: null,
-    date_posted: "2024-01-20",
-    notes: "E-commerce platform design.",
-    applied_at: "2024-02-01T15:00:00Z",
-    last_activity: "2024-02-05T10:00:00Z",
-    created_at: "2024-02-01T15:00:00Z",
-    updated_at: "2024-02-05T10:00:00Z",
-    activities: []
-  },
-  {
-    id: "5",
-    user_id: "mock-user",
-    title: "Software Architect",
-    company: "Google",
-    status: "Ghosted",
-    location: "Mountain View, CA",
-    salary_min: 250000,
-    salary_max: 400000,
-    url: "https://google.com/careers",
-    employment_type: "Full-time",
-    skills_tools: ["System Design", "Go", "Kubernetes", "Cloud"],
-    experience_level: "Staff+",
-    contact_person: null,
-    contact_email: null,
-    contact_linkedin: null,
-    contact_phone: null,
-    date_posted: "2023-11-15",
-    notes: "Large scale distributed systems.",
-    applied_at: "2023-12-01T10:00:00Z",
-    last_activity: "2023-12-01T10:00:00Z",
-    created_at: "2023-12-01T10:00:00Z",
-    updated_at: "2023-12-01T10:00:00Z",
-    activities: []
-  }
-];
-
 export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -189,6 +33,7 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const pageSize = 10;
 
   // Debounce search query
@@ -208,6 +53,7 @@ export default function DashboardPage() {
   const loadJobs = useCallback(async (silentUpdateId?: string, page: number = currentPage) => {
     try {
       if (!silentUpdateId) setLoading(true);
+      if (!silentUpdateId) setLoadError(null);
       const response = await jobService.getJobs(
         page,
         pageSize,
@@ -241,10 +87,11 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("Failed to load jobs:", err);
       if (!silentUpdateId) {
-        setJobs(MOCK_JOBS);
-        setTotalCount(MOCK_JOBS.length);
+        setJobs([]);
+        setTotalCount(0);
         setTotalPages(1);
-        setSelectedJob(MOCK_JOBS[0]);
+        setSelectedJob(null);
+        setLoadError("Failed to load jobs from API. Check authentication and server logs.");
       }
     } finally {
       if (!silentUpdateId) setLoading(false);
@@ -367,6 +214,11 @@ export default function DashboardPage() {
 
           {/* Table Container */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+            {loadError && (
+              <div className="mx-4 sm:mx-6 mt-4 mb-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {loadError}
+              </div>
+            )}
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full py-24">
                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />

@@ -1,102 +1,118 @@
 import { Router, Response } from 'express';
-import { createSupabaseUserClient } from '../config/supabase';
+import sql from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { UpdateProfileSchema, UpdateProfileRequest } from 'shared';
 
 const router = Router();
 
-const getClient = (req: AuthRequest) => {
-    const token = req.headers.authorization?.split(' ')[1] || '';
-    return createSupabaseUserClient(token);
-};
-
 // GET /settings - Get user settings (from profiles table)
 router.get('/', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model')
-        .eq('id', userId)
-        .single();
+    try {
+        const [settings] = await sql`
+            SELECT theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model 
+            FROM profiles 
+            WHERE id = ${userId}
+        `;
 
-    if (error) {
-        return res.status(500).json({ error: error.message });
+        if (!settings) {
+            return res.status(404).json({ error: 'Settings not found' });
+        }
+
+        return res.json(settings);
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
-
-    return res.json(data);
 });
 
 // PUT /settings - Update user settings
 router.put('/', validate(UpdateProfileSchema), async (req: AuthRequest<{}, {}, UpdateProfileRequest>, res: Response) => {
     const userId = req.user?.id;
     const updates = req.body;
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId)
-        .select('theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model')
-        .single();
+    try {
+        const [settings] = await sql`
+            UPDATE profiles 
+            SET ${sql(updates as any)}
+            WHERE id = ${userId}
+            RETURNING theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model
+        `;
 
-    if (error) {
-        return res.status(500).json({ error: error.message });
+        if (!settings) {
+            return res.status(404).json({ error: 'Settings not found' });
+        }
+
+        return res.json(settings);
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
-
-    return res.json(data);
 });
 
 // GET /settings/integrations - Get integration status
 router.get('/integrations', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('openai_api_key, default_ai_model')
-        .eq('id', userId)
-        .single();
+    try {
+        const [data] = await sql`
+            SELECT openai_api_key, default_ai_model 
+            FROM profiles 
+            WHERE id = ${userId}
+        `;
 
-    if (error) {
-        return res.status(500).json({ error: error.message });
-    }
-
-    return res.json({
-        openai: {
-            enabled: !!data.openai_api_key,
-            default_model: data.default_ai_model || 'gpt-4o-mini',
-            // last_used could be fetched from ai_usage_logs if needed
+        if (!data) {
+            return res.status(404).json({ error: 'Profile not found' });
         }
-    });
+
+        return res.json({
+            openai: {
+                enabled: !!data.openai_api_key,
+                default_model: data.default_ai_model || 'gpt-4o-mini',
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching integrations:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // PUT /settings/integrations - Update integration settings
 router.put('/integrations', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { provider, api_key, enabled: _enabled, default_model } = req.body;
-    const supabase = getClient(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     if (provider !== 'openai') {
         return res.status(400).json({ error: 'Unsupported provider' });
     }
 
-    const updates: Record<string, unknown> = {};
+    const updates: Record<string, any> = {};
     if (api_key !== undefined) updates.openai_api_key = api_key;
     if (default_model !== undefined) updates.default_ai_model = default_model;
 
-    const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId);
+    try {
+        const [result] = await sql`
+            UPDATE profiles 
+            SET ${sql(updates)}
+            WHERE id = ${userId}
+            RETURNING id
+        `;
 
-    if (error) {
-        return res.status(500).json({ error: error.message });
+        if (!result) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        return res.json({ message: 'Integration settings updated' });
+    } catch (error) {
+        console.error('Error updating integration settings:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
-
-    return res.json({ message: 'Integration settings updated' });
 });
 
 export default router;

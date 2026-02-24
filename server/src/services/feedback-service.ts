@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { storage, BUCKETS } from '../config/storage';
 import axios from 'axios';
 import dotenv from 'dotenv';
 
@@ -38,62 +38,63 @@ export interface FeedbackData {
     dryRun?: boolean;
 }
 
-const appName = process.env.APP_NAME || 'jobhunter';
-
 export class FeedbackService {
-    private static BUCKET_NAME = `${appName}-feedback-reports`;
+    private static BUCKET_NAME = BUCKETS.FEEDBACK;
 
     static async generateAndUploadReport(data: FeedbackData): Promise<string> {
         const htmlContent = this.generateHtml(data);
         const uniqueId = Math.random().toString(36).substring(2, 8);
         const fileName = `${new Date().toISOString().replace(/[:.]/g, '-')}-${uniqueId}.html`;
 
+        const isLocal = process.env.NODE_ENV === 'development';
+        const gcsEndpoint = process.env.GCS_ENDPOINT || 'http://localhost:4443';
+
         if (data.dryRun) {
             console.log('[FeedbackService] DryRun enabled: skipping upload and GitHub issue creation');
-            return `https://dummy-storage.supabase.co/storage/v1/object/public/${this.BUCKET_NAME}/${fileName}`;
+            const baseUrl = isLocal ? gcsEndpoint : `https://storage.googleapis.com`;
+            return `${baseUrl}/${this.BUCKET_NAME}/${fileName}`;
         }
 
-        // Ensure bucket exists
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const exists = buckets?.find(b => b.name === this.BUCKET_NAME);
-
-        if (!exists) {
-            const { error: createError } = await supabase.storage.createBucket(this.BUCKET_NAME, {
-                public: true,
-                fileSizeLimit: 50 * 1024 * 1024
-            });
-            if (createError) {
-                console.error('Error creating bucket:', createError);
-                throw new Error(`Failed to create bucket: ${createError.message}`);
-            }
-        }
-
-        // Upload report
-        const { error: uploadError } = await supabase.storage
-            .from(this.BUCKET_NAME)
-            .upload(fileName, htmlContent, {
-                contentType: 'text/html',
-                upsert: true
-            });
-
-        if (uploadError) {
-            console.error('Error uploading feedback report:', uploadError);
-            throw new Error(`Failed to upload report: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from(this.BUCKET_NAME)
-            .getPublicUrl(fileName);
-
-        // Optional: Create GitHub Issue
         try {
-            await this.createGitHubIssue(data, publicUrl);
-        } catch (err) {
-            console.error('Failed to create GitHub issue:', err);
-            // Don't fail the whole request if GitHub fails
-        }
+            // Upload report to GCS
+            const file = storage.bucket(this.BUCKET_NAME).file(fileName);
+            await file.save(htmlContent, {
+                contentType: 'text/html',
+                resumable: false,
+                metadata: {
+                    cacheControl: 'public, max-age=31536000',
+                }
+            });
 
-        return publicUrl;
+            // In development, we might need to make it public if bucket isn't auto-public
+            if (isLocal) {
+                try {
+                    await file.makePublic();
+                } catch (err) {
+                    // fake-gcs (filesystem backend) does not fully support object generation/ACL flows.
+                    // The direct emulator URL still works for local debugging, so do not fail the request.
+                    console.warn('[FeedbackService] makePublic failed in local emulator, continuing:', err);
+                }
+            }
+
+            // Construct public URL
+            const publicUrl = isLocal
+                ? `${gcsEndpoint}/download/storage/v1/b/${this.BUCKET_NAME}/o/${encodeURIComponent(fileName)}?alt=media`
+                : `https://storage.googleapis.com/${this.BUCKET_NAME}/${fileName}`;
+
+            // Optional: Create GitHub Issue
+            try {
+                await this.createGitHubIssue(data, publicUrl);
+            } catch (err) {
+                console.error('Failed to create GitHub issue:', err);
+                // Don't fail the whole request if GitHub fails
+            }
+
+            return publicUrl;
+        } catch (error) {
+            console.error('Error handling feedback report:', error);
+            throw new Error(`Failed to process feedback: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     private static async createGitHubIssue(data: FeedbackData, reportUrl: string) {
@@ -107,6 +108,10 @@ export class FeedbackService {
             return;
         }
 
+        const reportLink = isValidUrl(reportUrl)
+            ? withQueryParam(reportUrl, 'download', 'feedback_report.html')
+            : reportUrl;
+
         const body = `
 ### 📝 Feedback Details
 **Subject:** ${data.subject}
@@ -117,7 +122,7 @@ export class FeedbackService {
 ---
 
 ### 🔍 Analysis
-**[📥 Download & View Interactive Report](${reportUrl}?download=feedback_report.html)**
+**[📥 Download & View Interactive Report](${reportLink})**
 
 ---
 
@@ -376,4 +381,19 @@ ${data.description}
 </html>
         `;
     }
+}
+
+function isValidUrl(value: string): boolean {
+    try {
+        new URL(value);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function withQueryParam(url: string, key: string, value: string): string {
+    const parsed = new URL(url);
+    parsed.searchParams.set(key, value);
+    return parsed.toString();
 }

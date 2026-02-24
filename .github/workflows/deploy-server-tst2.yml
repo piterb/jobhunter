@@ -1,0 +1,112 @@
+name: Server CI/CD (tst2)
+
+on:
+  push:
+    branches: [ "tst2" ]
+    paths:
+      - 'server/**'
+      - 'shared/**'
+      - 'db/**'
+      - '.github/workflows/deploy-server-tst2.yml'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  Region: ${{ vars.GCP_REGION }}
+  ArtifactRepo: ${{ vars.ARTIFACT_REPO }}
+  ServiceName: ${{ vars.SERVER_SERVICE_NAME }}
+
+jobs:
+  ci:
+    name: Server CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build Shared
+        run: npm run build -w shared
+      - name: Lint Server
+        run: npm run lint -w server
+      - name: Type Check Server
+        run: npm run type-check -w server
+      - name: Test Server
+        run: npm test -w server
+
+  deploy:
+    name: Deploy Server
+    needs: ci
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: tst2
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dbmate
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+          sudo chmod +x /usr/local/bin/dbmate
+
+      - name: Run Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DBMATE_MIGRATIONS_DIR: db/migrations
+          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_tst2_schema_migrations"
+        run: dbmate up
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Docker Auth
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Server
+        run: |
+          docker build \
+            --file server/Dockerfile \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }} \
+            --tag ${{ vars.ARTIFACT_REPO }}/server:latest \
+            .
+          docker push ${{ vars.ARTIFACT_REPO }}/server --all-tags
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.ServiceName }}
+          region: ${{ vars.GCP_REGION }}
+          image: ${{ vars.ARTIFACT_REPO }}/server:${{ github.sha }}
+          flags: '--allow-unauthenticated'
+          env_vars: |-
+            NODE_ENV=production
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            RESOURCE_PREFIX=${{ vars.RESOURCE_PREFIX }}
+            GCS_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}
+            FEEDBACK_GITHUB_TOKEN=${{ secrets.FEEDBACK_GITHUB_TOKEN }}
+            FEEDBACK_ENABLED=${{ vars.FEEDBACK_ENABLED }}
+            AUTH_PROVIDER=${{ vars.AUTH_PROVIDER }}
+            AUTH_LOCAL_DEV_USE_MOCK_IDENTITY=${{ vars.AUTH_LOCAL_DEV_USE_MOCK_IDENTITY }}
+            OIDC_ISSUER=${{ vars.OIDC_ISSUER }}
+            OIDC_AUDIENCE=${{ vars.OIDC_AUDIENCE }}
+            OIDC_CLIENT_ALLOWLIST=${{ vars.OIDC_CLIENT_ALLOWLIST }}
+            OIDC_ALLOWED_ALGORITHMS=${{ vars.OIDC_ALLOWED_ALGORITHMS }}
+            AUTH_ENFORCE_APP_CLAIMS=${{ vars.AUTH_ENFORCE_APP_CLAIMS }}
+            AUTH_APP_ID_CLAIM=${{ vars.AUTH_APP_ID_CLAIM }}
+            AUTH_APP_ENV_CLAIM=${{ vars.AUTH_APP_ENV_CLAIM }}
+            AUTH_REQUIRE_CLIENT_ALLOWLIST=${{ vars.AUTH_REQUIRE_CLIENT_ALLOWLIST }}
+            AUTH_REQUIRED_SCOPES=${{ vars.AUTH_REQUIRED_SCOPES }}
+            GITHUB_OWNER=${{ github.repository_owner }}
+            GITHUB_REPO=${{ github.event.repository.name }}
+            APP_NAME=${{ vars.APP_NAME }}
+            APP_ENV=tst2

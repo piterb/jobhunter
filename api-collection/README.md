@@ -21,25 +21,15 @@ Stiahni Bruno z [https://www.usebruno.com/downloads](https://www.usebruno.com/do
 
 #### Ak potrebuješ token znova získať:
 
-```bash
-# Zobraz všetky kľúče v JSON formáte
-npx supabase status -o json
-
-# Alebo len service_role_key
-npx supabase status -o json | jq -r '.service_role_key'
-```
-
-Skopíruj `service_role_key` a vlož do `environments/Local.bru`.
+1. Spusti backend v development móde (`NODE_ENV=development`)
+2. Spusť request `01_Auth/Login (Dev Token)`
+3. Request automaticky uloží `access_token` do `authToken` premennej
 
 ### 4. Spusti server
 
 Uisti sa, že backend server beží:
 
 ```bash
-# V root priečinku
-npx supabase start
-
-# V server priečinku
 cd server
 npm run dev
 ```
@@ -70,7 +60,7 @@ api-collection/
 V `collection.bru` sú definované tieto premenné:
 
 - `baseUrl`: `http://localhost:3001/api/v1`
-- `authToken`: Tvoj Supabase auth token
+- `authToken`: Tvoj development auth token (`/auth/dev-login`)
 
 Môžeš ich použiť v requestoch ako `{{baseUrl}}` a `{{authToken}}`.
 

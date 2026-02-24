@@ -1,0 +1,52 @@
+name: Keycloak Identity Base
+
+on:
+  pull_request:
+    paths:
+      - "identity/terraform/base/**"
+      - ".github/workflows/keycloak-identity-base.yml"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "identity/terraform/base/**"
+      - ".github/workflows/keycloak-identity-base.yml"
+  workflow_dispatch:
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: identity/terraform/base
+    env:
+      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -input=false
+
+  apply:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: identity/terraform/base
+    env:
+      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
+      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform apply -auto-approve -input=false

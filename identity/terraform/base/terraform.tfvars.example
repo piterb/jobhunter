@@ -1,0 +1,9 @@
+# Copy this file to terraform.tfvars and adjust values for your environment.
+# Do not commit real secrets.
+
+keycloak_url           = "https://keycloak.example.com"
+keycloak_client_id     = "terraform-identity-base-tst"
+keycloak_client_secret = "<set-in-github-secret>"
+
+realm_name  = "jobhunter-tst"
+environment = "tst"

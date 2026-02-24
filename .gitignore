@@ -61,13 +61,14 @@ api-collection/environments/
 .bruno/
 
 # Terraform
-**/infra/.terraform/
-**/infra/*.tfstate
-**/infra/*.tfstate.backup
-**/infra/*.auto.tfvars
-**/infra/environments/*.tfvars
-!**/infra/environments/example.tfvars
-!**/infra/environments/common.example.tfvars
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.auto.tfvars
+*.tfvars
+example.tfvars
+common.example.tfvars
+
 
 # Docker
 Dockerfile

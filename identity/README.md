@@ -22,3 +22,5 @@ The realm is expected to already exist and be managed by the platform team.
 - realm: `jobhunter-tst`
 - environment: `tst`
 - folder: `identity`
+- base workflow: `.github/workflows/keycloak-identity-base-tst.yml`
+- base impact workflow: `.github/workflows/keycloak-identity-base-impact-tst.yml`

@@ -1,7 +1,7 @@
 # Copy to terraform.tfvars for LOCAL usage only.
 # This file holds sensitive credentials. Do NOT commit terraform.tfvars.
 #
-# In CI, values are provided from GH vars/secrets with KEYCLOACK_* prefix.
+# In CI, values are provided from GH vars/secrets with KEYCLOAK_* prefix.
 keycloak_url           = "https://keycloak.example.com"
 keycloak_client_id     = "terraform-identity-jobhunter-tst-webapp-spa"
 keycloak_client_secret = "<set-local-secret>"

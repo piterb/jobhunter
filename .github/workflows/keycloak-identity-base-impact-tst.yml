@@ -4,14 +4,11 @@ on:
   pull_request:
     paths:
       - "identity/terraform/base/**"
-      - ".github/workflows/keycloak-identity-base-impact.yml"
+      - ".github/workflows/keycloak-identity-base-impact-tst.yml"
   push:
-    branches:
-      - main
-      - master
     paths:
       - "identity/terraform/base/**"
-      - ".github/workflows/keycloak-identity-base-impact.yml"
+      - ".github/workflows/keycloak-identity-base-impact-tst.yml"
   workflow_dispatch:
 
 jobs:
@@ -34,6 +31,7 @@ jobs:
     needs: discover-apps
     if: needs.discover-apps.outputs.stacks != '[]'
     runs-on: ubuntu-latest
+    environment: tst
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +40,11 @@ jobs:
       run:
         working-directory: identity/terraform/apps/${{ matrix.app }}
     env:
-      TF_VAR_keycloak_url: ${{ vars.KEYCLOACK_URL }}
-      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOACK_CLIENT_ID }}
-      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOACK_CLIENT_SECRET }}
-      TF_VAR_realm_name: ${{ vars.KEYCLOACK_REALM_NAME }}
-      TF_VAR_environment: ${{ vars.KEYCLOACK_ENVIRONMENT }}
+      TF_VAR_keycloak_url: ${{ vars.KEYCLOAK_URL }}
+      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOAK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      TF_VAR_realm_name: ${{ vars.KEYCLOAK_REALM_NAME }}
+      TF_VAR_environment: ${{ vars.KEYCLOAK_ENVIRONMENT }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

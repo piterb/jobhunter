@@ -1,4 +1,4 @@
-name: Keycloak Identity Base
+name: Keycloak Identity Base (tst)
 
 on:
   pull_request:

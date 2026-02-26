@@ -22,9 +22,11 @@ jobs:
       run:
         working-directory: identity/terraform/base
     env:
-      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
-      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
-      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      TF_VAR_keycloak_url: ${{ vars.KEYCLOACK_URL }}
+      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOACK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOACK_CLIENT_SECRET }}
+      TF_VAR_realm_name: ${{ vars.KEYCLOACK_REALM_NAME }}
+      TF_VAR_environment: ${{ vars.KEYCLOACK_ENVIRONMENT }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -40,9 +42,11 @@ jobs:
       run:
         working-directory: identity/terraform/base
     env:
-      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
-      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
-      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      TF_VAR_keycloak_url: ${{ vars.KEYCLOACK_URL }}
+      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOACK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOACK_CLIENT_SECRET }}
+      TF_VAR_realm_name: ${{ vars.KEYCLOACK_REALM_NAME }}
+      TF_VAR_environment: ${{ vars.KEYCLOACK_ENVIRONMENT }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

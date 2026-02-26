@@ -22,9 +22,15 @@ jobs:
       run:
         working-directory: identity/terraform/apps/jobhunter-tst-webapp-spa
     env:
-      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
-      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
-      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      TF_VAR_keycloak_url: ${{ vars.KEYCLOACK_URL }}
+      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOACK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOACK_CLIENT_SECRET }}
+      TF_VAR_realm_name: ${{ vars.KEYCLOACK_REALM_NAME }}
+      TF_VAR_environment: ${{ vars.KEYCLOACK_ENVIRONMENT }}
+      TF_VAR_jobhunter_tst_webapp_spa_spa_redirect_uris: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_SPA_REDIRECT_URIS }}
+      TF_VAR_jobhunter_tst_webapp_spa_spa_web_origins: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_SPA_WEB_ORIGINS }}
+      TF_VAR_jobhunter_tst_webapp_spa_api_audience: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_API_AUDIENCE }}
+      TF_VAR_jobhunter_tst_webapp_spa_enable_direct_access_grants: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_ENABLE_DIRECT_ACCESS_GRANTS }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -40,9 +46,15 @@ jobs:
       run:
         working-directory: identity/terraform/apps/jobhunter-tst-webapp-spa
     env:
-      TF_VAR_keycloak_url: ${{ secrets.KEYCLOAK_URL }}
-      TF_VAR_keycloak_client_id: ${{ secrets.KEYCLOAK_CLIENT_ID }}
-      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      TF_VAR_keycloak_url: ${{ vars.KEYCLOACK_URL }}
+      TF_VAR_keycloak_client_id: ${{ vars.KEYCLOACK_CLIENT_ID }}
+      TF_VAR_keycloak_client_secret: ${{ secrets.KEYCLOACK_CLIENT_SECRET }}
+      TF_VAR_realm_name: ${{ vars.KEYCLOACK_REALM_NAME }}
+      TF_VAR_environment: ${{ vars.KEYCLOACK_ENVIRONMENT }}
+      TF_VAR_jobhunter_tst_webapp_spa_spa_redirect_uris: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_SPA_REDIRECT_URIS }}
+      TF_VAR_jobhunter_tst_webapp_spa_spa_web_origins: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_SPA_WEB_ORIGINS }}
+      TF_VAR_jobhunter_tst_webapp_spa_api_audience: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_API_AUDIENCE }}
+      TF_VAR_jobhunter_tst_webapp_spa_enable_direct_access_grants: ${{ vars.KEYCLOACK_JOBHUNTER_TST_WEBAPP_SPA_ENABLE_DIRECT_ACCESS_GRANTS }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

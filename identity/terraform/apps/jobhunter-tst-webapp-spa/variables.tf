@@ -17,13 +17,11 @@ variable "keycloak_client_secret" {
 variable "realm_name" {
   description = "Existing realm managed by the platform team"
   type        = string
-  default     = "jobhunter-tst"
 }
 
 variable "environment" {
   description = "Environment label used for conventions (tst/stg/prd)"
   type        = string
-  default     = "tst"
 }
 
 variable "jobhunter_tst_webapp_spa_spa_redirect_uris" {

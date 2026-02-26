@@ -2,6 +2,7 @@ provider "keycloak" {
   url           = var.keycloak_url
   client_id     = var.keycloak_client_id
   client_secret = var.keycloak_client_secret
+  realm         = var.realm_name
 }
 
 data "keycloak_realm" "target" {

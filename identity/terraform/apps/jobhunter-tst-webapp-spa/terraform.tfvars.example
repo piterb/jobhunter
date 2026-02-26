@@ -1,9 +1,12 @@
-# Copy this file to terraform.tfvars and adjust values.
-# Do not commit real secrets.
+# Copy to terraform.tfvars for LOCAL usage only.
+# This file holds sensitive credentials. Do NOT commit terraform.tfvars.
 #
-# base-provided defaults:
-# - keycloak_url, keycloak_client_id, keycloak_client_secret come from GitHub secrets (workflow env)
-# - realm_name and environment defaults are inherited from identity/terraform/base/variables.tf
+# In CI, values are provided from GH vars/secrets with KEYCLOACK_* prefix.
+keycloak_url           = "https://keycloak.example.com"
+keycloak_client_id     = "terraform-identity-jobhunter-tst-webapp-spa"
+keycloak_client_secret = "<set-local-secret>"
+realm_name             = "<set-existing-realm-name>"
+environment            = "tst"
 
 jobhunter_tst_webapp_spa_spa_redirect_uris = [
   "http://localhost:3000/auth/callback"

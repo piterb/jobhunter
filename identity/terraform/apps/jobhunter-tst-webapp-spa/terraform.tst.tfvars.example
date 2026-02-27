@@ -1,0 +1,17 @@
+# Copy to terraform.tst.tfvars for LOCAL usage only.
+# This file is app-specific. Shared Keycloak connection values come from ../../base/terraform.tst.tfstate.
+#
+# Optional: override base state location only if you moved the base stack/state file.
+# base_state_path = "../../base/terraform.tst.tfstate"
+
+jobhunter_tst_webapp_spa_spa_redirect_uris = [
+  "http://localhost:3000/auth/callback"
+]
+
+jobhunter_tst_webapp_spa_spa_web_origins = [
+  "http://localhost:3000"
+]
+
+jobhunter_tst_webapp_spa_api_audience = "jobhunter-tst-webapp-spa-api"
+
+jobhunter_tst_webapp_spa_enable_direct_access_grants = false

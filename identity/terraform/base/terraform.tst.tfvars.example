@@ -1,5 +1,5 @@
-# Copy to terraform.tfvars for LOCAL usage only.
-# This file holds sensitive credentials. Do NOT commit terraform.tfvars.
+# Copy to terraform.tst.tfvars for LOCAL usage only.
+# This file holds sensitive credentials. Do NOT commit terraform.tst.tfvars.
 
 keycloak_url           = "https://keycloak.example.com"
 keycloak_client_id     = "terraform-identity-base-tst"

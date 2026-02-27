@@ -1,17 +1,30 @@
 provider "keycloak" {
-  url           = var.keycloak_url
-  client_id     = var.keycloak_client_id
-  client_secret = var.keycloak_client_secret
-  realm         = var.realm_name
+  url           = data.terraform_remote_state.base.outputs.keycloak_url
+  client_id     = data.terraform_remote_state.base.outputs.keycloak_client_id
+  client_secret = data.terraform_remote_state.base.outputs.keycloak_client_secret
+  realm         = data.terraform_remote_state.base.outputs.realm_name
+}
+
+data "terraform_remote_state" "base" {
+  backend = "local"
+
+  config = {
+    path = var.base_state_path
+  }
+}
+
+locals {
+  realm_name  = data.terraform_remote_state.base.outputs.realm_name
+  environment = data.terraform_remote_state.base.outputs.environment
 }
 
 data "keycloak_realm" "target" {
-  realm = var.realm_name
+  realm = local.realm_name
 }
 
 resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_spa" {
   realm_id  = data.keycloak_realm.target.id
-  client_id = "jobhunter-tst-webapp-spa-spa-${var.environment}"
+  client_id = "jobhunter-tst-webapp-spa-spa-${local.environment}"
   name      = "jobhunter-tst-webapp-spa SPA"
 
   access_type                  = "PUBLIC"
@@ -22,11 +35,27 @@ resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_spa" {
   pkce_code_challenge_method = "S256"
   valid_redirect_uris        = var.jobhunter_tst_webapp_spa_spa_redirect_uris
   web_origins                = var.jobhunter_tst_webapp_spa_spa_web_origins
+
+  lifecycle {
+    precondition {
+      condition = local.environment != "prd" || alltrue([
+        for uri in var.jobhunter_tst_webapp_spa_spa_redirect_uris : !strcontains(uri, "*")
+      ])
+      error_message = "Wildcards in jobhunter_tst_webapp_spa_spa_redirect_uris are not allowed in prd."
+    }
+
+    precondition {
+      condition = local.environment != "prd" || alltrue([
+        for origin in var.jobhunter_tst_webapp_spa_spa_web_origins : !strcontains(origin, "*")
+      ])
+      error_message = "Wildcards in jobhunter_tst_webapp_spa_spa_web_origins are not allowed in prd."
+    }
+  }
 }
 
 resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_api" {
   realm_id  = data.keycloak_realm.target.id
-  client_id = "jobhunter-tst-webapp-spa-api-${var.environment}"
+  client_id = "jobhunter-tst-webapp-spa-api-${local.environment}"
   name      = "jobhunter-tst-webapp-spa API"
 
   access_type                  = "CONFIDENTIAL"

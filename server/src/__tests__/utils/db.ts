@@ -9,7 +9,7 @@ type SqlRunner = {
     (fragment: SqlFragment): SqlFragment;
     (value: Row): Row;
     begin: (fn: (sql: typeof sqlProxy) => Promise<unknown>) => Promise<unknown>;
-    unsafe: (q: string, p: unknown[]) => ReturnType<typeof sqlMock>;
+    unsafe: (q: string, p: unknown[]) => unknown;
     val: <T>(obj: T) => T;
 };
 
@@ -51,6 +51,7 @@ const toNumber = (v: unknown) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
 };
+const rowNumber = (row: Row, key: string) => toNumber(row[key]) ?? 0;
 
 const applyCommonFilters = (rows: Row[], strings: TemplateStringsArray, values: unknown[]) => {
     let data = [...rows];
@@ -72,9 +73,9 @@ const handleQuery = (strings: TemplateStringsArray, values: unknown[]) => {
 
     if (queryLower.includes('sum(coalesce(tokens_input')) {
         const rows = applyCommonFilters(mockStore.ai_usage_logs, strings, values);
-        const total = rows.reduce((acc, row) => acc + (row.tokens_input || 0) + (row.tokens_output || 0), 0);
+        const total = rows.reduce((acc, row) => acc + rowNumber(row, 'tokens_input') + rowNumber(row, 'tokens_output'), 0);
         const avg = rows.length
-            ? rows.reduce((acc, row) => acc + (row.latency_ms || 0), 0) / rows.length
+            ? rows.reduce((acc, row) => acc + rowNumber(row, 'latency_ms'), 0) / rows.length
             : 0;
         return [{ total_tokens: String(total), avg_latency: String(avg) }];
     }
@@ -124,7 +125,7 @@ const handleQuery = (strings: TemplateStringsArray, values: unknown[]) => {
         let data: Row = {};
 
         if (values.length && values[0] && typeof values[0] === 'object' && !isFragment(values[0])) {
-            data = values[0];
+            data = values[0] as Row;
         } else {
             const columnsMatch = query.match(/insert into\s+\w+\s*\(([^)]+)\)/i);
             if (columnsMatch) {
@@ -149,9 +150,9 @@ const handleQuery = (strings: TemplateStringsArray, values: unknown[]) => {
         if (!tableMatch) return [];
         const table = tableMatch[1];
 
-        let updates = values[0];
-        if (isFragment(updates) || updates === undefined || typeof updates !== 'object') {
-            updates = {};
+        let updates: Row = {};
+        if (!isFragment(values[0]) && values[0] !== undefined && typeof values[0] === 'object') {
+            updates = values[0] as Row;
         }
 
         if (queryLower.includes('set last_activity = now()')) {
@@ -193,7 +194,7 @@ const handleQuery = (strings: TemplateStringsArray, values: unknown[]) => {
     return [];
 };
 
-export const sqlMock = vi.fn((strings: TemplateStringsArray | string, ...values: unknown[]) => {
+const sqlMockBase = vi.fn((strings: TemplateStringsArray | string, ...values: unknown[]) => {
     if (!isTemplateCall(strings)) {
         if (typeof strings === 'string') {
             return { __sql_fragment: true, query: strings.toLowerCase(), values } as SqlFragment;
@@ -210,7 +211,9 @@ export const sqlMock = vi.fn((strings: TemplateStringsArray | string, ...values:
     return Promise.resolve(handleQuery(strings, values));
 });
 
-const sqlProxy = new Proxy(sqlMock as SqlRunner, {
+export const sqlMock = sqlMockBase as typeof sqlMockBase & SqlRunner;
+
+const sqlProxy = new Proxy(sqlMock as unknown as SqlRunner, {
     apply(target, thisArg, argumentsList: unknown[]) {
         if (
             argumentsList.length === 1 &&

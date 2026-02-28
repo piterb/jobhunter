@@ -120,15 +120,8 @@ export class KeycloakAuthAdapter implements FrontendAuthAdapter {
             throw new Error('Authentication callback completed but no Keycloak session/token was returned.');
         }
 
-        let profile: KeycloakProfile | undefined;
-        try {
-            profile = await client.loadUserProfile();
-        } catch {
-            profile = undefined;
-        }
-
         return {
-            user: mapUser(profile, client.tokenParsed as TokenClaims | undefined),
+            user: mapUser(undefined, client.tokenParsed as TokenClaims | undefined),
             access_token: client.token,
             refresh_token: client.refreshToken,
             expires_in: typeof client.tokenParsed?.exp === 'number'

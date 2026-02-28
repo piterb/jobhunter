@@ -9,8 +9,10 @@ import { Search, Loader2 } from "lucide-react";
 import { jobService } from "@/services/job-service";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AddJobModal } from "@/components/dashboard/add-job-modal";
+import { useAuth } from "@/lib/auth-context";
 
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,8 +101,11 @@ export default function DashboardPage() {
   }, [currentPage, debouncedSearchQuery, pageSize, sortField, sortOrder]);
 
   useEffect(() => {
+    if (authLoading || !user) {
+      return;
+    }
     loadJobs();
-  }, [loadJobs]);
+  }, [authLoading, user, loadJobs]);
 
   const handleSort = (field: string) => {
     if (field === sortField) {

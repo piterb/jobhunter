@@ -5,6 +5,11 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import { run as runEnvWizard } from './init-logic.ts';
 
+const ROOT_DIR = process.cwd();
+const KCADMIN_TARGET = 'local';
+const KCADMIN_REALM_FILE = path.join(ROOT_DIR, 'kcadmin', 'realms', 'jobhunter.json');
+const KCADMIN_SEED_FILE = path.join(ROOT_DIR, 'kcadmin', 'seeds', 'jobhunter.json');
+
 async function runCommand(command: string, args: string[], cwd: string = process.cwd()) {
     console.log(chalk.gray(`> ${command} ${args.join(' ')}`));
     const { stdout, stderr } = await execa(command, args, { cwd, stdio: 'inherit' });
@@ -33,6 +38,16 @@ async function hasAnyManagedContainers() {
     const checks = await Promise.all([
         containerExists('jobhunter-db'),
         containerExists('jobhunter-fake-gcs'),
+        containerExists('keycloak-local-postgres-1'),
+        containerExists('keycloak-local-keycloak-1'),
+    ]);
+    return checks.some(Boolean);
+}
+
+async function isKeycloakRuntimeRunning() {
+    const checks = await Promise.all([
+        containerExists('keycloak-local-postgres-1'),
+        containerExists('keycloak-local-keycloak-1'),
     ]);
     return checks.some(Boolean);
 }
@@ -54,17 +69,18 @@ async function main() {
 
     try {
         // 1. Docker Compose
-        console.log(chalk.blue('🐳 Step 1: Starting Infrastructure (Docker)...'));
+        console.log(chalk.blue('🐳 Step 1: Starting Infrastructure (Docker + Keycloak)...'));
         try {
             const hasContainers = await hasAnyManagedContainers();
             const stackRunning = await isDockerStackRunning();
+            const keycloakRunning = await isKeycloakRuntimeRunning();
 
             if (hasContainers) {
                 const { resetMode } = await inquirer.prompt([
                     {
                         type: 'list',
                         name: 'resetMode',
-                        message: 'Existing JobHunter containers detected. How do you want to reset?',
+                        message: 'Existing JobHunter/Keycloak containers detected. How do you want to reset?',
                         choices: [
                             {
                                 name: 'Runtime reset only (keep DB and storage data) (Recommended)',
@@ -82,12 +98,20 @@ async function main() {
                 if (resetMode === 'full') {
                     console.log(chalk.yellow('🔥 Full reset selected. Removing containers + volumes + storage-data...'));
                     await runCommand('docker-compose', ['down', '-v', '--remove-orphans']);
+                    await runCommand('kcadmin', ['down', '--target', KCADMIN_TARGET, '--wipe']);
                     await fs.emptyDir(path.join(process.cwd(), 'storage-data'));
-                } else if (stackRunning) {
-                    console.log(chalk.yellow('♻️  Runtime reset selected. Restarting containers (data preserved)...'));
-                    await runCommand('docker-compose', ['down']);
                 } else {
-                    console.log(chalk.yellow('♻️  Runtime reset selected. Cleaning stale containers...'));
+                    if (stackRunning || keycloakRunning) {
+                        console.log(chalk.yellow('♻️  Runtime reset selected. Restarting containers (data preserved)...'));
+                    } else {
+                        console.log(chalk.yellow('♻️  Runtime reset selected. Cleaning stale containers...'));
+                    }
+                    if (stackRunning) {
+                        await runCommand('docker-compose', ['down']);
+                    }
+                    if (keycloakRunning) {
+                        await runCommand('kcadmin', ['down', '--target', KCADMIN_TARGET]);
+                    }
                 }
             } else if (stackRunning) {
                 console.log(chalk.yellow('♻️  Existing Docker stack detected. Restarting from clean state...'));
@@ -98,9 +122,12 @@ async function main() {
             await removeContainerIfExists('jobhunter-db');
             await removeContainerIfExists('jobhunter-fake-gcs');
             await runCommand('docker-compose', ['up', '-d']);
-            console.log(chalk.green('✅ Docker containers are up!\n'));
+            await runCommand('kcadmin', ['up', '--target', KCADMIN_TARGET]);
+            await runCommand('kcadmin', ['realm', 'apply', '--file', KCADMIN_REALM_FILE, '--target', KCADMIN_TARGET]);
+            await runCommand('kcadmin', ['seed', 'apply', '--realm', 'jobhunter', '--file', KCADMIN_SEED_FILE, '--target', KCADMIN_TARGET]);
+            console.log(chalk.green('✅ Docker containers and Keycloak are up!\n'));
         } catch (err) {
-            console.error(chalk.red('❌ Docker Compose failed. Is Docker running?'));
+            console.error(chalk.red('❌ Infrastructure startup failed. Is Docker running and is kcadmin installed?'));
             process.exit(1);
         }
 
@@ -128,6 +155,10 @@ async function main() {
         console.log(chalk.white('Start the application in two terminals:'));
         console.log(chalk.cyan('  npm run dev -w server'));
         console.log(chalk.cyan('  npm run dev -w client\n'));
+        console.log(chalk.white('Local Keycloak:'));
+        console.log(chalk.cyan('  URL: http://localhost:8080'));
+        console.log(chalk.cyan('  Admin: admin / admin'));
+        console.log(chalk.cyan('  Test user: jobhunter.tester@local.test / Jobhunter123!\n'));
 
     } catch (err) {
         console.error(chalk.red('\n💥 Fatal setup error:'), err);

@@ -17,7 +17,7 @@ export interface AILogData {
 export const logAIUsage = async (log: AILogData) => {
     try {
         await sql`
-            INSERT INTO ai_usage_logs ${sql(log)}
+            INSERT INTO ai_usage_logs ${sql(log as unknown as Record<string, unknown>)}
         `;
     } catch (err) {
         console.error('Error logging AI usage:', err);

@@ -61,7 +61,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         `;
 
         const response: PaginatedJobs = {
-            data: data as PaginatedJobs['data'],
+            data: data as unknown as PaginatedJobs['data'],
             count: totalCount,
             page: pageNum,
             limit: limitNum,

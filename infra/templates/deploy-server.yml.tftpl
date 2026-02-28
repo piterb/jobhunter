@@ -35,7 +35,7 @@ jobs:
       - name: Type Check Server
         run: npm run type-check -w server
       - name: Test Server
-        run: npm test -w server
+        run: npm run test:run -w server
 
   deploy:
     name: Deploy Server
@@ -76,17 +76,17 @@ jobs:
         run: |
           docker build \
             --file server/Dockerfile \
-            --tag $${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }} \
-            --tag $${{ vars.ARTIFACT_REPO }}/server:latest \
+            --tag "$${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }}" \
+            --tag "$${{ vars.ARTIFACT_REPO }}/server:latest" \
             .
-          docker push $${{ vars.ARTIFACT_REPO }}/server --all-tags
+          docker push "$${{ vars.ARTIFACT_REPO }}/server" --all-tags
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: $${{ env.ServiceName }}
           region: $${{ vars.GCP_REGION }}
-          image: $${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }}
+          image: "$${{ vars.ARTIFACT_REPO }}/server:$${{ github.sha }}"
           flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production

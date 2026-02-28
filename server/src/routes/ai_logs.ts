@@ -3,7 +3,6 @@ import sql from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { CreateAIUsageLogSchema, CreateAIUsageLogRequest, GetAILogsQuerySchema, PaginatedAILogs } from 'shared';
-import type { AILog } from 'shared';
 
 const router = Router();
 
@@ -61,7 +60,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         `;
 
         const response: PaginatedAILogs = {
-            data: data as AILog[],
+            data: data as unknown as PaginatedAILogs['data'],
             count: totalCount,
             page: pageNum,
             limit: limitNum,

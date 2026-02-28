@@ -47,47 +47,29 @@ neon_api_key    = "napi_xxx"             # project-scoped key recommended
 # neon_db_branch_name = "main"
 
 # =============================================================================
-# Auth0 (provider access + tenant)
+# Identity Terraform state inputs
 # =============================================================================
-# Auth0 mode:
-# - "provision" => Terraform creates API + SPA for this stack (default).
-# - "reuse" => Terraform reuses existing shared API + SPA (recommended for Auth0 Free multi-stack).
-# auth0_mode = "provision"
-
-auth0_domain                  = "your-tenant.eu.auth0.com"     # Auth0 Dashboard -> Settings -> Domain
-auth0_terraform_client_id     = "your-auth0-m2m-client-id"     # Auth0 M2M app -> Client ID
-auth0_terraform_client_secret = "your-auth0-m2m-client-secret" # Auth0 M2M app -> Client Secret
-
-# Optional Auth0 naming overrides
-# auth0_spa_name_override = ""
-# auth0_api_name_override = ""
-
-# Required in auth0_mode = "reuse" unless you set oidc_audience / oidc_client_allowlist directly.
-# auth0_existing_audience = "https://api.your-shared-audience"
-# auth0_existing_client_id = "your-shared-spa-client-id"
-
-# Optional: enable Auth0 Google social connection from Terraform
-# Set both values only if you already created Google OAuth Client credentials.
-# In auth0_mode="reuse" this block is automatically ignored.
-# auth0_google_connection_enabled = true
-# google_client_id = "your-google-client-id.apps.googleusercontent.com"
-# google_client_secret = "your-google-client-secret"
+# Paths are resolved from infra/ working directory.
+# base state must export: keycloak_url, realm_name
+# app state must export: spa_client_id, api_client_id
+identity_base_state_path = "../identity/terraform/base/terraform.tst.tfstate"
+identity_app_state_path  = "../identity/terraform/apps/jobhunter-tst-webapp-spa/terraform.tst.tfstate"
 
 # =============================================================================
 # Runtime auth policy (advanced - usually keep defaults)
 # =============================================================================
-# auth_provider = "auth0"
+# auth_provider = "keycloak"
 # auth_local_dev_use_mock_identity = false
-# oidc_issuer = "" # default derived from auth0_domain
-# oidc_audience = "" # default derived from created/reused Auth0 API identifier
-# oidc_client_allowlist = "" # default = created/reused Auth0 SPA client_id
+# oidc_issuer = "" # default derived from identity base state
+# oidc_audience = "" # default derived from app identity state api_client_id
+# oidc_client_allowlist = "" # default = app identity state spa_client_id
 # oidc_allowed_algorithms = "RS256"
 # auth_enforce_app_claims = false
 # auth_app_id_claim = "app_id"
 # auth_app_env_claim = "app_env"
 # auth_require_client_allowlist = true
 # auth_required_scopes = ""
-# next_public_auth0_scope = "openid profile email"
+# next_public_auth_scope = "openid profile email"
 
 # =============================================================================
 # Other optional app settings

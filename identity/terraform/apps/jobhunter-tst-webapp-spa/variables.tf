@@ -14,6 +14,11 @@ variable "jobhunter_tst_webapp_spa_spa_web_origins" {
   type        = list(string)
 }
 
+variable "jobhunter_tst_webapp_spa_spa_post_logout_redirect_uris" {
+  description = "Allowed post-logout redirect URIs for SPA 'jobhunter-tst-webapp-spa'"
+  type        = list(string)
+}
+
 variable "jobhunter_tst_webapp_spa_api_audience" {
   description = "Audience value for API 'jobhunter-tst-webapp-spa'"
   type        = string

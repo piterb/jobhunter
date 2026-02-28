@@ -34,6 +34,7 @@ resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_spa" {
 
   pkce_code_challenge_method = "S256"
   valid_redirect_uris        = var.jobhunter_tst_webapp_spa_spa_redirect_uris
+  valid_post_logout_redirect_uris = var.jobhunter_tst_webapp_spa_spa_post_logout_redirect_uris
   web_origins                = var.jobhunter_tst_webapp_spa_spa_web_origins
 
   lifecycle {
@@ -49,6 +50,13 @@ resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_spa" {
         for origin in var.jobhunter_tst_webapp_spa_spa_web_origins : !strcontains(origin, "*")
       ])
       error_message = "Wildcards in jobhunter_tst_webapp_spa_spa_web_origins are not allowed in prd."
+    }
+
+    precondition {
+      condition = local.environment != "prd" || alltrue([
+        for uri in var.jobhunter_tst_webapp_spa_spa_post_logout_redirect_uris : !strcontains(uri, "*")
+      ])
+      error_message = "Wildcards in jobhunter_tst_webapp_spa_spa_post_logout_redirect_uris are not allowed in prd."
     }
   }
 }

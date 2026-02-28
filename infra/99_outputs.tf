@@ -104,12 +104,12 @@ output "neon_project_id" {
 
 output "neon_branch_id" {
   description = "Neon branch used for app database resources"
-  value       = local.neon_create_branch ? neon_branch.db_host[0].id : local.neon_selected_existing_branch_id
+  value       = neon_branch.db_host.id
 }
 
 output "neon_branch_name" {
   description = "Neon branch name used for app database resources"
-  value       = local.neon_create_branch ? local.neon_effective_branch_name : local.neon_selected_existing_branch_name
+  value       = neon_branch.db_host.name
 }
 
 output "neon_role_name" {

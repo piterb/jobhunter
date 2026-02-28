@@ -35,6 +35,7 @@ locals {
   neon_role_name          = var.neon_role_name != "" ? var.neon_role_name : "${local.neon_db_base_name}_app"
   neon_database_name      = var.neon_database_name != "" ? var.neon_database_name : local.neon_db_base_name
   neon_db_branch_name     = trimspace(var.neon_db_branch_name)
+  neon_effective_branch_name = local.neon_db_branch_name != "" ? local.neon_db_branch_name : "main"
   neon_database_url       = "postgresql://${neon_role.app.name}:${urlencode(neon_role.app.password)}@${neon_endpoint.app_rw.host}/${neon_database.app.name}?sslmode=require"
 }
 

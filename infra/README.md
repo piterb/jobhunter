@@ -20,7 +20,7 @@ Ensure you have the following tools, accounts, and access prepared:
 3.  **GitHub CLI (gh)**: `brew install gh`
 4.  **Git**: Should be installed and configured on your machine.
 5.  **Google Cloud Account**: An active GCP account with billing enabled.
-6.  **Auth0 Tenant**: You must have permissions to manage Auth0 resources. For shared mode you can reuse existing API/SPA.
+6.  **Keycloak Identity State**: The shared identity stack and app identity stack must already exist and produce Terraform state consumable by `infra/`.
 7.  **Neon Project**: Created manually (Terraform does not create the Neon project itself).
 8.  **Neon project-scoped API key**: For that specific project.
 
@@ -37,38 +37,17 @@ Isolation in GCP is based on unique `<app_name>-<env_name>` naming for Cloud Run
 *   **Create GCP Project**: Create a new project manually in the [GCP Console](https://console.cloud.google.com/). 
     *   *Note: These scripts manage resources within an existing project, they do not create the project itself to avoid complex billing/organization permission issues.*
 *   **Enable Billing**: Ensure the project has a Billing Account attached.
-*   **Auth0 Terraform M2M App** (manual):
-    *   Create a Machine-to-Machine Application in Auth0.
-    *   Copy `Client ID` and `Client Secret` to `auth0_terraform_client_id` and `auth0_terraform_client_secret`.
-    *   In Auth0 Dashboard go to: `APIs` -> `Auth0 Management API` -> `Machine to Machine Applications`.
-    *   Find this Terraform M2M app and click **Authorize**.
-    *   Grant scopes on **Auth0 Management API**:
-      *   Minimum for `terraform plan/apply`:
-      *   `read:clients`, `create:clients`, `update:clients`
-      *   `read:resource_servers`, `create:resource_servers`, `update:resource_servers`
-      *   `read:connections`, `create:connections`, `update:connections`
-      *   Recommended if you also run `terraform destroy`:
-      *   `delete:clients`, `delete:resource_servers`, `delete:connections`
 *   **Create Neon Project** manually in [Neon Console](https://console.neon.tech/).
 *   **Create Neon project-scoped API key** with permissions to manage branches/roles/databases/endpoints inside that project.
 *   **Copy Neon Project ID** (used as `neon_project_id` in tfvars).
 *   **Identify GitHub coordinates** for this repo:
     *   `github_owner` and `github_repo` from repository URL `https://github.com/<owner>/<repo>`
     *   `github_branch` used for deployment trigger in this stack
-*   **Google OAuth setup for Auth0 Google connection** (manual):
-    *   Open [Google Cloud Console](https://console.cloud.google.com/) and select your project.
-    *   Go to `APIs & Services` -> `OAuth consent screen` and configure the app (internal/external, app name, support email, developer contact).
-    *   Add required scopes: `openid`, `email`, `profile`.
-    *   Add test users if the app is in testing mode.
-    *   Go to `APIs & Services` -> `Credentials` -> `Create Credentials` -> `OAuth client ID`.
-    *   Choose application type `Web application`.
-    *   Add Authorized redirect URI:
-      *   `https://<your-auth0-domain>/login/callback`
-    *   Important: do **not** add your Cloud Run app callback URL here. Google redirects to Auth0, not directly to your app.
-    *   Save and copy generated `Client ID` and `Client secret`.
-    *   Put them into Terraform vars:
-      *   `google_client_id`
-      *   `google_client_secret`
+*   **Prepare identity stack states** (manual, outside `infra/`):
+    *   Apply the shared Keycloak base stack in `identity/terraform/base`.
+    *   Apply the app-specific Keycloak stack in `identity/terraform/apps/<app-name>`.
+    *   Verify the base state exports `keycloak_url` and `realm_name`.
+    *   Verify the app state exports `spa_client_id` and `api_client_id`.
 
 ### 2. Local CLI Authentication
 You must be logged into the CLI tools on your machine:
@@ -83,21 +62,15 @@ You need to prepare two variable files:
 
 2.  **Specific Environment**:
     Copy `environments/example.tfvars` to `environments/tst2.tfvars` and fill in project-specific IDs.
-    The template is split by systems/providers (`GCP`, `GitHub`, `Neon`, `Auth0`, runtime policy).
-    Fill required keys first: `app_name`, `env_name`, `gcp_project_id`, `github_owner`, `github_repo`, `github_branch`, `neon_project_id`, `neon_api_key`, `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret`.
-    Choose `auth0_mode`:
-    - `provision` (default): Terraform creates stack-specific Auth0 API + SPA.
-    - `reuse`: Terraform reuses existing shared Auth0 API + SPA (recommended on Auth0 Free for multi-app/env).
-    In `reuse` mode set `auth0_existing_audience` and `auth0_existing_client_id` (or directly override `oidc_audience` and `oidc_client_allowlist`).
+    The template is split by systems/providers (`GCP`, `GitHub`, `Neon`, `Identity`, runtime policy).
+    Fill required keys first: `app_name`, `env_name`, `gcp_project_id`, `github_owner`, `github_repo`, `github_branch`, `neon_project_id`, `neon_api_key`, `identity_base_state_path`, `identity_app_state_path`.
     Neon model in shared project: one shared branch and isolated resources per app/env (`database + role + endpoint`).
     `neon_db_branch_name` behavior:
     - empty/commented => use existing Neon default (primary) branch
     - set value => use that branch and auto-create it if missing
     Most advanced auth/OIDC overrides are intentionally commented out in the template; keep defaults unless you have a specific reason to change them.
-    Terraform exports runtime Auth0 values to GitHub environment variables automatically in both modes.
-    In `provision` mode it also creates Auth0 API + SPA artifacts.
+    Terraform derives runtime Keycloak/OIDC values from identity Terraform state and exports them to GitHub environment variables.
     Terraform provisions Neon resources inside the existing project (branch/database/role/endpoint) and writes derived connection URI into the `DATABASE_URL` GitHub secret automatically.
-    Auth0 SPA callback/logout URLs for your Cloud Run client are configured automatically by Terraform on the Auth0 side.
     Migration table naming is environment-scoped: `<app_name>_<env_name>_schema_migrations`.
 
 ### 3. Neon Isolation Notes
@@ -114,9 +87,8 @@ Confirm all items:
 *   `neon_api_key` is project-scoped for that Neon project.
 *   If `neon_db_branch_name` is empty/commented, Neon project has an existing default (primary) branch.
 *   If `neon_db_branch_name` is set, Terraform will use that branch and auto-create it when missing.
-*   `auth0_domain`, `auth0_terraform_client_id`, `auth0_terraform_client_secret` are valid.
-*   If `auth0_mode=reuse`: `auth0_existing_audience` and `auth0_existing_client_id` (or `oidc_*` overrides) are set.
-*   `google_client_id` and `google_client_secret` are set only when provisioning Auth0 Google connection (`auth0_mode=provision` and `auth0_google_connection_enabled=true`).
+*   `identity_base_state_path` points to an existing state file with `keycloak_url` and `realm_name`.
+*   `identity_app_state_path` points to an existing state file with `spa_client_id` and `api_client_id`.
 *   `gh auth status` and `gcloud auth application-default print-access-token` both work locally.
 
 ## 🛠 Quick Start (First Run)

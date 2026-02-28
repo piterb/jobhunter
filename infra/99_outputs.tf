@@ -57,9 +57,14 @@ output "feedback_bucket_name" {
   value = google_storage_bucket.feedback_reports.name
 }
 
-output "auth0_domain" {
-  description = "Auth0 tenant domain used by Terraform provider"
-  value       = local.auth0_domain_clean
+output "auth_base_url" {
+  description = "Identity provider base URL used by runtime"
+  value       = local.keycloak_base_url
+}
+
+output "auth_realm" {
+  description = "Identity provider realm used by runtime"
+  value       = local.keycloak_realm
 }
 
 output "oidc_issuer" {
@@ -69,7 +74,7 @@ output "oidc_issuer" {
 
 output "oidc_audience" {
   description = "OIDC audience for backend/client runtime"
-  value       = local.auth0_api_identifier_resolved
+  value       = local.oidc_audience_value
 }
 
 output "oidc_client_allowlist" {
@@ -77,34 +82,19 @@ output "oidc_client_allowlist" {
   value       = local.oidc_client_allowlist
 }
 
-output "auth0_frontend_client_id" {
-  description = "Resolved Auth0 SPA client ID used by this environment"
-  value       = local.auth0_frontend_client_id_resolved
-}
-
-output "auth0_frontend_client_name" {
-  description = "Auth0 SPA app name (provision mode only)"
-  value       = local.auth0_is_provision ? auth0_client.frontend[0].name : null
-}
-
-output "auth0_api_name" {
-  description = "Auth0 API (resource server) name (provision mode only)"
-  value       = local.auth0_is_provision ? auth0_resource_server.api[0].name : null
+output "auth_frontend_client_id" {
+  description = "Resolved SPA client ID used by this environment"
+  value       = local.auth_frontend_client_id
 }
 
 output "client_auth_callback_url" {
-  description = "Frontend callback URL configured in Auth0 SPA app"
+  description = "Frontend callback URL configured for the SPA app"
   value       = local.client_redirect_uri
 }
 
 output "client_auth_logout_url" {
-  description = "Frontend logout URL configured in Auth0 SPA app"
+  description = "Frontend logout URL configured for the SPA app"
   value       = local.client_logout_uri
-}
-
-output "auth0_google_connection_callback_url" {
-  description = "Redirect URI to register in Google OAuth client for Auth0 connection"
-  value       = "https://${local.auth0_domain_clean}/login/callback"
 }
 
 output "neon_project_id" {
@@ -114,12 +104,12 @@ output "neon_project_id" {
 
 output "neon_branch_id" {
   description = "Neon branch used for app database resources"
-  value       = local.neon_create_branch ? neon_branch.db_host[0].id : local.neon_selected_existing_branch_id
+  value       = neon_branch.db_host.id
 }
 
 output "neon_branch_name" {
   description = "Neon branch name used for app database resources"
-  value       = local.neon_create_branch ? local.neon_effective_branch_name : local.neon_selected_existing_branch_name
+  value       = neon_branch.db_host.name
 }
 
 output "neon_role_name" {

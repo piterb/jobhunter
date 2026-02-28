@@ -1,12 +1,12 @@
-name: Client CI/CD (tst2)
+name: Client CI/CD (tst)
 
 on:
   push:
-    branches: [ "tst2" ]
+    branches: [ "tst" ]
     paths:
       - 'client/**'
       - 'shared/**'
-      - '.github/workflows/deploy-client-tst2.yml'
+      - '.github/workflows/deploy-client-tst.yml'
   workflow_dispatch:
 
 env:
@@ -35,7 +35,7 @@ jobs:
     needs: ci
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: tst2
+    environment: tst
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -62,12 +62,12 @@ jobs:
             --build-arg NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }} \
             --build-arg NEXT_PUBLIC_FEEDBACK_ENABLED=${{ vars.NEXT_PUBLIC_FEEDBACK_ENABLED }} \
             --build-arg NEXT_PUBLIC_AUTH_PROVIDER=${{ vars.NEXT_PUBLIC_AUTH_PROVIDER }} \
-            --build-arg NEXT_PUBLIC_AUTH0_DOMAIN=${{ vars.NEXT_PUBLIC_AUTH0_DOMAIN }} \
-            --build-arg NEXT_PUBLIC_AUTH0_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTH0_CLIENT_ID }} \
-            --build-arg NEXT_PUBLIC_AUTH0_AUDIENCE=${{ vars.NEXT_PUBLIC_AUTH0_AUDIENCE }} \
-            --build-arg NEXT_PUBLIC_AUTH0_SCOPE=${{ vars.NEXT_PUBLIC_AUTH0_SCOPE }} \
-            --build-arg NEXT_PUBLIC_AUTH0_REDIRECT_URI=${{ vars.NEXT_PUBLIC_AUTH0_REDIRECT_URI }} \
-            --build-arg NEXT_PUBLIC_AUTH0_LOGOUT_URL=${{ vars.NEXT_PUBLIC_AUTH0_LOGOUT_URL }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_URL=${{ vars.NEXT_PUBLIC_KEYCLOAK_URL }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=${{ vars.NEXT_PUBLIC_KEYCLOAK_REALM }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ vars.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_SCOPE=${{ vars.NEXT_PUBLIC_KEYCLOAK_SCOPE }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REDIRECT_URI=${{ vars.NEXT_PUBLIC_KEYCLOAK_REDIRECT_URI }} \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_LOGOUT_REDIRECT_URI=${{ vars.NEXT_PUBLIC_KEYCLOAK_LOGOUT_REDIRECT_URI }} \
             .
           docker push ${{ vars.ARTIFACT_REPO }}/client --all-tags
 
@@ -80,4 +80,4 @@ jobs:
           flags: '--allow-unauthenticated'
           env_vars: |-
             NODE_ENV=production
-            APP_ENV=tst2
+            APP_ENV=tst

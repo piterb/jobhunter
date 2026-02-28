@@ -93,84 +93,23 @@ variable "neon_db_branch_name" {
 }
 
 # -----------------------------------------------------------------------------
-# Auth0 + OIDC runtime policy
+# Identity + OIDC runtime policy
 # -----------------------------------------------------------------------------
 
-variable "auth0_mode" {
-  description = "Auth0 management mode: 'provision' (create API/SPA per stack) or 'reuse' (use existing shared Auth0 API/SPA)"
-  type        = string
-  default     = "provision"
-
-  validation {
-    condition     = contains(["provision", "reuse"], var.auth0_mode)
-    error_message = "auth0_mode must be either 'provision' or 'reuse'."
-  }
-}
-
-variable "auth0_domain" {
-  description = "Auth0 tenant domain (with or without https://)"
+variable "identity_base_state_path" {
+  description = "Path to the Terraform state file for the shared identity base stack"
   type        = string
 }
 
-variable "auth0_terraform_client_id" {
-  description = "Auth0 M2M client ID used by Terraform provider"
+variable "identity_app_state_path" {
+  description = "Path to the Terraform state file for the application identity stack"
   type        = string
-  sensitive   = true
-}
-
-variable "auth0_terraform_client_secret" {
-  description = "Auth0 M2M client secret used by Terraform provider"
-  type        = string
-  sensitive   = true
-}
-
-variable "auth0_spa_name_override" {
-  description = "Optional Auth0 SPA application name override"
-  type        = string
-  default     = ""
-}
-
-variable "auth0_api_name_override" {
-  description = "Optional Auth0 API name override"
-  type        = string
-  default     = ""
-}
-
-variable "auth0_existing_client_id" {
-  description = "Existing/shared Auth0 SPA client_id (required in auth0_mode='reuse' when oidc_client_allowlist is empty)"
-  type        = string
-  default     = ""
-}
-
-variable "auth0_existing_audience" {
-  description = "Existing/shared Auth0 API audience identifier (required in auth0_mode='reuse' when oidc_audience is empty)"
-  type        = string
-  default     = ""
-}
-
-variable "auth0_google_connection_enabled" {
-  description = "Create/update Auth0 Google social connection (applies only in auth0_mode='provision'; ignored in 'reuse')"
-  type        = bool
-  default     = true
-}
-
-variable "google_client_id" {
-  description = "Google OAuth Web Client ID used by Auth0 Google connection"
-  type        = string
-  default     = ""
-}
-
-variable "google_client_secret" {
-  description = "Google OAuth Web Client Secret used by Auth0 Google connection"
-  type        = string
-  sensitive   = true
-  default     = ""
 }
 
 variable "auth_provider" {
   description = "Runtime auth provider (matches AUTH_PROVIDER)"
   type        = string
-  default     = "auth0"
+  default     = "keycloak"
 }
 
 variable "auth_local_dev_use_mock_identity" {
@@ -180,19 +119,19 @@ variable "auth_local_dev_use_mock_identity" {
 }
 
 variable "oidc_issuer" {
-  description = "OIDC issuer override. Empty => derived from auth0_domain"
+  description = "OIDC issuer override. Empty => derived from identity base stack"
   type        = string
   default     = ""
 }
 
 variable "oidc_audience" {
-  description = "OIDC audience override. Empty => derived from created Auth0 API identifier"
+  description = "OIDC audience override. Empty => derived from identity app stack API client id"
   type        = string
   default     = ""
 }
 
 variable "oidc_client_allowlist" {
-  description = "OIDC client allowlist override. Empty => generated Auth0 SPA client ID"
+  description = "OIDC client allowlist override. Empty => derived from identity app stack SPA client id"
   type        = string
   default     = ""
 }
@@ -233,8 +172,8 @@ variable "auth_required_scopes" {
   default     = ""
 }
 
-variable "next_public_auth0_scope" {
-  description = "Frontend Auth0 scope (matches NEXT_PUBLIC_AUTH0_SCOPE)"
+variable "next_public_auth_scope" {
+  description = "Frontend auth scope (matches NEXT_PUBLIC_KEYCLOAK_SCOPE)"
   type        = string
   default     = "openid profile email"
 }

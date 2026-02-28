@@ -12,10 +12,6 @@ terraform {
       source  = "kislerdm/neon"
       version = "~> 0.13"
     }
-    auth0 = {
-      source  = "auth0/auth0"
-      version = "~> 1.9"
-    }
   }
 }
 
@@ -30,10 +26,4 @@ provider "github" {
 
 provider "neon" {
   api_key = var.neon_api_key
-}
-
-provider "auth0" {
-  domain        = local.auth0_domain
-  client_id     = var.auth0_terraform_client_id
-  client_secret = var.auth0_terraform_client_secret
 }

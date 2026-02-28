@@ -1,13 +1,13 @@
-name: Server CI/CD (tst2)
+name: Server CI/CD (tst)
 
 on:
   push:
-    branches: [ "tst2" ]
+    branches: [ "tst" ]
     paths:
       - 'server/**'
       - 'shared/**'
       - 'db/**'
-      - '.github/workflows/deploy-server-tst2.yml'
+      - '.github/workflows/deploy-server-tst.yml'
   workflow_dispatch:
 
 env:
@@ -42,7 +42,7 @@ jobs:
     needs: ci
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: tst2
+    environment: tst
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -59,7 +59,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DBMATE_MIGRATIONS_DIR: db/migrations
-          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_tst2_schema_migrations"
+          DBMATE_MIGRATIONS_TABLE: "${{ vars.APP_NAME }}_tst_schema_migrations"
         run: dbmate up
 
       - name: Google Auth
@@ -109,4 +109,4 @@ jobs:
             GITHUB_OWNER=${{ github.repository_owner }}
             GITHUB_REPO=${{ github.event.repository.name }}
             APP_NAME=${{ vars.APP_NAME }}
-            APP_ENV=tst2
+            APP_ENV=tst

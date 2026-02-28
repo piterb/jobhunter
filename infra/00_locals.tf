@@ -19,31 +19,38 @@ locals {
   server_service_name = "${local.app_env_slug}-server"
   client_service_name = "${local.app_env_slug}-client"
 
-  resource_prefix = var.resource_prefix_override != "" ? var.resource_prefix_override : "${var.app_name}-${var.env_name}"
+  resource_prefix   = var.resource_prefix_override != "" ? var.resource_prefix_override : "${var.app_name}-${var.env_name}"
+  keycloak_url_raw  = trimsuffix(data.terraform_remote_state.identity_base.outputs.keycloak_url, "/")
+  keycloak_base_url = startswith(local.keycloak_url_raw, "http://") || startswith(local.keycloak_url_raw, "https://") ? local.keycloak_url_raw : "https://${local.keycloak_url_raw}"
+  keycloak_realm    = data.terraform_remote_state.identity_base.outputs.realm_name
+  oidc_issuer_url   = var.oidc_issuer != "" ? var.oidc_issuer : "${local.keycloak_base_url}/realms/${local.keycloak_realm}"
 
-  auth0_domain_clean = trimsuffix(trimprefix(var.auth0_domain, "https://"), "/")
-  auth0_domain       = local.auth0_domain_clean
-  oidc_issuer_url    = var.oidc_issuer != "" ? var.oidc_issuer : "https://${local.auth0_domain_clean}/"
-  auth0_is_provision = var.auth0_mode == "provision"
+  oidc_audience_value     = var.oidc_audience != "" ? var.oidc_audience : data.terraform_remote_state.identity_app.outputs.api_client_id
+  client_redirect_uri     = "${google_cloud_run_v2_service.client.uri}/auth/callback"
+  client_logout_uri       = "${google_cloud_run_v2_service.client.uri}/login"
+  auth_frontend_client_id = data.terraform_remote_state.identity_app.outputs.spa_client_id
+  default_client_allow    = local.auth_frontend_client_id
+  oidc_client_allowlist   = var.oidc_client_allowlist != "" ? var.oidc_client_allowlist : local.default_client_allow
+  neon_db_base_name       = replace(local.app_env_slug, "-", "_")
+  neon_role_name          = var.neon_role_name != "" ? var.neon_role_name : "${local.neon_db_base_name}_app"
+  neon_database_name      = var.neon_database_name != "" ? var.neon_database_name : local.neon_db_base_name
+  neon_db_branch_name     = trimspace(var.neon_db_branch_name)
+  neon_effective_branch_name = local.neon_db_branch_name != "" ? local.neon_db_branch_name : "main"
+  neon_database_url       = "postgresql://${neon_role.app.name}:${urlencode(neon_role.app.password)}@${neon_endpoint.app_rw.host}/${neon_database.app.name}?sslmode=require"
+}
 
-  auth0_api_name               = var.auth0_api_name_override != "" ? var.auth0_api_name_override : "${var.app_name}-${var.env_name}-api"
-  auth0_spa_name               = var.auth0_spa_name_override != "" ? var.auth0_spa_name_override : "${var.app_name}-${var.env_name}-client"
-  auth0_api_identifier_default = "https://api.${var.app_name}.${var.env_name}"
-  auth0_api_identifier_resolved = (
-    var.oidc_audience != "" ? var.oidc_audience : (
-      local.auth0_is_provision ? try(auth0_resource_server.api[0].identifier, "") : var.auth0_existing_audience
-    )
-  )
-  client_redirect_uri = "${google_cloud_run_v2_service.client.uri}/auth/callback"
-  client_logout_uri   = "${google_cloud_run_v2_service.client.uri}/login"
-  auth0_frontend_client_id_resolved = (
-    local.auth0_is_provision ? try(auth0_client.frontend[0].client_id, "") : var.auth0_existing_client_id
-  )
-  default_client_allow  = local.auth0_frontend_client_id_resolved
-  oidc_client_allowlist = var.oidc_client_allowlist != "" ? var.oidc_client_allowlist : local.default_client_allow
-  neon_db_base_name     = replace(local.app_env_slug, "-", "_")
-  neon_role_name        = var.neon_role_name != "" ? var.neon_role_name : "${local.neon_db_base_name}_app"
-  neon_database_name    = var.neon_database_name != "" ? var.neon_database_name : local.neon_db_base_name
-  neon_db_branch_name   = trimspace(var.neon_db_branch_name)
-  neon_database_url     = "postgresql://${neon_role.app.name}:${urlencode(neon_role.app.password)}@${neon_endpoint.app_rw.host}/${neon_database.app.name}?sslmode=require"
+data "terraform_remote_state" "identity_base" {
+  backend = "local"
+
+  config = {
+    path = var.identity_base_state_path
+  }
+}
+
+data "terraform_remote_state" "identity_app" {
+  backend = "local"
+
+  config = {
+    path = var.identity_app_state_path
+  }
 }

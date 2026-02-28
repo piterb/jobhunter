@@ -65,6 +65,16 @@ resource "keycloak_openid_client" "jobhunter_tst_webapp_spa_api" {
   service_accounts_enabled     = true
 }
 
+resource "keycloak_openid_audience_protocol_mapper" "jobhunter_tst_webapp_spa_spa_api_audience" {
+  realm_id  = data.keycloak_realm.target.id
+  client_id = keycloak_openid_client.jobhunter_tst_webapp_spa_spa.id
+  name      = "jobhunter-tst-webapp-spa API audience"
+
+  included_client_audience = keycloak_openid_client.jobhunter_tst_webapp_spa_api.client_id
+  add_to_access_token      = true
+  add_to_id_token          = false
+}
+
 resource "keycloak_role" "jobhunter_tst_webapp_spa_app_user" {
   realm_id    = data.keycloak_realm.target.id
   name        = "jobhunter-tst-webapp-spa_app_user"

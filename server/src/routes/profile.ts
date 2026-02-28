@@ -168,8 +168,7 @@ router.post('/avatar', upload.single('file'), async (req: AuthRequest, res: Resp
             metadata: {
                 contentType: file.mimetype,
                 contentDisposition: 'inline',
-            },
-            ...(isLocal ? {} : { public: true })
+            }
         });
 
         const gcsEndpoint = process.env.GCS_ENDPOINT || 'http://127.0.0.1:4443';

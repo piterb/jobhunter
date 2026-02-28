@@ -66,17 +66,6 @@ export class FeedbackService {
                 }
             });
 
-            // In development, we might need to make it public if bucket isn't auto-public
-            if (isLocal) {
-                try {
-                    await file.makePublic();
-                } catch (err) {
-                    // fake-gcs (filesystem backend) does not fully support object generation/ACL flows.
-                    // The direct emulator URL still works for local debugging, so do not fail the request.
-                    console.warn('[FeedbackService] makePublic failed in local emulator, continuing:', err);
-                }
-            }
-
             // Construct public URL
             const publicUrl = isLocal
                 ? `${gcsEndpoint}/download/storage/v1/b/${this.BUCKET_NAME}/o/${encodeURIComponent(fileName)}?alt=media`

@@ -12,6 +12,10 @@ jobhunter_tst_webapp_spa_spa_web_origins = [
   "http://localhost:3000"
 ]
 
+jobhunter_tst_webapp_spa_spa_post_logout_redirect_uris = [
+  "http://localhost:3000"
+]
+
 jobhunter_tst_webapp_spa_api_audience = "jobhunter-tst-webapp-spa-api"
 
 jobhunter_tst_webapp_spa_enable_direct_access_grants = false

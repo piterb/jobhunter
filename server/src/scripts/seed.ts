@@ -34,8 +34,7 @@ const seed = async () => {
                 metadata: {
                     contentType: 'image/svg+xml',
                     contentDisposition: 'inline',
-                },
-                ...(isLocal ? {} : { public: true })
+                }
             });
 
             const gcsEndpoint = process.env.GCS_ENDPOINT || 'http://127.0.0.1:4443';

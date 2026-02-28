@@ -61,7 +61,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         `;
 
         const response: PaginatedJobs = {
-            data: data as any[],
+            data: data as PaginatedJobs['data'],
             count: totalCount,
             page: pageNum,
             limit: limitNum,
@@ -131,7 +131,7 @@ router.put('/:id', validate(UpdateJobSchema), async (req: AuthRequest<{ id: stri
     try {
         const [job] = await sql`
             UPDATE jobs 
-            SET ${sql(updates as any)}
+            SET ${sql(updates)}
             WHERE id = ${id} AND user_id = ${userId}
             RETURNING *
         `;

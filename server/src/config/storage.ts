@@ -10,8 +10,6 @@ dotenv.config({ path: envPath1 });
 dotenv.config({ path: envPath2 });
 dotenv.config();
 
-const isLocal = process.env.NODE_ENV === 'development' || !process.env.GCP_PROJECT_ID;
-
 export const storage = new Storage({
     // Local dev uses fake-gcs-server endpoint from .env.local
     apiEndpoint: process.env.GCS_ENDPOINT,
@@ -49,7 +47,7 @@ export const ensureBuckets = async () => {
             if (bucketName === BUCKETS.AVATARS || bucketName === BUCKETS.FEEDBACK) {
                 try {
                     await bucket.makePublic();
-                } catch (err) {
+                } catch (_err) {
                     console.warn(`[Storage] Could not set bucket ${bucketName} to public. Emulators might not support this. Continuing...`);
                 }
             }

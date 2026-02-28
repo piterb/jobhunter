@@ -3,6 +3,7 @@ import sql from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { CreateActivitySchema } from 'shared';
+import type postgres from 'postgres';
 
 const router = Router();
 
@@ -60,13 +61,13 @@ router.post('/:jobId/activities', validate(CreateActivitySchema), async (req: Au
         };
 
         // Use a transaction for activity insertion and job update
-        const [activity] = await sql.begin(async (sql: any) => {
-            const [newActivity] = await sql`
-                INSERT INTO activities ${sql(activityData)}
+        const [activity] = await sql.begin(async (tx: postgres.Sql) => {
+            const [newActivity] = await tx`
+                INSERT INTO activities ${tx(activityData)}
                 RETURNING *
             `;
 
-            await sql`
+            await tx`
                 UPDATE jobs 
                 SET last_activity = NOW() 
                 WHERE id = ${jobId}

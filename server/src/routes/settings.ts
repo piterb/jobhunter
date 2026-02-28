@@ -38,7 +38,7 @@ router.put('/', validate(UpdateProfileSchema), async (req: AuthRequest<{}, {}, U
     try {
         const [settings] = await sql`
             UPDATE profiles 
-            SET ${sql(updates as any)}
+            SET ${sql(updates)}
             WHERE id = ${userId}
             RETURNING theme, language, ghosting_threshold_days, onboarding_completed, default_ai_model
         `;
@@ -92,7 +92,7 @@ router.put('/integrations', async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Unsupported provider' });
     }
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, string> = {};
     if (api_key !== undefined) updates.openai_api_key = api_key;
     if (default_model !== undefined) updates.default_ai_model = default_model;
 

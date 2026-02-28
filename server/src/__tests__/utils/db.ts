@@ -1,7 +1,19 @@
 import { vi } from 'vitest';
 import crypto from 'crypto';
 
-export const mockStore: Record<string, any[]> = {
+type Row = Record<string, unknown>;
+type MockStore = Record<string, Row[]>;
+type SqlFragment = { __sql_fragment: true; query: string; values: unknown[] };
+type SqlRunner = {
+    (strings: TemplateStringsArray, ...values: unknown[]): Promise<unknown[]>;
+    (fragment: SqlFragment): SqlFragment;
+    (value: Row): Row;
+    begin: (fn: (sql: typeof sqlProxy) => Promise<unknown>) => Promise<unknown>;
+    unsafe: (q: string, p: unknown[]) => ReturnType<typeof sqlMock>;
+    val: <T>(obj: T) => T;
+};
+
+export const mockStore: MockStore = {
     jobs: [],
     activities: [],
     profiles: [],
@@ -17,13 +29,11 @@ export const resetMockStore = () => {
     mockStore.ai_usage_logs = [];
 };
 
-type Fragment = { __sql_fragment: true; query: string; values: any[] };
-
-const isTemplateCall = (arg: any): arg is TemplateStringsArray =>
+const isTemplateCall = (arg: unknown): arg is TemplateStringsArray =>
     Array.isArray(arg) && Object.prototype.hasOwnProperty.call(arg, 'raw');
-const isFragment = (arg: any): arg is Fragment => !!arg && typeof arg === 'object' && arg.__sql_fragment === true;
+const isFragment = (arg: unknown): arg is SqlFragment => !!arg && typeof arg === 'object' && '__sql_fragment' in arg && arg.__sql_fragment === true;
 
-const getBoundValue = (strings: TemplateStringsArray, values: any[], pattern: RegExp, occurrence = 1) => {
+const getBoundValue = (strings: TemplateStringsArray, values: unknown[], pattern: RegExp, occurrence = 1) => {
     let seen = 0;
     for (let i = 0; i < strings.length - 1; i++) {
         if (pattern.test(strings[i].toLowerCase())) {
@@ -36,13 +46,13 @@ const getBoundValue = (strings: TemplateStringsArray, values: any[], pattern: Re
     return undefined;
 };
 
-const firstString = (v: any) => (typeof v === 'string' ? v : undefined);
-const toNumber = (v: any) => {
+const firstString = (v: unknown) => (typeof v === 'string' ? v : undefined);
+const toNumber = (v: unknown) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
 };
 
-const applyCommonFilters = (rows: any[], strings: TemplateStringsArray, values: any[]) => {
+const applyCommonFilters = (rows: Row[], strings: TemplateStringsArray, values: unknown[]) => {
     let data = [...rows];
 
     const id = firstString(getBoundValue(strings, values, /(^|[^a-z_])id\s*=/));
@@ -56,7 +66,7 @@ const applyCommonFilters = (rows: any[], strings: TemplateStringsArray, values: 
     return data;
 };
 
-const handleQuery = (strings: TemplateStringsArray, values: any[]) => {
+const handleQuery = (strings: TemplateStringsArray, values: unknown[]) => {
     const query = strings.join('?').trim();
     const queryLower = query.toLowerCase();
 
@@ -111,7 +121,7 @@ const handleQuery = (strings: TemplateStringsArray, values: any[]) => {
         if (!tableMatch) return [];
         const table = tableMatch[1];
 
-        let data: Record<string, any> = {};
+        let data: Row = {};
 
         if (values.length && values[0] && typeof values[0] === 'object' && !isFragment(values[0])) {
             data = values[0];
@@ -123,7 +133,7 @@ const handleQuery = (strings: TemplateStringsArray, values: any[]) => {
             }
         }
 
-        const newRow = {
+        const newRow: Row = {
             id: data.id || crypto.randomUUID(),
             created_at: data.created_at || new Date().toISOString(),
             ...data
@@ -156,7 +166,7 @@ const handleQuery = (strings: TemplateStringsArray, values: any[]) => {
         const filtered = applyCommonFilters(rows, strings, values);
         const ids = new Set(filtered.map((r) => r.id));
 
-        const updated: any[] = [];
+        const updated: Row[] = [];
         mockStore[table] = rows.map((row) => {
             if (ids.has(row.id)) {
                 const next = { ...row, ...updates };
@@ -183,34 +193,40 @@ const handleQuery = (strings: TemplateStringsArray, values: any[]) => {
     return [];
 };
 
-export const sqlMock: any = vi.fn((strings: TemplateStringsArray | string, ...values: any[]) => {
+export const sqlMock = vi.fn((strings: TemplateStringsArray | string, ...values: unknown[]) => {
     if (!isTemplateCall(strings)) {
         if (typeof strings === 'string') {
-            return { __sql_fragment: true, query: strings.toLowerCase(), values } as Fragment;
+            return { __sql_fragment: true, query: strings.toLowerCase(), values } as SqlFragment;
         }
-        return { __sql_fragment: true, query: '', values } as Fragment;
+        return { __sql_fragment: true, query: '', values } as SqlFragment;
     }
 
     const query = strings.join('?').trim().toLowerCase();
 
     if (!query.startsWith('select') && !query.startsWith('insert') && !query.startsWith('update') && !query.startsWith('delete')) {
-        return { __sql_fragment: true, query, values } as Fragment;
+        return { __sql_fragment: true, query, values } as SqlFragment;
     }
 
     return Promise.resolve(handleQuery(strings, values));
 });
 
-sqlMock.begin = vi.fn(async (fn: Function) => await fn(sqlProxy));
-sqlMock.unsafe = vi.fn((q: string, p: any[]) => sqlMock([q] as any, ...(p || [])));
-sqlMock.val = (obj: any) => obj;
-
-const sqlProxy = new Proxy(sqlMock, {
-    apply(target, thisArg, argumentsList) {
-        if (argumentsList.length === 1 && typeof argumentsList[0] === 'object' && !Array.isArray(argumentsList[0]) && !isTemplateCall(argumentsList[0])) {
+const sqlProxy = new Proxy(sqlMock as SqlRunner, {
+    apply(target, thisArg, argumentsList: unknown[]) {
+        if (
+            argumentsList.length === 1 &&
+            typeof argumentsList[0] === 'object' &&
+            argumentsList[0] !== null &&
+            !Array.isArray(argumentsList[0]) &&
+            !isTemplateCall(argumentsList[0])
+        ) {
             return argumentsList[0];
         }
-        return target.apply(thisArg, argumentsList);
+        return Reflect.apply(target, thisArg, argumentsList);
     }
 });
+
+sqlMock.begin = vi.fn(async (fn: (sql: typeof sqlProxy) => Promise<unknown>) => await fn(sqlProxy));
+sqlMock.unsafe = vi.fn((q: string, p: unknown[]) => sqlMock([q] as unknown as TemplateStringsArray, ...(p || [])));
+sqlMock.val = <T>(obj: T) => obj;
 
 export default sqlProxy;

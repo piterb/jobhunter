@@ -41,7 +41,7 @@ router.put('/', validate(UpdateProfileSchema), async (req: AuthRequest<{}, {}, U
     try {
         const [profile] = await sql`
             UPDATE profiles 
-            SET ${sql(updates as any)}
+            SET ${sql(updates)}
             WHERE id = ${userId}
             RETURNING *
         `;
@@ -186,11 +186,11 @@ router.post('/avatar', upload.single('file'), async (req: AuthRequest, res: Resp
         `;
 
         return res.json({ avatar_url: profile.avatar_url });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error uploading avatar:', error);
         return res.status(500).json({
             error: 'Failed to upload avatar',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
         });
     }
 });

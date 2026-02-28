@@ -7,9 +7,10 @@ const ISSUER = 'https://issuer.integration.test/';
 const AUDIENCE = 'https://api.integration.test';
 const CLIENT_ID = 'client-a';
 
-// jose is ESM-only in this workspace setup, so we keep runtime dynamic import untyped.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let jose: any;
+// jose is ESM-only in this workspace setup, so we keep runtime dynamic import lightly typed.
+type JoseModule = Awaited<typeof import('jose')>;
+
+let jose: JoseModule;
 let privateKey: CryptoKey;
 let jwk: Record<string, unknown>;
 let originalFetch: typeof global.fetch;

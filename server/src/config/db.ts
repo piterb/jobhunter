@@ -24,7 +24,7 @@ const sql = postgres(connectionString, {
     // Neon and local PG specific options could go here
     // For example, transform column names from snake_case to camelCase if we wanted,
     // but we'll stick to snake_case to match existing DB schema for now.
-    debug: process.env.NODE_ENV === 'development' ? (connection, query, params) => {
+    debug: process.env.NODE_ENV === 'development' ? (_connection, _query, _params) => {
         // Optional: log queries in development
         // console.log('Executing query:', query, 'with params:', params);
     } : false,

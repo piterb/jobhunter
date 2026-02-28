@@ -26,6 +26,8 @@ function getScope(): string {
     return process.env.NEXT_PUBLIC_KEYCLOAK_SCOPE || 'openid profile email';
 }
 
+type InitMode = 'session-check' | 'interactive';
+
 function buildFallbackLogoutUrl(): string {
     const baseUrl = (process.env.NEXT_PUBLIC_KEYCLOAK_URL || '').replace(/\/$/, '');
     const realm = process.env.NEXT_PUBLIC_KEYCLOAK_REALM || '';
@@ -80,21 +82,29 @@ export class KeycloakAuthAdapter implements FrontendAuthAdapter {
         return keycloakClient;
     }
 
-    private async ensureInitialized(client: KeycloakInstance): Promise<void> {
+    private async ensureInitialized(client: KeycloakInstance, mode: InitMode = 'session-check'): Promise<void> {
         if (client.didInitialize) {
             return;
         }
 
-        await client.init({
-            onLoad: 'check-sso',
-            pkceMethod: 'S256',
-            checkLoginIframe: false
-        });
+        const initOptions =
+            mode === 'session-check'
+                ? {
+                    onLoad: 'check-sso' as const,
+                    pkceMethod: 'S256' as const,
+                    checkLoginIframe: false
+                }
+                : {
+                    pkceMethod: 'S256' as const,
+                    checkLoginIframe: false
+                };
+
+        await client.init(initOptions);
     }
 
     async signIn(): Promise<void> {
         const client = await this.getClient();
-        await this.ensureInitialized(client);
+        await this.ensureInitialized(client, 'interactive');
         await client.login({
             redirectUri: getRedirectUri(),
             scope: getScope()
